@@ -1,0 +1,6 @@
+{
+  "name": "VEX Real Estate",
+  "description": "Premium real estate platform with vision, action, and integrated blockchain payment gateways.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
