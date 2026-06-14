@@ -7,7 +7,6 @@ import {
   ShieldAlert,
   Building2,
   Users,
-  Search,
   FileText,
   CheckCircle,
   Clock,
@@ -20,11 +19,8 @@ import {
   Heart,
   Sliders,
   Activity,
-  AlertTriangle,
   Layers,
-  ArrowRight,
-  Bell,
-  Scale
+  MessageSquare,
 } from 'lucide-react';
 
 import { Property, Inquiry, AuditLog, UserAccount } from './types';
@@ -35,10 +31,12 @@ import MarketDiscover from './buyer/MarketDiscover';
 import SavedListings from './buyer/SavedListings';
 import ActiveHoldings from './buyer/ActiveHoldings';
 import TenantKyc from './buyer/TenantKyc';
+import TenantMessages from './buyer/TenantMessages';
 import OwnedProperties from './owner/OwnedProperties';
 import OwnerLifecycle from './owner/OwnerLifecycle';
 import OwnerInquiries from './owner/OwnerInquiries';
 import OwnerKyc from './owner/OwnerKyc';
+import OwnerMessages from './owner/OwnerMessages';
 import PropertyAudits from './admin/PropertyAudits';
 import MasterUserRegistry from './admin/MasterUserRegistry';
 import KycVerificationsAudit from './admin/KycVerificationsAudit';
@@ -1096,8 +1094,20 @@ export default function PortalPage() {
                       : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`}
                 >
-                  <Wallet className="w-4 h-4 text-blue-404" />
+                  <Wallet className="w-4 h-4 text-blue-400" />
                   <span>KYC & WALLET CENTER</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('tenant_messages')}
+                  className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-xs font-mono tracking-wider transition-colors ${
+                    activeTab === 'tenant_messages'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 text-sky-400" />
+                  <span>PROPERTY CHATS</span>
                 </button>
               </>
             )}
@@ -1151,6 +1161,18 @@ export default function PortalPage() {
                 >
                   <Wallet className="w-4 h-4 text-emerald-400" />
                   <span>COMPLIANCE & WALLET</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('owner_messages')}
+                  className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 text-xs font-mono tracking-wider transition-colors ${
+                    activeTab === 'owner_messages'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4 text-rose-400" />
+                  <span>TENANT MESSAGES</span>
                 </button>
               </>
             )}
@@ -1293,6 +1315,8 @@ export default function PortalPage() {
                 {activeTab === 'overrides' && 'Sovereign Controls & Force Registry Overrides'}
                 {activeTab === 'property_detail' && 'Sovereign Asset Detailed Ledger Viewer'}
                 {activeTab === 'prd_documentation' && 'VEX Compliance & PRD Manifest'}
+                {activeTab === 'tenant_messages' && 'Property Owner Messaging Hub'}
+                {activeTab === 'owner_messages' && 'Tenant Conversation Manager'}
               </h1>
               <p className="text-xs text-slate-500 mt-1">
                 {activeTab === 'discover' && 'Browse, inspect verified real-estate tokens or initiate direct rent/buy requests.'}
@@ -1311,6 +1335,8 @@ export default function PortalPage() {
                 {activeTab === 'overrides' && 'Master-key admin bypass panel.'}
                 {activeTab === 'property_detail' && 'Deep-dive into structural characteristics, verified deeds, map boundaries, and direct lister contact.'}
                 {activeTab === 'prd_documentation' && 'Trust, Blockchain, Escrow & Compliance functional audit guidelines specification.'}
+                {activeTab === 'tenant_messages' && 'Chat directly with property owners about fractional tokens, lease terms, and blockchain deed verification.'}
+                {activeTab === 'owner_messages' && 'Manage all incoming tenant rent inquiries, fractional buy requests, and lease negotiations in real-time.'}
               </p>
             </div>
 
@@ -1527,6 +1553,16 @@ export default function PortalPage() {
           {/* ====== 16. GLOBAL COMPLIANCE PRD VIEW ====== */}
           {activeTab === 'prd_documentation' && (
             <PrdDoc />
+          )}
+
+          {/* ====== 17. TENANT MESSAGES VIEW ====== */}
+          {activeTab === 'tenant_messages' && (
+            <TenantMessages properties={properties} currentUser={currentUser} />
+          )}
+
+          {/* ====== 18. OWNER MESSAGES VIEW ====== */}
+          {activeTab === 'owner_messages' && (
+            <OwnerMessages properties={properties} currentUser={currentUser} />
           )}
 
         </main>

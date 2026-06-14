@@ -75,6 +75,8 @@ const PARTNERS = [
   { name: 'Coinbase Prime', type: 'Liquidity & Custody' },
   { name: 'BlackRock Real Estate', type: 'Institutional Assets' },
   { name: 'Andreessen Horowitz', type: 'Venture Capital' },
+  { name: 'ChainLink Oracles', type: 'On-Chain Price Feeds' },
+  { name: 'Polygon zkEVM', type: 'Layer-2 Settlement' },
 ];
 
 // Helper generators defined outside the React component to satisfy strict purity standards
@@ -264,22 +266,18 @@ export default function LandingPage() {
         Full-Screen Video Background - Using iframe embed for better reliability
       */}
       <div className="fixed inset-0 w-full h-full -z-10 overflow-hidden pointer-events-none">
-        {/* YouTube embed as fallback - plays automatically without controls */}
-        <iframe
-          className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto object-cover transform -translate-x-1/2 -translate-y-1/2"
-          src="https://www.youtube.com/embed/ZgZRDX9kU2Q?autoplay=1&loop=1&playlist=ZgZRDX9kU2Q&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&enablejsapi=1"
-          title="Background Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        ></iframe>
-        
-        {/* Subtle overlay for text readability (optional, very light) */}
-        <div className="absolute inset-0 bg-black/30 pointer-events-none"></div>
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260403_050628_c4e32401-fab4-4a27-b7a8-6e9291cd5959.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
       </div>
 
       {/* NAVBAR */}
-      <header className="px-6 md:px-12 lg:px-16 pt-6 relative z-50">
+      <header className="px-6 md:px-12 lg:px-16 pt-6 sticky top-0 z-50">
         <div className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between">
           <div className="flex items-center">
             <Link href="/" className="text-2xl font-semibold tracking-tight text-white select-none">
@@ -338,7 +336,7 @@ export default function LandingPage() {
           <div>
             <AnimatedHeading
               text={"Shaping tomorrow\nwith vision and action."}
-              className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-normal mb-4 text-white"
+              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4 text-white"
               style={{ letterSpacing: '-0.04em' }}
             />
 
@@ -401,32 +399,32 @@ export default function LandingPage() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-white mb-2 block bg-white/10 px-3 py-1 rounded-full w-fit">
-              Story: Pure Transparency
+              Story: Real Estate on the Blockchain
             </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-normal text-white uppercase tracking-tight mb-6">
-              Our Visionary Blueprint
+              Fractional Ownership. Global Access.
             </h2>
             <div className="space-y-4 text-gray-300 font-light leading-relaxed text-base md:text-lg">
               <p>
-                Traditional real-estate is bottlenecked by gatekeepers, paper contracts, and high capital thresholds. VEX was structured to forge an uncompromising path. We build zero-compromise architectural structures, underwritten by auditable Rust and Solidity protocols.
+                VEX tokenizes premium real estate into ERC-1155 fractional assets, allowing anyone to own a slice of a Zurich penthouse, a Singapore commercial tower, or a Tokyo loft — starting from $85 USDC per token. No brokers. No borders. No minimums.
               </p>
               <p>
-                By dividing legendary real estate assets into fractional, secure, high-yield ERC-1155 smart tokens, our network allows anyone to immediately invest, secure payouts quarterly, or exit with a single click. No banks. No high broker commissions.
+                Every property is cross-referenced with physical land registries, deed hashes anchored on-chain, and smart escrow contracts that automatically distribute rental yields to token holders every 30 days — verified, auditable, unstoppable.
               </p>
             </div>
 
             <div className="grid grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/10">
               <div>
                 <div className="text-2xl md:text-3xl font-extralight text-white font-mono">$1.4B+</div>
-                <div className="text-xs text-white/50 tracking-wider">LOCKED IN SMART CONTRACTS</div>
+                <div className="text-xs text-white/50 tracking-wider">REAL ESTATE ON-CHAIN</div>
               </div>
               <div>
-                <div className="text-2xl md:text-3xl font-extralight text-white font-mono">0.05s</div>
-                <div className="text-xs text-white/50 tracking-wider">BLOCK SETTLEMENT TIMER</div>
+                <div className="text-2xl md:text-3xl font-extralight text-white font-mono">14,200+</div>
+                <div className="text-xs text-white/50 tracking-wider">FRACTIONAL TOKEN HOLDERS</div>
               </div>
               <div>
                 <div className="text-2xl md:text-3xl font-extralight text-white font-mono">100%</div>
-                <div className="text-xs text-white/50 tracking-wider">AUDITED ETHEREUM & SOL REGISTER</div>
+                <div className="text-xs text-white/50 tracking-wider">DEED-VERIFIED PROPERTIES</div>
               </div>
             </div>
           </div>
@@ -435,22 +433,22 @@ export default function LandingPage() {
             <div className="liquid-glass border border-white/20 rounded-2xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <Coins className="w-8 h-8 text-emerald-400" />
-                <span className="font-mono text-sm tracking-widest text-emerald-300">BLOCKCHAIN GATEWAYS</span>
+                <span className="font-mono text-sm tracking-widest text-emerald-300">SMART YIELD DISTRIBUTION</span>
               </div>
-              <h3 className="text-xl font-normal text-white mb-2">Automated Token Yield Distributed</h3>
+              <h3 className="text-xl font-normal text-white mb-2">Automated Rental Income</h3>
               <p className="text-sm text-gray-300 font-light">
-                Secure multisig smart wallets directly escrow monthly rental pool deposits. Rent collected is algorithmically distributed straight to tokenized buyers on zkSync and Polygon Mainnets, giving instant verifiable yield.
+                Tenant rent collected by multisig escrow wallets is algorithmically split and streamed directly to fractional token holders on zkSync — no banks, no delays, fully verifiable on-chain.
               </p>
             </div>
 
             <div className="liquid-glass border border-white/20 rounded-2xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-4">
                 <ShieldCheck className="w-8 h-8 text-white" />
-                <span className="font-mono text-sm tracking-widest text-gray-300">TRUSTLESS REGISTRIES</span>
+                <span className="font-mono text-sm tracking-widest text-gray-300">IMMUTABLE TITLE REGISTRY</span>
               </div>
-              <h3 className="text-xl font-normal text-white mb-2">Immutable Real Estate Title</h3>
+              <h3 className="text-xl font-normal text-white mb-2">Blockchain-Anchored Deeds</h3>
               <p className="text-sm text-gray-300 font-light">
-                Property deeds are cross-referenced with local land registries, digitizing raw metadata on an immutable, auditable decentralized node ledger. Never verify ownership of premium assets manually again.
+                Each property deed is hashed and recorded as an immutable ERC-1155 certificate. Ownership is transparent, tamper-proof, and legally enforceable in multiple jurisdictions worldwide.
               </p>
             </div>
           </div>
@@ -462,13 +460,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
           <div className="text-center max-w-xl mx-auto mb-16">
             <span className="text-xs font-mono uppercase tracking-widest text-emerald-300 bg-emerald-950/40 px-3 py-1 rounded-full">
-              Platform Features
+              Platform Capabilities
             </span>
             <h2 className="text-3xl md:text-4xl font-normal text-white uppercase tracking-tight mt-3">
-              Designed for Speed. Built for Integrity.
+              Built for Real Estate. Secured by Blockchain.
             </h2>
             <p className="text-sm text-gray-400 mt-3 font-light">
-              Experience the supreme luxury real estate tech stack with instant yield, real-time IoT controls, and auditable ledger actions.
+              From fractional deed tokenization to smart lease automation — every feature is designed around verified, on-chain real estate ownership.
             </p>
           </div>
 
@@ -477,9 +475,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-105 transition-all">
                 <Coins className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Solidity smart contracts</h3>
+              <h3 className="text-lg font-medium text-white mb-2">Fractional Token Sales</h3>
               <p className="text-xs text-gray-400 leading-relaxed font-light">
-                Fully open-source property custody. Automated payouts with zero human intervention.
+                Divide any property into ERC-1155 tokens. Investors buy fractions starting at $85 USDC with instant on-chain confirmation.
               </p>
             </div>
 
@@ -487,9 +485,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-105 transition-all">
                 <Building2 className="w-6 h-6 text-emerald-400" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Verified Real Deed Pools</h3>
+              <h3 className="text-lg font-medium text-white mb-2">Deed-Verified Listings</h3>
               <p className="text-xs text-gray-400 leading-relaxed font-light">
-                Contracts are legally tied directly to physical deeds with real-world custody entities.
+                Every property is cross-checked with physical land registries. Deed hashes are permanently anchored to the blockchain.
               </p>
             </div>
 
@@ -497,9 +495,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-105 transition-all">
                 <Wallet className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Zero Gas Cost Rent Pools</h3>
+              <h3 className="text-lg font-medium text-white mb-2">Smart Rent Collection</h3>
               <p className="text-xs text-gray-400 leading-relaxed font-light">
-                Payments processed on highly optimized Layer-2 chains, keeping gas fees completely negligible.
+                Tenant rent is collected via multisig escrow and distributed to token holders automatically on Layer-2 with negligible gas fees.
               </p>
             </div>
 
@@ -507,9 +505,9 @@ export default function LandingPage() {
               <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-6 group-hover:scale-105 transition-all">
                 <Coins className="w-6 h-6 text-emerald-400" />
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Realtime Energy IoT</h3>
+              <h3 className="text-lg font-medium text-white mb-2">Live IoT Property Data</h3>
               <p className="text-xs text-gray-400 leading-relaxed font-light">
-                Every VEX building updates power and utility consumption dynamically to our oracle registry feed.
+                Real-time energy, occupancy, and utility metrics streamed from every VEX building directly to the on-chain oracle registry.
               </p>
             </div>
           </div>
@@ -521,10 +519,10 @@ export default function LandingPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
             <span className="text-xs font-mono uppercase tracking-widest text-emerald-300">
-              Active Marketplace
+              Live Token Marketplace
             </span>
             <h2 className="text-3xl md:text-4xl font-normal text-white uppercase tracking-tight mt-1">
-              Tokenized Elite Properties
+              Own Real Estate From $85 USDC
             </h2>
           </div>
           <div className="flex gap-2 mt-4 md:mt-0 font-mono text-xs overflow-x-auto pb-2">
@@ -613,10 +611,10 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
               <span className="text-xs font-mono uppercase tracking-widest text-emerald-400">
-                Global Endorsements
+                Verified Investor Reviews
               </span>
               <h2 className="text-3xl md:text-4xl font-normal text-white uppercase tracking-tight mt-2">
-                The Real Estate Ledger Vanguard
+                Trusted by Blockchain Real Estate Investors
               </h2>
             </div>
             
@@ -685,10 +683,10 @@ export default function LandingPage() {
             DEPLOY PORTAL SECURE NODE
           </span>
           <h3 className="text-2xl md:text-3xl font-light uppercase tracking-tight text-white mt-6 mb-4">
-            Ready to Enter the Sovereign Ledger?
+            Start Investing in Tokenized Real Estate Today
           </h3>
           <p className="text-xs md:text-sm text-gray-300 max-w-xl mx-auto mb-8 font-light leading-relaxed">
-            Unlock instant tenant services, real-time energy IoT controls, fractionized estate tokens, and fully auditable secure compliance registers today.
+            Get instant access to deed-verified fractional properties, on-chain rental yields, smart lease contracts, and a fully auditable blockchain ownership registry — all from one platform.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
