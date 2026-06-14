@@ -19,8 +19,8 @@ interface OwnedPropertiesProps {
   setNewPropSupply: (n: number) => void;
   newPropApy: number;
   setNewPropApy: (n: number) => void;
-  newPropType: 'Apartment' | 'House' | 'Land' | 'Commercial Space';
-  setNewPropType: (t: 'Apartment' | 'House' | 'Land' | 'Commercial Space') => void;
+  newPropType: 'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space';
+  setNewPropType: (t: 'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space') => void;
   newPropPurpose: 'FOR_RENT' | 'FOR_SALE' | 'FOR_RENT_AND_SALE';
   setNewPropPurpose: (p: 'FOR_RENT' | 'FOR_SALE' | 'FOR_RENT_AND_SALE') => void;
   deedDocName: string;
@@ -107,7 +107,7 @@ export default function OwnedProperties({
                   setNewPropLocation('');
                   setNewPropDesc('');
                   setDeedDocName('');
-                  setPhotoMockUrl('https://picsum.photos/seed/newprop/800/500');
+                  setPhotoMockUrl('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80');
                 }}
                 className="text-red-500 hover:underline hover:text-red-700 font-bold uppercase text-[10px] cursor-pointer"
               >
@@ -185,6 +185,9 @@ export default function OwnedProperties({
                 >
                   <option value="Apartment">Apartment</option>
                   <option value="House">House</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Studio">Studio</option>
+                  <option value="Office">Office</option>
                   <option value="Land">Land</option>
                   <option value="Commercial Space">Commercial Space</option>
                 </select>
@@ -267,7 +270,7 @@ export default function OwnedProperties({
                   type="text"
                   value={photoMockUrl.startsWith('data:') ? '' : photoMockUrl}
                   onChange={(e) => setPhotoMockUrl(e.target.value)}
-                  placeholder="https://picsum.photos/seed/..."
+                  placeholder="https://images.unsplash.com/photo-..."
                   className="flex-1 p-1 px-1.5 border rounded bg-slate-50 outline-none text-[9px] font-mono"
                 />
               </div>
@@ -324,6 +327,15 @@ export default function OwnedProperties({
                         <span className="text-[9px] font-bold font-mono px-2 py-0.5 border rounded bg-blue-50 text-blue-600 uppercase">
                           {item.purpose.replace('FOR_', '').replace('_', ' ')}
                         </span>
+                        {item.occupancyStatus && (
+                          <span className={`text-[9px] font-bold font-mono px-2 py-0.5 border rounded uppercase ${
+                            item.occupancyStatus === 'OCCUPIED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            item.occupancyStatus === 'RESERVED' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                            'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}>
+                            {item.occupancyStatus}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -379,6 +391,14 @@ export default function OwnedProperties({
                       <div className="text-[10px] text-emerald-600 font-mono text-left font-semibold mt-2">
                         ID: {item.certificateId} <br />
                         Hash: {item.blockchainHash?.slice(0, 15)}...
+                      </div>
+                    )}
+                    {item.occupancyStatus === 'OCCUPIED' && item.currentTenantName && (
+                      <div className="text-[10px] text-blue-700 font-mono text-left mt-2 bg-blue-50 border border-blue-100 rounded-lg px-2 py-1.5">
+                        <div className="font-bold uppercase tracking-wider text-[9px] text-blue-400 mb-0.5">Current Tenant</div>
+                        <div>{item.currentTenantName}</div>
+                        <div className="text-blue-400">{item.currentTenantEmail}</div>
+                        {item.monthlyRent && <div className="text-emerald-600 font-bold mt-0.5">${item.monthlyRent.toLocaleString()}/mo</div>}
                       </div>
                     )}
                   </div>

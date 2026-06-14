@@ -73,22 +73,26 @@ function makeDeedApprovalCertificateIdAndHash() {
 }
 
 const INITIAL_PROPERTIES_PORTAL: Property[] = [
+  // ---- TENANT-FACING (FOR RENT) LISTINGS ----
   {
     id: 'prop-1',
-    name: 'VEX Obsidian Tower',
+    name: 'Parkview Residences — Unit 12A',
     location: 'Zurich, Switzerland',
     tokenPrice: 120,
     tokensAvailable: 1540,
     totalTokens: 2500,
     apy: 9.4,
     category: 'Building',
-    image: 'https://picsum.photos/seed/obsidian/800/500',
-    description: 'High-yield residential complex offering certified carbon-neutral utilities, automated smart lock interfaces and instant on-chain rental yields.',
-    purpose: 'FOR_RENT_AND_SALE',
+    image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
+    description: 'Bright 2-bedroom apartment on the 12th floor of Parkview Residences with panoramic lake views. Features an open-plan kitchen, hardwood floors, in-unit laundry, and a private balcony. Minutes from tram line 10 and the Zürichsee lakefront promenade.',
+    purpose: 'FOR_RENT',
     type: 'Apartment',
     bedrooms: 2,
     bathrooms: 2,
-    sizeSqFt: 1450,
+    sizeSqFt: 1150,
+    monthlyRent: 3800,
+    occupancyStatus: 'VACANT',
+    amenities: ['Balcony', 'Lake View', 'In-unit Laundry', 'Gym', 'Concierge', 'Secure Parking'],
     status: 'PUBLISHED',
     ownerId: 'usr-3',
     ownerName: 'Lord Sterling',
@@ -96,27 +100,32 @@ const INITIAL_PROPERTIES_PORTAL: Property[] = [
     certificateId: 'VEX-CERT-0199',
     documentName: 'Zurich-Deed-99A.pdf',
     additionalImages: [
-      'https://picsum.photos/seed/obsidian1/800/500',
-      'https://picsum.photos/seed/obsidian2/800/500',
-      'https://picsum.photos/seed/obsidian3/800/500'
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=800&q=80',
     ]
   },
   {
     id: 'prop-2',
-    name: 'VEX Sapphire Pavilion',
+    name: 'Marina Bay Skyline Studio',
     location: 'Marina Bay, Singapore',
     tokenPrice: 85,
     tokensAvailable: 840,
     totalTokens: 1200,
     apy: 11.2,
     category: 'Investing',
-    image: 'https://picsum.photos/seed/sapphire/800/500',
-    description: 'Ultra-luxurious sky hospitality suite with automated fractional smart contract management and real-time ledger accounting.',
-    purpose: 'FOR_SALE',
-    type: 'Commercial Space',
-    bedrooms: 4,
-    bathrooms: 5,
-    sizeSqFt: 3400,
+    image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
+    description: 'Sleek studio apartment in a premium high-rise tower overlooking Marina Bay. Fully furnished with smart home controls, floor-to-ceiling glass walls, and direct MRT access. Ideal for young professionals and expats seeking a central Singapore base.',
+    purpose: 'FOR_RENT',
+    type: 'Studio',
+    bedrooms: 0,
+    bathrooms: 1,
+    sizeSqFt: 480,
+    monthlyRent: 2900,
+    occupancyStatus: 'OCCUPIED',
+    currentTenantName: 'Elena Vasquez',
+    currentTenantEmail: 'elena.v@techcorp.sg',
+    amenities: ['Furnished', 'Smart Home', 'Rooftop Pool', 'MRT Access', 'Gym', '24/7 Security'],
     status: 'PUBLISHED',
     ownerId: 'usr-3',
     ownerName: 'Lord Sterling',
@@ -124,27 +133,30 @@ const INITIAL_PROPERTIES_PORTAL: Property[] = [
     certificateId: 'VEX-CERT-0224',
     documentName: 'SG-Deed-8224.pdf',
     additionalImages: [
-      'https://picsum.photos/seed/sapphire1/800/500',
-      'https://picsum.photos/seed/sapphire2/800/500',
-      'https://picsum.photos/seed/sapphire3/800/500'
+      'https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=800&q=80',
     ]
   },
   {
     id: 'prop-3',
-    name: 'VEX Emerald Plaza',
-    location: 'California, USA',
+    name: 'West Hollywood Modern Townhouse',
+    location: 'Los Angeles, California, USA',
     tokenPrice: 250,
     tokensAvailable: 410,
     totalTokens: 800,
     apy: 8.7,
     category: 'Advisory',
-    image: 'https://picsum.photos/seed/emerald/800/500',
-    description: 'Prestige commercial real estate workspace housing Tier-1 sovereign blockchain teams and liquidity pools.',
+    image: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=800&q=80',
+    description: '3-storey contemporary townhouse in prime West Hollywood. Features an open-concept living area, gourmet kitchen, rooftop terrace with city views, 2-car garage, and a private garden. Walking distance to Sunset Strip boutiques and restaurants.',
     purpose: 'FOR_RENT',
-    type: 'Commercial Space',
-    bedrooms: 0,
-    bathrooms: 8,
-    sizeSqFt: 12500,
+    type: 'House',
+    bedrooms: 3,
+    bathrooms: 3,
+    sizeSqFt: 2800,
+    monthlyRent: 8500,
+    occupancyStatus: 'VACANT',
+    amenities: ['Rooftop Terrace', 'Gourmet Kitchen', '2-Car Garage', 'Private Garden', 'Smart Security', 'EV Charging'],
     status: 'PUBLISHED',
     ownerId: 'usr-3',
     ownerName: 'Lord Sterling',
@@ -152,55 +164,63 @@ const INITIAL_PROPERTIES_PORTAL: Property[] = [
     certificateId: 'VEX-CERT-0308',
     documentName: 'US-Deed-9308.pdf',
     additionalImages: [
-      'https://picsum.photos/seed/emerald1/800/500',
-      'https://picsum.photos/seed/emerald2/800/500',
-      'https://picsum.photos/seed/emerald3/800/500'
+      'https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
     ]
   },
   {
     id: 'prop-4',
-    name: 'VEX Diamond Ridge Chalet',
-    location: 'St. Moritz, Switzerland',
+    name: "Côte d'Azur Beachfront Villa",
+    location: 'Nice, France',
     tokenPrice: 180,
     tokensAvailable: 950,
     totalTokens: 1500,
     apy: 12.1,
     category: 'Building',
-    image: 'https://picsum.photos/seed/diamond/800/500',
-    description: 'Supreme mountain chalet offering alpine security guarantees, heated geothermal installations and verified multi-signature smart escrow structures.',
-    purpose: 'FOR_SALE',
-    type: 'House',
+    image: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=80',
+    description: 'Breathtaking 5-bedroom Mediterranean villa set directly on the Promenade des Anglais. Features a heated infinity pool, private beach access, wine cellar, and panoramic sea views from every room. Staff quarters included. Perfect for long-term lease or fractional investment.',
+    purpose: 'FOR_RENT_AND_SALE',
+    type: 'Villa',
     bedrooms: 5,
     bathrooms: 4,
-    sizeSqFt: 4100,
+    sizeSqFt: 5200,
+    monthlyRent: 22000,
+    occupancyStatus: 'VACANT',
+    amenities: ['Infinity Pool', 'Private Beach', 'Wine Cellar', 'Staff Quarters', 'Home Theater', 'Sea View'],
     status: 'PUBLISHED',
     ownerId: 'usr-3',
     ownerName: 'Lord Sterling',
     blockchainHash: '0x99a22e8317fbcdadeccaa98a2b3dfecfaea88102',
     certificateId: 'VEX-CERT-0842',
-    documentName: 'CH-StMoritz-Deed.pdf',
+    documentName: 'FR-Nice-VillaDeed.pdf',
     additionalImages: [
-      'https://picsum.photos/seed/diamond1/800/500',
-      'https://picsum.photos/seed/diamond2/800/500',
-      'https://picsum.photos/seed/diamond3/800/500'
+      'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1576941089067-2de3c901e126?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=800&q=80',
     ]
   },
   {
     id: 'prop-5',
-    name: 'VEX Platinum Quay Office',
+    name: 'Canary Wharf Grade-A Office Suite',
     location: 'Canary Wharf, London, UK',
     tokenPrice: 145,
     tokensAvailable: 1100,
     totalTokens: 2000,
     apy: 10.5,
     category: 'Investing',
-    image: 'https://picsum.photos/seed/platinum/800/500',
-    description: 'Premium riverside dual-aspect layout offering direct views of the finance hub, structured with an automated tenant lease tracking registry and real-time ledger accounting.',
-    purpose: 'FOR_RENT_AND_SALE',
-    type: 'Commercial Space',
+    image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
+    description: 'Premium Grade-A office suite on the 28th floor of One Canada Square. 6,200 sq ft of open-plan workspace with floor-to-ceiling glazing, private meeting rooms, a dedicated reception, server room, and DLR station access at ground level.',
+    purpose: 'FOR_RENT',
+    type: 'Office',
     bedrooms: 0,
     bathrooms: 4,
     sizeSqFt: 6200,
+    monthlyRent: 32000,
+    occupancyStatus: 'OCCUPIED',
+    currentTenantName: 'Meridian Capital Partners',
+    currentTenantEmail: 'leasing@meridiancap.co.uk',
+    amenities: ['DLR Station Access', 'Concierge', 'Server Room', 'Meeting Rooms', 'Panoramic Views', 'Bike Storage'],
     status: 'PUBLISHED',
     ownerId: 'usr-3',
     ownerName: 'Lord Sterling',
@@ -208,27 +228,30 @@ const INITIAL_PROPERTIES_PORTAL: Property[] = [
     certificateId: 'VEX-CERT-0599',
     documentName: 'UK-London-CanaryWharf-Deed.pdf',
     additionalImages: [
-      'https://picsum.photos/seed/platinum1/800/500',
-      'https://picsum.photos/seed/platinum2/800/500',
-      'https://picsum.photos/seed/platinum3/800/500'
+      'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1505409859467-3a796fd5798e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=800&q=80',
     ]
   },
   {
     id: 'prop-6',
-    name: 'VEX Quartz Tech Loft',
+    name: 'Shibuya Crossing Designer Apartment',
     location: 'Shibuya, Tokyo, Japan',
     tokenPrice: 95,
     tokensAvailable: 480,
     totalTokens: 1000,
     apy: 13.4,
     category: 'Advisory',
-    image: 'https://picsum.photos/seed/quartz/800/500',
-    description: 'Ultra-modern high-tech cybernetic apartment featuring real-time electronic utility gauges and automated IoT sensors backed by fractional public trust ledger.',
+    image: 'https://images.unsplash.com/photo-1615460549969-36fa19521a4f?auto=format&fit=crop&w=800&q=80',
+    description: 'Architect-designed 2-bedroom apartment steps from Shibuya Crossing. Features Japanese-minimalist interiors with walnut cabinetry, underfloor heating, a soaking tub, and a Juliet balcony facing the crossing. Fully equipped and move-in ready.',
     purpose: 'FOR_RENT',
     type: 'Apartment',
     bedrooms: 2,
     bathrooms: 1,
-    sizeSqFt: 980,
+    sizeSqFt: 860,
+    monthlyRent: 4200,
+    occupancyStatus: 'VACANT',
+    amenities: ['Underfloor Heating', 'Soaking Tub', 'Balcony', 'Designer Interiors', 'Bike Storage', 'Parcel Locker'],
     status: 'PUBLISHED',
     ownerId: 'usr-3',
     ownerName: 'Lord Sterling',
@@ -236,11 +259,107 @@ const INITIAL_PROPERTIES_PORTAL: Property[] = [
     certificateId: 'VEX-CERT-0711',
     documentName: 'JP-Tokyo-Shibuya-Deed.pdf',
     additionalImages: [
-      'https://picsum.photos/seed/quartz1/800/500',
-      'https://picsum.photos/seed/quartz2/800/500',
-      'https://picsum.photos/seed/quartz3/800/500'
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=800&q=80',
     ]
-  }
+  },
+  // ---- OWNER-MANAGED (FOR SALE) LISTINGS ----
+  {
+    id: 'prop-7',
+    name: 'Dubai Marina Penthouse',
+    location: 'Dubai Marina, UAE',
+    tokenPrice: 320,
+    tokensAvailable: 2000,
+    totalTokens: 2000,
+    apy: 7.8,
+    category: 'Investing',
+    image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=800&q=80',
+    description: 'Full-floor penthouse atop a 62-storey Marina tower. 4 bedrooms, private pool, double-height ceilings, and 360° views of the Gulf and city skyline. Includes a private elevator lobby, staff room, and 3 covered parking bays.',
+    purpose: 'FOR_SALE',
+    type: 'Apartment',
+    bedrooms: 4,
+    bathrooms: 5,
+    sizeSqFt: 6800,
+    monthlyRent: 45000,
+    occupancyStatus: 'VACANT',
+    amenities: ['Private Pool', 'Private Elevator', 'Staff Room', '3 Parking Bays', 'Smart Home', 'Marina View'],
+    status: 'PUBLISHED',
+    ownerId: 'usr-3',
+    ownerName: 'Lord Sterling',
+    blockchainHash: '0xab12cd34ef56gh78ij90kl12mn34op56qr78st90',
+    certificateId: 'VEX-CERT-1001',
+    documentName: 'UAE-Dubai-PenthouseDeed.pdf',
+    additionalImages: [
+      'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80',
+    ]
+  },
+  {
+    id: 'prop-8',
+    name: 'Barcelona Gothic Quarter Flat',
+    location: 'Gothic Quarter, Barcelona, Spain',
+    tokenPrice: 75,
+    tokensAvailable: 600,
+    totalTokens: 800,
+    apy: 9.1,
+    category: 'Building',
+    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+    description: 'Charming 2-bedroom apartment in a 19th-century building at the heart of the Gothic Quarter. Exposed stone walls, original tile floors, high ceilings, and a restored courtyard garden. Excellent Airbnb income history. Steps from Las Ramblas.',
+    purpose: 'FOR_RENT_AND_SALE',
+    type: 'Apartment',
+    bedrooms: 2,
+    bathrooms: 1,
+    sizeSqFt: 920,
+    monthlyRent: 2400,
+    occupancyStatus: 'OCCUPIED',
+    currentTenantName: 'Sophie Renard',
+    currentTenantEmail: 'sophie.r@studio-bcn.es',
+    amenities: ['Courtyard Garden', 'Original Tile Floors', 'High Ceilings', 'Air Conditioning', 'Storage Room'],
+    status: 'PUBLISHED',
+    ownerId: 'usr-3',
+    ownerName: 'Lord Sterling',
+    blockchainHash: '0x1122334455667788990011223344556677889900',
+    certificateId: 'VEX-CERT-1102',
+    documentName: 'ES-Barcelona-Deed.pdf',
+    additionalImages: [
+      'https://images.unsplash.com/photo-1598928636135-d146006ff4be?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=800&q=80',
+    ]
+  },
+  {
+    id: 'prop-9',
+    name: 'Sydney Harbourview Terrace House',
+    location: 'Millers Point, Sydney, Australia',
+    tokenPrice: 210,
+    tokensAvailable: 1200,
+    totalTokens: 1500,
+    apy: 8.3,
+    category: 'Advisory',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80',
+    description: 'Heritage-listed sandstone terrace house with direct views of Sydney Harbour Bridge. 3 bedrooms, 2 bathrooms, and a fully renovated interior blending period charm with modern amenities. Private courtyard, cellar, and off-street parking.',
+    purpose: 'FOR_SALE',
+    type: 'House',
+    bedrooms: 3,
+    bathrooms: 2,
+    sizeSqFt: 2100,
+    monthlyRent: 7800,
+    occupancyStatus: 'RESERVED',
+    amenities: ['Harbour View', 'Private Courtyard', 'Cellar', 'Off-street Parking', 'Heritage Listed', 'Renovated Kitchen'],
+    status: 'PUBLISHED',
+    ownerId: 'usr-3',
+    ownerName: 'Lord Sterling',
+    blockchainHash: '0xaabbccddeeff00112233445566778899aabbccdd',
+    certificateId: 'VEX-CERT-1203',
+    documentName: 'AU-Sydney-TerraceHouseDeed.pdf',
+    additionalImages: [
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=800&q=80',
+    ]
+  },
 ];
 
 export default function PortalPage() {
@@ -262,7 +381,7 @@ export default function PortalPage() {
   // Filtering states in marketplace for Tenant
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPurpose, setFilterPurpose] = useState<'ALL' | 'FOR_RENT' | 'FOR_SALE'>('ALL');
-  const [filterType, setFilterType] = useState<'ALL' | 'Apartment' | 'House' | 'Land' | 'Commercial Space'>('ALL');
+  const [filterType, setFilterType] = useState<'ALL' | 'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space'>('ALL');
   const [filterVerified, setFilterVerified] = useState<boolean>(false);
 
   // Property detail modal state
@@ -290,13 +409,13 @@ export default function PortalPage() {
   const [newPropApy, setNewPropApy] = useState(9.5);
   const [newPropLocation, setNewPropLocation] = useState('');
   const [newPropDesc, setNewPropDesc] = useState('');
-  const [newPropType, setNewPropType] = useState<'Apartment' | 'House' | 'Land' | 'Commercial Space'>('Apartment');
+  const [newPropType, setNewPropType] = useState<'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space'>('Apartment');
   const [newPropPurpose, setNewPropPurpose] = useState<'FOR_RENT' | 'FOR_SALE' | 'FOR_RENT_AND_SALE'>('FOR_SALE');
   const [newPropBedrooms, setNewPropBedrooms] = useState(2);
   const [newPropBathrooms, setNewPropBathrooms] = useState(2);
   const [newPropSize, setNewPropSize] = useState(1200);
   const [deedDocName, setDeedDocName] = useState('');
-  const [photoMockUrl, setPhotoMockUrl] = useState('https://picsum.photos/seed/newprop/800/500');
+  const [photoMockUrl, setPhotoMockUrl] = useState('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80');
 
   // Owner interactive states
   const [ownerMsg, setOwnerMsg] = useState('');
@@ -337,10 +456,12 @@ export default function PortalPage() {
 
         // Load properties database
         const storedProps = localStorage.getItem('vex_properties');
-        if (storedProps) {
+        const propsVersion = localStorage.getItem('vex_properties_version');
+        if (storedProps && propsVersion === 'v2') {
           setProperties(JSON.parse(storedProps));
         } else {
           localStorage.setItem('vex_properties', JSON.stringify(INITIAL_PROPERTIES_PORTAL));
+          localStorage.setItem('vex_properties_version', 'v2');
           setProperties(INITIAL_PROPERTIES_PORTAL);
         }
 
@@ -641,7 +762,7 @@ export default function PortalPage() {
             tokensAvailable: Number(newPropSupply) || 1000,
             totalTokens: Number(newPropSupply) || 1000,
             apy: Number(newPropApy) || 8.5,
-            image: photoMockUrl || 'https://picsum.photos/seed/propdefault/800/500',
+            image: photoMockUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
             description: newPropDesc || 'Sovereign-listed real estate backing.',
             purpose: newPropPurpose,
             type: newPropType,
@@ -664,7 +785,7 @@ export default function PortalPage() {
       setNewPropLocation('');
       setNewPropDesc('');
       setDeedDocName('');
-      setPhotoMockUrl('https://picsum.photos/seed/newprop/800/500');
+      setPhotoMockUrl('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80');
       return;
     }
 
@@ -678,7 +799,7 @@ export default function PortalPage() {
       totalTokens: Number(newPropSupply) || 1000,
       apy: Number(newPropApy) || 8.5,
       category: 'Investing',
-      image: photoMockUrl || 'https://picsum.photos/seed/propdefault/800/500',
+      image: photoMockUrl || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
       description: newPropDesc || 'Sovereign-listed real estate backing.',
       purpose: newPropPurpose,
       type: newPropType,

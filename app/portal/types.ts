@@ -10,7 +10,12 @@ export interface Property {
   image: string;
   description?: string;
   purpose: 'FOR_RENT' | 'FOR_SALE' | 'FOR_RENT_AND_SALE';
-  type: 'Apartment' | 'House' | 'Land' | 'Commercial Space';
+  type: 'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space';
+  occupancyStatus?: 'OCCUPIED' | 'VACANT' | 'RESERVED';
+  currentTenantName?: string;
+  currentTenantEmail?: string;
+  monthlyRent?: number;
+  amenities?: string[];
   bedrooms?: number;
   bathrooms?: number;
   sizeSqFt?: number;

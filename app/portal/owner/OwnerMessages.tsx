@@ -86,8 +86,8 @@ const SEED_OWNER_THREADS: OwnerThread[] = [
   {
     id: 'owner-thread-1',
     propertyId: 'prop-1',
-    propertyName: 'VEX Obsidian Tower',
-    propertyImage: 'https://picsum.photos/seed/obsidian/800/500',
+    propertyName: 'Parkview Residences - Unit 12A',
+    propertyImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
     tenantName: 'Alex Murano',
     tenantInitials: 'AM',
     lastMessage: 'Hi, I am interested in renting Suite 402...',
@@ -98,8 +98,8 @@ const SEED_OWNER_THREADS: OwnerThread[] = [
   {
     id: 'owner-thread-2',
     propertyId: 'prop-2',
-    propertyName: 'VEX Sapphire Pavilion',
-    propertyImage: 'https://picsum.photos/seed/sapphire/800/500',
+    propertyName: 'Marina Bay Skyline Studio',
+    propertyImage: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
     tenantName: 'Priya Nair',
     tenantInitials: 'PN',
     lastMessage: 'My KYC is approved and wallet is linked...',
@@ -110,8 +110,8 @@ const SEED_OWNER_THREADS: OwnerThread[] = [
   {
     id: 'owner-thread-3',
     propertyId: 'prop-3',
-    propertyName: 'VEX Emerald Plaza',
-    propertyImage: 'https://picsum.photos/seed/emerald/800/500',
+    propertyName: 'Canary Wharf Grade-A Office Suite',
+    propertyImage: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&q=80',
     tenantName: 'James Vickers',
     tenantInitials: 'JV',
     lastMessage: 'Yes, we have dedicated co-working tiers...',

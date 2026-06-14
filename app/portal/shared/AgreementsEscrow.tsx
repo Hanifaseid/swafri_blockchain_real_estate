@@ -95,9 +95,9 @@ export default function AgreementsEscrow({
         {
           id: 'agr-0081',
           propertyId: 'prop-1',
-          propertyName: 'VEX Obsidian Tower',
+          propertyName: 'Parkview Residences - Unit 12A',
           propertyLocation: 'Zurich, Switzerland',
-          propertyImage: 'https://picsum.photos/seed/obsidian/800/500',
+          propertyImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80',
           tenantName: 'Sarah Conner',
           tenantEmail: 'sarah.conner@sky.net',
           tenantWallet: '0x321a0f9b0de318caeec3b0928fab83a819b1399',
@@ -124,9 +124,9 @@ export default function AgreementsEscrow({
         {
           id: 'agr-0092',
           propertyId: 'prop-2',
-          propertyName: 'VEX Sapphire Pavilion',
+          propertyName: 'Marina Bay Skyline Studio',
           propertyLocation: 'Marina Bay, Singapore',
-          propertyImage: 'https://picsum.photos/seed/sapphire/800/500',
+          propertyImage: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80',
           tenantName: 'Tony Stark',
           tenantEmail: 'tony@stark.arc',
           tenantWallet: '0xfa89c0decca2ba18ef399cbbde02aefea7881cd0',

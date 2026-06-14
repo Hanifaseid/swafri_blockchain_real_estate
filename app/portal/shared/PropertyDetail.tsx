@@ -133,9 +133,9 @@ export default function PropertyDetail({
               {(selectedProperty.additionalImages && selectedProperty.additionalImages.length > 0
                 ? selectedProperty.additionalImages
                 : [
-                    `https://picsum.photos/seed/${selectedProperty.id}_room1/600/400`,
-                    `https://picsum.photos/seed/${selectedProperty.id}_room2/600/400`,
-                    `https://picsum.photos/seed/${selectedProperty.id}_room3/600/400`,
+                    `https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80`,
+                    `https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=600&q=80`,
+                    `https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=600&q=80`,
                   ]
               ).map((imgUrl, i) => (
                 <div key={i} className="relative h-28 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 group cursor-pointer shadow-sm">
@@ -167,8 +167,10 @@ export default function PropertyDetail({
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center border-t pt-6 text-slate-700">
               <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 shadow-sm">
-                <span className="text-[9px] text-slate-400 font-mono block uppercase">Token Valuation</span>
-                <strong className="text-sm text-slate-900 font-mono block mt-1">${selectedProperty.tokenPrice} USD</strong>
+                <span className="text-[9px] text-slate-400 font-mono block uppercase">Monthly Rent</span>
+                <strong className="text-sm text-slate-900 font-mono block mt-1">
+                  {selectedProperty.monthlyRent ? `$${selectedProperty.monthlyRent.toLocaleString()}/mo` : `$${selectedProperty.tokenPrice * 30}/mo`}
+                </strong>
               </div>
               <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 shadow-sm">
                 <span className="text-[9px] text-slate-400 font-mono block uppercase">Vex continuous APY</span>
@@ -185,6 +187,41 @@ export default function PropertyDetail({
                 <strong className="text-sm text-blue-600 font-mono block mt-1">{selectedProperty.sizeSqFt || 1200} SQFT</strong>
               </div>
             </div>
+
+            {/* Amenities list */}
+            {selectedProperty.amenities && selectedProperty.amenities.length > 0 && (
+              <div className="border-t pt-5">
+                <h4 className="text-[10px] font-bold font-mono text-slate-400 uppercase tracking-widest mb-3">Amenities & Features</h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProperty.amenities.map((amenity) => (
+                    <span key={amenity} className="text-[11px] font-mono bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full">
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Occupancy status for owners */}
+            {selectedProperty.occupancyStatus && (
+              <div className="border-t pt-5 flex flex-wrap gap-4 text-xs font-mono">
+                <div>
+                  <span className="text-slate-400 uppercase text-[9px] block mb-1">Occupancy Status</span>
+                  <span className={`font-bold px-2.5 py-1 rounded border uppercase ${
+                    selectedProperty.occupancyStatus === 'OCCUPIED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                    selectedProperty.occupancyStatus === 'RESERVED' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                    'bg-rose-50 text-rose-700 border-rose-200'
+                  }`}>{selectedProperty.occupancyStatus}</span>
+                </div>
+                {selectedProperty.occupancyStatus === 'OCCUPIED' && selectedProperty.currentTenantName && (
+                  <div>
+                    <span className="text-slate-400 uppercase text-[9px] block mb-1">Current Tenant</span>
+                    <span className="font-bold text-slate-800">{selectedProperty.currentTenantName}</span>
+                    <span className="text-slate-500 block text-[10px]">{selectedProperty.currentTenantEmail}</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="bg-slate-50 border rounded-2xl p-5 space-y-4 font-mono text-[11px] text-slate-600">
               <div className="flex items-center justify-between font-bold text-slate-800 uppercase text-[10px] tracking-wider border-b pb-2">

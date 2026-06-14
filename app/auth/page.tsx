@@ -282,7 +282,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative font-sans flex flex-col justify-between selection:bg-white selection:text-black overflow-y-auto overflow-x-hidden">
+    <div className="min-h-screen bg-black text-white relative font-sans flex flex-col justify-between selection:bg-white selection:text-black overflow-x-hidden">
       {/* Background Hero Section Architectural Dark Image */}
       <div 
         className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1600')] bg-cover bg-center opacity-25 mix-blend-luminosity pointer-events-none" 

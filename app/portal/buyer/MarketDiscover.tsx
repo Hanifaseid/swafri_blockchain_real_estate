@@ -9,8 +9,8 @@ interface MarketDiscoverProps {
   setSearchTerm: (s: string) => void;
   filterPurpose: 'ALL' | 'FOR_RENT' | 'FOR_SALE';
   setFilterPurpose: (p: 'ALL' | 'FOR_RENT' | 'FOR_SALE') => void;
-  filterType: 'ALL' | 'Apartment' | 'House' | 'Land' | 'Commercial Space';
-  setFilterType: (t: 'ALL' | 'Apartment' | 'House' | 'Land' | 'Commercial Space') => void;
+  filterType: 'ALL' | 'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space';
+  setFilterType: (t: 'ALL' | 'Apartment' | 'House' | 'Villa' | 'Studio' | 'Office' | 'Land' | 'Commercial Space') => void;
   filterVerified: boolean;
   setFilterVerified: (b: boolean) => void;
   filteredProperties: Property[];
@@ -74,6 +74,9 @@ export default function MarketDiscover({
               <option value="ALL">All Types</option>
               <option value="Apartment">Apartment</option>
               <option value="House">House</option>
+              <option value="Villa">Villa</option>
+              <option value="Studio">Studio</option>
+              <option value="Office">Office</option>
               <option value="Land">Land</option>
               <option value="Commercial Space">Commercial Space</option>
             </select>
@@ -162,8 +165,8 @@ export default function MarketDiscover({
 
                   <div className="border-t border-slate-100 pt-4 mt-4 grid grid-cols-3 gap-2 text-center text-[11px] font-semibold text-slate-500 bg-slate-50 p-2.5 rounded-xl">
                     <div>
-                      <span className="block text-[9px] text-slate-400 font-mono">TOKEN PRICE</span>
-                      <span className="text-slate-900 font-mono">${item.tokenPrice} USD</span>
+                      <span className="block text-[9px] text-slate-400 font-mono">MONTHLY RENT</span>
+                      <span className="text-slate-900 font-mono">{item.monthlyRent ? `$${item.monthlyRent.toLocaleString()}` : `$${item.tokenPrice * 30}`}</span>
                     </div>
                     <div>
                       <span className="block text-[9px] text-slate-400 font-mono">LEDGER APY</span>
