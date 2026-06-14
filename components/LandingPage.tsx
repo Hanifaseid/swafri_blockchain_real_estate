@@ -328,14 +328,6 @@ export default function LandingPage() {
             >
               Portal
             </Link>
-            <button
-              onClick={() => setIsChatOpen((v) => !v)}
-              className="relative liquid-glass border border-white/20 hover:border-white/40 transition-all p-2.5 rounded-xl cursor-pointer group"
-              aria-label="Open AI Assistant"
-            >
-              <Bot className="w-5 h-5 text-white group-hover:text-emerald-300 transition-colors" />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-transparent animate-pulse" />
-            </button>
           </div>
         </div>
       </header>
@@ -741,7 +733,9 @@ export default function LandingPage() {
       <button
         onClick={() => setIsChatOpen((v) => !v)}
         aria-label="VEX AI Assistant"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-2xl liquid-glass border border-white/25 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform group"
+        title="VEX AI Assistant"
+        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-full bg-emerald-600 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform group"
+        style={{ boxShadow: '0 12px 30px rgba(16, 185, 129, 0.18)' }}
       >
         {isChatOpen
           ? <Minimize2 className="w-5 h-5 text-white" />
