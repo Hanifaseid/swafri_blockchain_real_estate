@@ -2,14 +2,15 @@
 
 import React, { useState } from 'react';
 import { UserAccount } from '../types';
-import { 
-  CheckCircle, 
-  XCircle, 
-  UserCheck, 
-  FileText, 
-  ShieldAlert, 
-  Filter, 
-  Eye, 
+import {
+  CheckCircle,
+  XCircle,
+  X,
+  UserCheck,
+  FileText,
+  ShieldAlert,
+  Filter,
+  Eye,
   UserX,
   AlertTriangle,
   Scale
