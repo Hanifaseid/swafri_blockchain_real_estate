@@ -12,7 +12,15 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://images.unsplash.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+        {/* Preload hero background so it renders immediately on landing page */}
+        <link
+          rel="preload"
+          as="image"
+          href="https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&w=1920&q=75"
+          fetchPriority="high"
+        />
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
