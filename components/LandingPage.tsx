@@ -326,7 +326,7 @@ export default function LandingPage() {
               href="/auth"
               className="text-white hover:text-gray-300 text-sm transition-colors cursor-pointer font-medium"
             >
-              Portal
+              Get Started
             </Link>
           </div>
         </div>
@@ -734,7 +734,7 @@ export default function LandingPage() {
         onClick={() => setIsChatOpen((v) => !v)}
         aria-label="VEX AI Assistant"
         title="VEX AI Assistant"
-        className="fixed bottom-20 right-6 z-50 w-14 h-14 rounded-full bg-emerald-600 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform group"
+        className="fixed bottom-20 right-10 z-50 w-14 h-14 rounded-full bg-emerald-600 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform group"
         style={{ boxShadow: '0 12px 30px rgba(16, 185, 129, 0.18)' }}
       >
         {isChatOpen
@@ -749,7 +749,7 @@ export default function LandingPage() {
       {/* Chat popup */}
       {isChatOpen && (
         <div
-          className="fixed bottom-24 right-6 z-50 w-[370px] max-w-[calc(100vw-3rem)] flex flex-col"
+          className="fixed bottom-24 right-10 z-50 w-[370px] max-w-[calc(100vw-3rem)] flex flex-col"
           style={{
             height: '560px',
             borderRadius: '20px',

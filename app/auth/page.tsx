@@ -351,7 +351,7 @@ export default function AuthPage() {
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                LOGIN INTERFACE
+                LOGIN
               </button>
               <button
                 onClick={() => {
@@ -365,7 +365,7 @@ export default function AuthPage() {
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                PUBLIC REGISTRATION
+                 REGISTRATION
               </button>
             </div>
 
