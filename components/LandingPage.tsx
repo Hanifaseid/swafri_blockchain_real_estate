@@ -9,11 +9,13 @@ import {
   Wallet,
   Activity,
   Sparkles,
-  MessageSquare,
   Send,
   X,
   ChevronLeft,
   ChevronRight,
+  Bot,
+  Minimize2,
+  RotateCcw,
 } from 'lucide-react';
 import AnimatedHeading from './AnimatedHeading';
 import FadeIn from './FadeIn';
@@ -197,6 +199,13 @@ export default function LandingPage() {
 
   // Anchor refs for scrolling
   const listingsRef = useRef<HTMLDivElement>(null);
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isChatOpen) {
+      chatMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, isChatOpen]);
 
   // Handle generic transaction simulator popups
   const triggerMockTxn = (actionText: string) => {
@@ -312,7 +321,7 @@ export default function LandingPage() {
             </button>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/auth"
               className="text-white hover:text-gray-300 text-sm transition-colors cursor-pointer font-medium"
@@ -320,10 +329,12 @@ export default function LandingPage() {
               Portal
             </Link>
             <button
-              onClick={() => setIsChatOpen(true)}
-              className="bg-white text-black hover:bg-gray-100 transition-colors px-6 py-2 rounded-lg text-sm font-medium cursor-pointer"
+              onClick={() => setIsChatOpen((v) => !v)}
+              className="relative liquid-glass border border-white/20 hover:border-white/40 transition-all p-2.5 rounded-xl cursor-pointer group"
+              aria-label="Open AI Assistant"
             >
-              Start a Chat
+              <Bot className="w-5 h-5 text-white group-hover:text-emerald-300 transition-colors" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-transparent animate-pulse" />
             </button>
           </div>
         </div>
@@ -348,12 +359,12 @@ export default function LandingPage() {
 
             <FadeIn delay={1200} duration={1000}>
               <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={() => setIsChatOpen(true)}
-                  className="bg-white text-black px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors cursor-pointer"
+                <Link
+                  href="/auth"
+                  className="bg-white text-black px-8 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors cursor-pointer inline-block"
                 >
-                  Start a Chat
-                </button>
+                  Get Started
+                </Link>
 
                 <button
                   onClick={() => document.getElementById('listings-section')?.scrollIntoView({ behavior: 'smooth' })}
@@ -699,7 +710,7 @@ export default function LandingPage() {
               onClick={() => setIsChatOpen(true)}
               className="liquid-glass border border-white/20 hover:bg-white hover:text-black hover:border-white text-white px-8 py-4 rounded-xl text-xs font-bold font-mono tracking-widest uppercase transition-all shadow-lg active:scale-95"
             >
-              Consult AI Advisor
+              Ask AI Advisor
             </button>
           </div>
         </div>
@@ -725,98 +736,141 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* IMMERSIVE AI ASSISTANT DRAWER PANEL */}
-      {isChatOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
-          <div
-            onClick={() => setIsChatOpen(false)}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer"
-          />
+      {/* ── FLOATING AI CHAT WIDGET ── */}
+      {/* FAB trigger */}
+      <button
+        onClick={() => setIsChatOpen((v) => !v)}
+        aria-label="VEX AI Assistant"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-2xl liquid-glass border border-white/25 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform group"
+      >
+        {isChatOpen
+          ? <Minimize2 className="w-5 h-5 text-white" />
+          : <>
+              <Bot className="w-6 h-6 text-white group-hover:text-emerald-300 transition-colors" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full border-2 border-black animate-pulse" />
+            </>
+        }
+      </button>
 
-          {/* Drawer Inner Content */}
-          <div className="w-full max-w-md bg-zinc-950 border-l border-white/20 h-full relative z-10 flex flex-col justify-between shadow-2xl">
-            {/* Drawer Header */}
-            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-black">
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
-                <div>
-                  <h3 className="text-base font-normal tracking-tight">VEX Real Estate AI Assistant</h3>
-                  <p className="text-[10px] font-mono text-emerald-300 uppercase">Solidity & Rust Expert</p>
-                </div>
+      {/* Chat popup */}
+      {isChatOpen && (
+        <div
+          className="fixed bottom-24 right-6 z-50 w-[370px] max-w-[calc(100vw-3rem)] flex flex-col"
+          style={{
+            height: '560px',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            background: 'rgba(0,0,0,0.72)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)',
+          }}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
               </div>
+              <div>
+                <p className="text-sm font-semibold text-white tracking-tight leading-none">VEX AI Advisor</p>
+                <p className="text-[10px] text-emerald-400 font-mono mt-0.5 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full inline-block animate-pulse" />
+                  Real Estate Intelligence
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setChatMessages([{ role: 'assistant', content: 'Greetings. I am your VEX AI blockchain real estate advisor. Click a query helper or type yours to explore our zero-knowledge secured, high-yield fractional ecosystem.' }])}
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 cursor-pointer transition-colors"
+                title="Reset conversation"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-white/60" />
+              </button>
               <button
                 onClick={() => setIsChatOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 cursor-pointer"
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 cursor-pointer transition-colors"
               >
-                <X className="w-4 h-4 text-white" />
+                <X className="w-3.5 h-3.5 text-white/60" />
               </button>
             </div>
+          </div>
 
-            {/* Chat message loops */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 font-mono text-xs">
-              {chatMessages.map((msg, i) => (
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'assistant' && (
+                  <div className="w-6 h-6 rounded-lg bg-emerald-900/60 border border-emerald-700/40 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-3 h-3 text-emerald-400" />
+                  </div>
+                )}
                 <div
-                  key={i}
-                  className={`p-4 rounded-xl border leading-relaxed ${
+                  className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
                     msg.role === 'assistant'
-                      ? 'bg-white/5 border-white/15 text-white'
-                      : 'bg-emerald-950/20 border-emerald-900/40 text-emerald-300'
+                      ? 'bg-white/6 border border-white/10 text-gray-200 rounded-tl-sm'
+                      : 'bg-white text-black rounded-tr-sm'
                   }`}
+                  style={msg.role === 'assistant' ? { background: 'rgba(255,255,255,0.06)' } : {}}
                 >
-                  <span className="block text-[9px] uppercase font-bold tracking-widest text-white/50 mb-1">
-                    {msg.role === 'assistant' ? '✦ VEX INTELIGENCE PROTOCOL' : '✦ USER ACCREDITATION AUTHOR'}
-                  </span>
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                  {msg.content}
                 </div>
-              ))}
-
-              {isSendingMsg && (
-                <div className="p-4 rounded-xl border bg-white/5 border-white/15 text-white animate-pulse flex items-center gap-2">
-                  <Activity className="w-4 h-4 animate-spin text-emerald-400" />
-                  <span>DECRYPTING CRYPTO FEEDBACK...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Prompt Helper Buttons */}
-            <div className="px-6 py-2 border-t border-white/10 bg-black/40">
-              <span className="block text-[9px] font-mono uppercase tracking-widest text-white/40 mb-2">Query Helpers:</span>
-              <div className="flex flex-wrap gap-2 text-[10px] font-mono">
-                {[
-                  'Explain token price and APY stability',
-                  'How do renters pay rent on Solana?',
-                  'Define zk-SNARK deeds',
-                ].map((s, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSendMessage(s)}
-                    className="bg-white/5 hover:bg-white/15 text-white/80 border border-white/10 px-2.5 py-1.5 rounded-lg text-left cursor-pointer transition-all truncate max-w-[240px]"
-                  >
-                    {s}
-                  </button>
-                ))}
               </div>
-            </div>
+            ))}
+            {isSendingMsg && (
+              <div className="flex gap-2.5 justify-start">
+                <div className="w-6 h-6 rounded-lg bg-emerald-900/60 border border-emerald-700/40 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-3 h-3 text-emerald-400 animate-pulse" />
+                </div>
+                <div className="px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-xs border border-white/10 flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
+            <div ref={chatMessagesEndRef} />
+          </div>
 
-            {/* Message input space */}
-            <div className="p-6 border-t border-white/10 bg-black/70 flex gap-2">
+          {/* Quick prompts */}
+          <div className="px-4 pb-2 shrink-0">
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {[
+                'How do fractional tokens work?',
+                'What APY can I expect?',
+                'How is rent paid on-chain?',
+              ].map((s, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSendMessage(s)}
+                  className="whitespace-nowrap text-[10px] font-mono px-3 py-1.5 rounded-lg border border-white/10 text-white/60 hover:text-white hover:border-white/25 transition-all cursor-pointer shrink-0"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Input */}
+          <div className="px-4 pb-4 shrink-0">
+            <div className="flex items-center gap-2 rounded-xl border border-white/12 px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.12)' }}>
               <input
                 type="text"
-                placeholder="Ask about smart rental structures..."
+                placeholder="Ask about tokenized real estate..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSendMessage();
-                }}
-                className="bg-zinc-950 text-xs border border-white/20 rounded-lg px-4 py-3 flex-1 focus:outline-none focus:border-white text-white font-mono"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                className="flex-1 bg-transparent text-xs text-white placeholder-white/30 focus:outline-none font-sans"
               />
               <button
                 onClick={() => handleSendMessage()}
-                disabled={isSendingMsg}
-                className="bg-white text-black hover:bg-gray-100 transition-colors px-4 rounded-lg cursor-pointer flex items-center justify-center shadow"
+                disabled={isSendingMsg || !chatInput.trim()}
+                className="w-7 h-7 rounded-lg bg-white disabled:bg-white/20 flex items-center justify-center shrink-0 cursor-pointer transition-colors hover:bg-gray-100 disabled:cursor-not-allowed"
               >
-                <Send className="w-4 h-4" />
+                <Send className="w-3.5 h-3.5 text-black disabled:text-white/40" />
               </button>
             </div>
           </div>

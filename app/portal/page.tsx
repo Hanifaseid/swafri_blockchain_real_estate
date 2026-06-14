@@ -1519,8 +1519,12 @@ export default function PortalPage() {
           {/* ====== 12. IDENTITY CLEARINGS REVIEW ADMIN ====== */}
           {activeTab === 'compliance_kyc' && (
             <KycVerificationsAudit
+              currentUser={currentUser!}
               users={users}
               approveUserKycState={approveUserKycState}
+              onAuditLogAdded={logAudit}
+              onNotificationTriggered={handleTriggerNotification}
+              onUpdateUsers={persistUsers}
             />
           )}
 
