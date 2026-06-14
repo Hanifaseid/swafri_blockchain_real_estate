@@ -14,6 +14,7 @@ import {
   Zap,
   TrendingUp,
   Coins,
+  RefreshCw,
   ShieldCheck,
   CheckCircle,
   FileCheck2
