@@ -20,12 +20,12 @@ const envSchema = z.object({
   // Feature flags — safe to leave undefined in dev
   NEXT_PUBLIC_ENABLE_WALLET: z
     .string()
-    .transform((v) => v === 'true')
-    .default('false'),
+    .optional()
+    .transform((v) => v === 'true'),
   NEXT_PUBLIC_ENABLE_KYC: z
     .string()
-    .transform((v) => v === 'true')
-    .default('false'),
+    .optional()
+    .transform((v) => v === 'true'),
 });
 
 // Parse and export — will throw a clear error if anything is wrong
