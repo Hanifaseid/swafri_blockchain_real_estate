@@ -46,8 +46,8 @@ export const registerSchema = z.object({
     .or(z.literal('')),
   password: passwordSchema,
   confirmPassword: z.string().min(1, 'Please confirm your password'),
-  role: z.enum(['TENANT', 'PROPERTY_OWNER'], {
-    required_error: 'Please select a role',
+  role: z.enum(['TENANT', 'PROPERTY_OWNER'] as const, {
+    error: 'Please select a role',
   }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
