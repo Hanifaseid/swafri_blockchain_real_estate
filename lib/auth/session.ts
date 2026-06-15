@@ -1,28 +1,101 @@
-const SESSION_KEY = "vex_session";
+import type { UserAccount } from '@/features/users/types/user.types';
 
-export type SessionUser = {
-  id: string;
-  name: string;
-  email: string;
-  role: "SUPER_ADMIN" | "ADMIN" | "PROPERTY_OWNER" | "TENANT";
+// ─── Storage Keys ─────────────────────────────────────────────────────────────
+// All localStorage keys used by the auth system live here.
+// No other file should hardcode these strings.
+
+export const SESSION_KEYS = {
+  ACTIVE_USER: 'vex_active_user',  // keeps backward compat with existing portal code
+  TOKEN: 'vex_token',
+  USERS_DB: 'vex_users',
+  AUDIT_LOGS: 'vex_audit_logs',
+  PROPERTIES: 'vex_properties',
+  PROPERTIES_VERSION: 'vex_properties_version',
+  INQUIRIES: 'vex_inquiries',
+  NOTIFICATIONS: 'vex_notifications',
+  LISTER_CHATS: 'vex_lister_chats',
+  FAVORITES: (userId: string) => `vex_favorites_user_${userId}`,
+} as const;
+
+// ─── Session Shape ────────────────────────────────────────────────────────────
+// Stored in localStorage as the active session.
+// token is optional — will be populated when the real backend is connected.
+
+export interface Session {
+  user: UserAccount;
   token?: string;
-};
-
-export function setSession(user: SessionUser) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(user));
 }
 
-export function getSession(): SessionUser | null {
-  if (typeof window === "undefined") return null;
+// ─── Set Session ──────────────────────────────────────────────────────────────
 
-  const data = localStorage.getItem(SESSION_KEY);
-  return data ? JSON.parse(data) : null;
+export function setSession(user: UserAccount, token?: string): void {
+  if (typeof window === 'undefined') return;
+  const session: Session = { user, token };
+  // Write under both keys so the existing portal/page.tsx still works
+  localStorage.setItem(SESSION_KEYS.ACTIVE_USER, JSON.stringify(user));
+  if (token) {
+    localStorage.setItem(SESSION_KEYS.TOKEN, token);
+  }
+  // Full session object
+  localStorage.setItem('vex_session', JSON.stringify(session));
 }
 
-export function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+// ─── Get Session ──────────────────────────────────────────────────────────────
+
+export function getSession(): Session | null {
+  if (typeof window === 'undefined') return null;
+
+  // Try the full session object first
+  const raw = localStorage.getItem('vex_session');
+  if (raw) {
+    try {
+      return JSON.parse(raw) as Session;
+    } catch {
+      // fall through to legacy key
+    }
+  }
+
+  // Fall back to legacy key used by existing portal code
+  const legacyRaw = localStorage.getItem(SESSION_KEYS.ACTIVE_USER);
+  if (legacyRaw) {
+    try {
+      const user = JSON.parse(legacyRaw) as UserAccount;
+      return { user };
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
 }
 
-export function isAuthenticated() {
-  return !!getSession();
+// ─── Get Current User ─────────────────────────────────────────────────────────
+
+export function getCurrentUser(): UserAccount | null {
+  return getSession()?.user ?? null;
+}
+
+// ─── Clear Session ────────────────────────────────────────────────────────────
+
+export function clearSession(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('vex_session');
+  localStorage.removeItem(SESSION_KEYS.ACTIVE_USER);
+  localStorage.removeItem(SESSION_KEYS.TOKEN);
+}
+
+// ─── Is Authenticated ─────────────────────────────────────────────────────────
+
+export function isAuthenticated(): boolean {
+  return getCurrentUser() !== null;
+}
+
+// ─── Update Session User ──────────────────────────────────────────────────────
+// Call this after a profile update so the session stays in sync.
+
+export function updateSessionUser(updated: Partial<UserAccount>): void {
+  const current = getCurrentUser();
+  if (!current) return;
+  const merged: UserAccount = { ...current, ...updated };
+  setSession(merged, getSession()?.token);
 }
