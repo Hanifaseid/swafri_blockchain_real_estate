@@ -52,11 +52,11 @@ export function LoginForm() {
         <h2 className="text-xl font-light text-white tracking-tight uppercase">
           Sign In
         </h2>
-        <p className="text-xs text-white/35 font-mono">
+        <p className="text-xs text-white/50 font-mono">
           Enter your credentials to access your dashboard
         </p>
       </div>
-
+    
       {/* Server alerts */}
       {serverError && (
         <div
