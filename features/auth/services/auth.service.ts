@@ -188,7 +188,7 @@ export async function getCurrentUser(): Promise<UserAccount | null> {
 }
 
 // ─── createAdmin ──────────────────────────────────────────────────────────────
-// SUPER_ADMIN only — creates an ADMIN account via the API.
+// SUPER_ADMIN only — creates an ADMIN account via POST /admin/admins.
 
 export async function createAdmin(
   payload: CreateAdminPayload,
@@ -199,13 +199,16 @@ export async function createAdmin(
   }
 
   try {
-    const { data } = await apiClient.post<{ success: boolean; message: string; data: { user: import('@/lib/api/adapters').ApiUser } }>(
-      ENDPOINTS.AUTH.REGISTER,
+    const { data } = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data: { user: import('@/lib/api/adapters').ApiUser };
+    }>(
+      ENDPOINTS.ADMIN.ADMINS,          // POST /admin/admins
       {
         name:     payload.name,
         email:    payload.email,
         password: payload.password,
-        role:     'admin',
       }
     );
 
