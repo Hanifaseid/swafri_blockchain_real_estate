@@ -22,11 +22,13 @@ export default function RegisterPage() {
           Back to Home
         </Link>
 
-        <div className="flex items-center gap-2.5 select-none">
-          <div className="w-7 h-7 rounded bg-white flex items-center justify-center text-black font-extrabold text-sm">
-            S
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded bg-white flex items-center justify-center text-black font-extrabold text-sm shadow">
+            V
           </div>
-          <span className="text-lg font-semibold tracking-tight text-white">Swafir</span>
+          <span className="text-lg font-semibold tracking-tight text-white select-none">
+            VEX Real Estate Ledger
+          </span>
         </div>
       </header>
 
