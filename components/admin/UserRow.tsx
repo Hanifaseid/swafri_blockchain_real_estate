@@ -40,7 +40,7 @@ export function UserRow({
 
   return (
     <tr
-      className="border-b transition-colors hover:bg-white/3"
+      className="border-b transition-colors hover:bg-black/3"
       style={{ borderColor: 'var(--color-dash-border)' }}
     >
       {/* User info */}
@@ -48,8 +48,8 @@ export function UserRow({
         <div className="flex items-center gap-3">
           <Avatar name={user.name} size="sm" />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user.name}</p>
-            <p className="text-xs text-white/40 font-mono truncate">{user.email}</p>
+            <p className="text-sm font-medium text-[#0f172a] truncate">{user.name}</p>
+            <p className="text-xs text-black/40 font-mono truncate">{user.email}</p>
           </div>
         </div>
       </td>
@@ -76,7 +76,7 @@ export function UserRow({
       </td>
 
       {/* Joined date */}
-      <td className="px-4 py-3 text-xs text-white/40 font-mono whitespace-nowrap">
+      <td className="px-4 py-3 text-xs text-black/40 font-mono blackspace-nowrap">
         {new Date(user.createdAt).toLocaleDateString('en-GB', {
           day: '2-digit', month: 'short', year: 'numeric',
         })}
@@ -88,7 +88,7 @@ export function UserRow({
           <button
             type="button"
             onClick={() => onView(user)}
-            className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-colors"
+            className="p-1.5 rounded-lg text-black/30 hover:text-[#0f172a] hover:bg-black/5 transition-colors"
             aria-label={`View ${user.name}`}
           >
             <Eye size={14} />
@@ -99,7 +99,7 @@ export function UserRow({
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-black/30 hover:text-[#0f172a] hover:bg-black/5 transition-colors"
                 aria-label="More actions"
                 aria-expanded={menuOpen}
               >
