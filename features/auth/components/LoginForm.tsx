@@ -17,7 +17,6 @@ import {
   darkInputPasswordClass,
   darkInputErrorClass,
 } from '@/components/forms/styles';
-import { QuickFillBar } from './QuickFillBar';
 import { cn } from '@/lib/utils';
 
 // ─── LoginForm ────────────────────────────────────────────────────────────────
@@ -56,7 +55,7 @@ export function LoginForm() {
           Enter your credentials to access your dashboard
         </p>
       </div>
-    
+
       {/* Server alerts */}
       {serverError && (
         <div
@@ -161,14 +160,6 @@ export function LoginForm() {
           {isSuccess ? 'Redirecting…' : 'Sign In'}
         </Button>
       </form>
-
-      {/* Dev quick-fill */}
-      <QuickFillBar
-        onFill={(email, password) => {
-          setValue('email', email);
-          setValue('password', password);
-        }}
-      />
     </div>
   );
 }

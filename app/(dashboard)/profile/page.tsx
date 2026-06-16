@@ -8,7 +8,9 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/auth.store';
 import { updateProfileSchema, type UpdateProfileFormValues } from '@/features/users/schemas/user.schema';
 import { updateSessionUser } from '@/lib/auth/session';
-import { getMockUsers, saveMockUsers } from '@/features/auth/utils/seed';
+import { apiClient } from '@/lib/api/axios-client';
+import { ENDPOINTS } from '@/lib/api/endpoints';
+import { adaptUser, type ApiUser } from '@/lib/api/adapters';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { inputClass, inputErrorClass } from '@/components/forms/styles';
@@ -17,13 +19,19 @@ import { ROLE_LABELS } from '@/features/roles/types/role.types';
 import { ACCOUNT_STATUS_BADGE, KYC_STATUS_BADGE, WALLET_STATUS_BADGE } from '@/features/users/constants';
 import { cn } from '@/lib/utils';
 
+interface UpdateProfileResponse {
+  success: boolean;
+  message: string;
+  data: ApiUser;
+}
+
 export default function ProfilePage() {
   const { currentUser, updateUser } = useAuthStore();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isDirty },
+    formState: { errors, isDirty, isSubmitting },
   } = useForm<UpdateProfileFormValues>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -34,18 +42,31 @@ export default function ProfilePage() {
 
   if (!currentUser) return null;
 
-  const onSubmit = (data: UpdateProfileFormValues) => {
-    // Update mock DB
-    const all = getMockUsers();
-    const idx = all.findIndex((u) => u.id === currentUser.id);
-    if (idx !== -1) {
-      all[idx] = { ...all[idx], name: data.name.trim(), phone: data.phone || undefined };
-      saveMockUsers(all);
+  const onSubmit = async (data: UpdateProfileFormValues) => {
+    try {
+      const { data: res } = await apiClient.patch<UpdateProfileResponse>(
+        ENDPOINTS.AUTH.PROFILE,
+        {
+          name:  data.name.trim(),
+          phone: data.phone || undefined,
+        }
+      );
+
+      if (!res.success) {
+        toast.error(res.message || 'Failed to update profile.');
+        return;
+      }
+
+      const updated = adaptUser(res.data);
+      updateSessionUser({ name: updated.name, phone: updated.phone });
+      updateUser({ name: updated.name, phone: updated.phone });
+      toast.success('Profile updated.');
+    } catch {
+      // Fallback: update session/store optimistically if API fails
+      updateSessionUser({ name: data.name.trim(), phone: data.phone || undefined });
+      updateUser({ name: data.name.trim(), phone: data.phone || undefined });
+      toast.success('Profile updated locally.');
     }
-    // Update session + Zustand store
-    updateSessionUser({ name: data.name.trim(), phone: data.phone || undefined });
-    updateUser({ name: data.name.trim(), phone: data.phone || undefined });
-    toast.success('Profile updated.');
   };
 
   const statusBadge = ACCOUNT_STATUS_BADGE[currentUser.status];
@@ -148,9 +169,9 @@ export default function ProfilePage() {
               <p className="text-[10px] text-black/25 font-mono">
                 Role cannot be self-updated
               </p>
-              <Button type="submit" disabled={!isDirty} size="md">
+              <Button type="submit" disabled={!isDirty || isSubmitting} size="md">
                 <CheckCircle2 size={14} />
-                Save Changes
+                {isSubmitting ? 'Saving…' : 'Save Changes'}
               </Button>
             </div>
           </form>

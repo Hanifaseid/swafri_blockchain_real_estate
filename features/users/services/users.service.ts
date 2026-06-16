@@ -1,8 +1,12 @@
 import type { UserAccount, AccountStatus, UserFilters } from '@/features/users/types/user.types';
-import { getMockUsers, saveMockUsers } from '@/features/auth/utils/seed';
+import type { UserRole } from '@/features/roles/types/role.types';
+import { apiClient } from '@/lib/api/axios-client';
+import { ENDPOINTS } from '@/lib/api/endpoints';
 import { SESSION_KEYS } from '@/lib/auth/session';
+import { adaptUser, type ApiUser, ROLE_TO_API } from '@/lib/api/adapters';
 
 // ─── Audit helper ─────────────────────────────────────────────────────────────
+// Audit logs are stored locally since the API has no audit endpoint.
 
 function logAudit(actorName: string, actorEmail: string, action: string) {
   if (typeof window === 'undefined') return;
@@ -18,44 +22,62 @@ function logAudit(actorName: string, actorEmail: string, action: string) {
   localStorage.setItem(SESSION_KEYS.AUDIT_LOGS, JSON.stringify(logs));
 }
 
-function stripPassword(user: ReturnType<typeof getMockUsers>[number]): UserAccount {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { passwordHash: _, ...safe } = user;
-  return safe;
+// ─── API response shapes ──────────────────────────────────────────────────────
+
+interface UsersListResponse {
+  success: boolean;
+  message: string;
+  data: ApiUser[] | { users: ApiUser[] } | { data: ApiUser[] };
 }
 
-function delay(ms = 400): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
+interface UserDetailResponse {
+  success: boolean;
+  message: string;
+  data: ApiUser;
 }
 
 // ─── getUsers ─────────────────────────────────────────────────────────────────
 
 export async function getUsers(filters?: UserFilters): Promise<UserAccount[]> {
-  await delay(300);
-  let users = getMockUsers().map(stripPassword);
+  try {
+    const params: Record<string, string> = {};
+    if (filters?.role)      params.role      = ROLE_TO_API[filters.role as UserRole] ?? filters.role;
+    if (filters?.status)    params.status    = filters.status.toLowerCase();
+    if (filters?.kycStatus) params.kycStatus = filters.kycStatus.toLowerCase();
+    if (filters?.search)    params.search    = filters.search;
 
-  if (filters?.role)   users = users.filter((u) => u.role === filters.role);
-  if (filters?.status) users = users.filter((u) => u.status === filters.status);
-  if (filters?.kycStatus) users = users.filter((u) => u.kycStatus === filters.kycStatus);
-  if (filters?.search) {
-    const q = filters.search.toLowerCase();
-    users = users.filter(
-      (u) =>
-        u.name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q)
-    );
+    const { data } = await apiClient.get<UsersListResponse>(ENDPOINTS.USERS.LIST, { params });
+
+    if (!data.success) return [];
+
+    // Handle different possible response shapes
+    let apiUsers: ApiUser[];
+    if (Array.isArray(data.data)) {
+      apiUsers = data.data;
+    } else if (data.data && 'users' in data.data && Array.isArray((data.data as { users: ApiUser[] }).users)) {
+      apiUsers = (data.data as { users: ApiUser[] }).users;
+    } else if (data.data && 'data' in data.data && Array.isArray((data.data as { data: ApiUser[] }).data)) {
+      apiUsers = (data.data as { data: ApiUser[] }).data;
+    } else {
+      return [];
+    }
+
+    return apiUsers.map(adaptUser);
+  } catch {
+    return [];
   }
-
-  return users;
 }
 
 // ─── getUserById ──────────────────────────────────────────────────────────────
 
 export async function getUserById(id: string): Promise<UserAccount | null> {
-  await delay(200);
-  const all = getMockUsers();
-  const found = all.find((u) => u.id === id);
-  return found ? stripPassword(found) : null;
+  try {
+    const { data } = await apiClient.get<UserDetailResponse>(ENDPOINTS.USERS.DETAIL(id));
+    if (!data.success) return null;
+    return adaptUser(data.data);
+  } catch {
+    return null;
+  }
 }
 
 // ─── updateUserStatus ─────────────────────────────────────────────────────────
@@ -66,30 +88,41 @@ export async function updateUserStatus(
   actor: UserAccount,
   reason?: string
 ): Promise<UserAccount> {
-  await delay(400);
-  const all = getMockUsers();
-  const idx = all.findIndex((u) => u.id === userId);
-  if (idx === -1) throw new Error('User not found');
-
-  const target = all[idx];
-
   // Guards
-  if (target.role === 'SUPER_ADMIN') throw new Error('Cannot modify a Super Admin account.');
-  if (target.role === 'ADMIN' && actor.role !== 'SUPER_ADMIN') {
-    throw new Error('Only Super Admin can modify Admin accounts.');
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'ADMIN') {
+    throw new Error('Insufficient permissions to modify user status.');
   }
 
-  all[idx] = { ...target, status, updatedAt: new Date().toISOString() };
-  saveMockUsers(all);
+  const body = reason ? { reason } : {};
+
+  let endpoint: string;
+  if (status === 'SUSPENDED') {
+    endpoint = ENDPOINTS.USERS.SUSPEND(userId);
+  } else if (status === 'BLOCKED') {
+    endpoint = ENDPOINTS.USERS.BLOCK(userId);
+  } else if (status === 'ACTIVE') {
+    endpoint = ENDPOINTS.USERS.REACTIVATE(userId);
+  } else {
+    endpoint = ENDPOINTS.USERS.UPDATE(userId);
+  }
+
+  const method = status === 'ACTIVE' ? 'patch' : 'patch';
+  const { data } = await apiClient[method]<UserDetailResponse>(endpoint, body);
+
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to update user status');
+  }
+
+  const updated = adaptUser(data.data);
 
   const actionLabel =
-    status === 'SUSPENDED' ? `Suspended user ${target.email}` :
-    status === 'BLOCKED'   ? `Blocked user ${target.email}` :
-    status === 'ACTIVE'    ? `Reactivated user ${target.email}` :
-                             `Set ${target.email} status to ${status}`;
+    status === 'SUSPENDED' ? `Suspended user ${updated.email}` :
+    status === 'BLOCKED'   ? `Blocked user ${updated.email}` :
+    status === 'ACTIVE'    ? `Reactivated user ${updated.email}` :
+                             `Set ${updated.email} status to ${status}`;
 
   logAudit(actor.name, actor.email, reason ? `${actionLabel} — Reason: ${reason}` : actionLabel);
-  return stripPassword(all[idx]);
+  return updated;
 }
 
 // ─── suspendUser ──────────────────────────────────────────────────────────────

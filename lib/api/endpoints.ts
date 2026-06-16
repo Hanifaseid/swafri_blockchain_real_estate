@@ -9,6 +9,7 @@ export const ENDPOINTS = {
     REGISTER:        '/auth/register',
     LOGOUT:          '/auth/logout',
     ME:              '/auth/me',
+    PROFILE:         '/auth/profile',
     REFRESH:         '/auth/refresh',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD:  '/auth/reset-password',
@@ -16,13 +17,13 @@ export const ENDPOINTS = {
 
   // ── Users ─────────────────────────────────────────────────────────────────
   USERS: {
-    LIST:       '/users',
-    DETAIL:     (id: string) => `/users/${id}`,
-    UPDATE:     (id: string) => `/users/${id}`,
-    SUSPEND:    (id: string) => `/users/${id}/suspend`,
-    BLOCK:      (id: string) => `/users/${id}/block`,
-    REACTIVATE: (id: string) => `/users/${id}/reactivate`,
-    ACTIVITY:   (id: string) => `/users/${id}/activity`,
+    LIST:       '/admin/users',
+    DETAIL:     (id: string) => `/admin/users/${id}`,
+    UPDATE:     (id: string) => `/admin/users/${id}`,
+    SUSPEND:    (id: string) => `/admin/users/${id}/suspend`,
+    BLOCK:      (id: string) => `/admin/users/${id}/block`,
+    REACTIVATE: (id: string) => `/admin/users/${id}/reactivate`,
+    ACTIVITY:   (id: string) => `/admin/users/${id}/activity`,
   },
 
   // ── KYC ───────────────────────────────────────────────────────────────────

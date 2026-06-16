@@ -1,22 +1,29 @@
 'use client';
 
 import { UserCheck } from 'lucide-react';
+import { SEED_CREDENTIALS } from '@/features/auth/utils/seed';
 
 // ─── QuickFillBar ─────────────────────────────────────────────────────────────
-// Developer quick-fill buttons — pre-fills email/password for seed accounts.
-// Extracted from the existing auth/page.tsx for reuse.
-// Only shown in development mode.
+// Developer quick-fill buttons — pre-fills email/password for dev accounts.
+// Only shown in development mode. Credentials are real API accounts.
 
 interface QuickFillBarProps {
   onFill: (email: string, password: string) => void;
 }
 
-const DEV_ACCOUNTS = [
-  { label: 'TENANT',     email: 'tenant@swafir.com',     password: 'Tenant@1234',   color: 'text-emerald-400' },
-  { label: 'OWNER',      email: 'owner@swafir.com',      password: 'Owner@1234',    color: 'text-purple-400'  },
-  { label: 'ADMIN',      email: 'admin@swafir.com',      password: 'Admin@1234',    color: 'text-blue-400'    },
-  { label: 'SUPERADMIN', email: 'superadmin@swafir.com', password: 'Admin@1234',    color: 'text-amber-400'   },
-] as const;
+const ROLE_COLORS: Record<string, string> = {
+  TENANT:         'text-emerald-400',
+  PROPERTY_OWNER: 'text-purple-400',
+  ADMIN:          'text-blue-400',
+  SUPER_ADMIN:    'text-amber-400',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  TENANT:         'TENANT',
+  PROPERTY_OWNER: 'OWNER',
+  ADMIN:          'ADMIN',
+  SUPER_ADMIN:    'SUPERADMIN',
+};
 
 export function QuickFillBar({ onFill }: QuickFillBarProps) {
   // Only render in development
@@ -30,14 +37,16 @@ export function QuickFillBar({ onFill }: QuickFillBarProps) {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {DEV_ACCOUNTS.map(({ label, email, password, color }) => (
+        {SEED_CREDENTIALS.map(({ role, email, password }) => (
           <button
-            key={label}
+            key={role}
             type="button"
             onClick={() => onFill(email, password)}
             className="bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all rounded-lg p-2.5 text-center cursor-pointer"
           >
-            <div className={`text-[10px] font-semibold font-mono mb-0.5 ${color}`}>{label}</div>
+            <div className={`text-[10px] font-semibold font-mono mb-0.5 ${ROLE_COLORS[role] ?? 'text-white/50'}`}>
+              {ROLE_LABELS[role] ?? role}
+            </div>
             <div className="text-[9px] text-white/30 truncate font-mono">{email}</div>
           </button>
         ))}

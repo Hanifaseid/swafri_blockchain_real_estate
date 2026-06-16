@@ -3,14 +3,12 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/auth.store';
 import { getCurrentUser } from '@/lib/auth/session';
-import { initSeedUsers } from '@/features/auth/utils/seed';
 
 // ─── AuthProvider ─────────────────────────────────────────────────────────────
 // Runs once on app mount:
-//   1. Seeds localStorage with default users if not already done
-//   2. Reads the active session from localStorage
-//   3. Hydrates the Zustand auth store
-//   4. Sets two cookies that proxy.ts reads for server-side route protection:
+//   1. Reads the active session from localStorage
+//   2. Hydrates the Zustand auth store
+//   3. Sets two cookies that proxy.ts reads for server-side route protection:
 //        vex_authed     = '1'         (is the user logged in?)
 //        vex_user_role  = 'TENANT'    (what is their role?)
 //
@@ -22,8 +20,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, clearUser, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // Init seed users on first load (no-op if already seeded)
-    initSeedUsers();
 
     const user = getCurrentUser();
 
