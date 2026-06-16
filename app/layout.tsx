@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { siteConfig } from '@/config/site.config';
 import { QueryProvider } from '@/components/providers/QueryProvider';
+import { AuthProvider } from '@/components/providers/AuthProvider';
+import { ToastProvider } from '@/components/providers/ToastProvider';
+
+// ─── Root Metadata ────────────────────────────────────────────────────────────
 
 export const metadata: Metadata = {
   title: siteConfig.title,
@@ -13,6 +17,13 @@ export const metadata: Metadata = {
     type: 'website',
   },
 };
+
+// ─── Root Layout ──────────────────────────────────────────────────────────────
+// Provider wrap order:
+//   QueryProvider  — TanStack Query (must be outermost, all hooks need it)
+//   AuthProvider   — reads session, hydrates Zustand store, sets cookies
+//   ToastProvider  — mounts react-hot-toast Toaster
+//   children       — all pages
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -32,9 +43,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning>
-        {/* QueryProvider must wrap everything — required by useQuery/useMutation hooks */}
         <QueryProvider>
-          {children}
+          <AuthProvider>
+            {children}
+            <ToastProvider />
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>
