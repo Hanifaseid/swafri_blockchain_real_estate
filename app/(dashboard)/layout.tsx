@@ -47,14 +47,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.replace('/login');
   };
 
-  // Resolve current page title from nav config
   const getPageTitle = (): string => {
     if (!currentUser) return '';
     const items = getNavItems(currentUser.role);
     const match = items.find(
-      (item) =>
-        pathname === item.href ||
-        (item.href !== '/dashboard' && pathname.startsWith(item.href.split('?')[0]))
+      (item) => {
+        const cleanHref = item.href.split('?')[0];
+        return pathname === cleanHref || (cleanHref !== '/dashboard' && pathname.startsWith(cleanHref + '/'));
+      }
     );
     return match?.label ?? 'Dashboard';
   };
