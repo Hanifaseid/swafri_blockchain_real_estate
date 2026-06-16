@@ -29,10 +29,10 @@ export default function PropertiesPage() {
       <div className="flex items-center gap-3 mb-8">
         <Building2 className="w-6 h-6 text-purple-400 shrink-0" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">
             {ROLE_LABELS[currentUser.role]}
           </p>
-          <h1 className="text-2xl font-light text-white tracking-tight">{content.title}</h1>
+          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">{content.title}</h1>
         </div>
       </div>
 
@@ -43,8 +43,8 @@ export default function PropertiesPage() {
         <div className="w-14 h-14 rounded-2xl bg-purple-950/40 border border-purple-900/40 flex items-center justify-center mx-auto mb-5">
           <Clock className="w-7 h-7 text-purple-400" />
         </div>
-        <p className="text-white/60 font-light mb-2">{content.desc}</p>
-        <p className="text-xs text-white/25 font-mono">Coming in: {content.phase}</p>
+        <p className="text-black/60 font-light mb-2">{content.desc}</p>
+        <p className="text-xs text-black/25 font-mono">Coming in: {content.phase}</p>
       </div>
     </div>
   );

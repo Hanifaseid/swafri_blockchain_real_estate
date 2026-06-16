@@ -41,7 +41,7 @@ export function DashboardTopbar({
       className={cn('flex items-center justify-between px-5 py-0', className)}
       style={{
         height: 'var(--topbar-height)',
-        background: 'var(--color-dash-sidebar)',
+        background: 'var(--color-dash-topbar)',
         borderBottom: '1px solid var(--color-dash-border)',
       }}
     >
@@ -50,13 +50,13 @@ export function DashboardTopbar({
         <button
           type="button"
           onClick={onMenuClick}
-          className="lg:hidden text-white/40 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/5"
+          className="lg:hidden text-black/40 hover:text-black transition-colors p-1.5 rounded-lg hover:bg-black/5"
           aria-label="Open sidebar"
         >
           <Menu size={18} />
         </button>
         {pageTitle && (
-          <h1 className="text-sm font-medium text-white/70 hidden sm:block">
+          <h1 className="text-sm font-medium text-black/70 hidden sm:block">
             {pageTitle}
           </h1>
         )}
@@ -68,7 +68,7 @@ export function DashboardTopbar({
         <button
           type="button"
           aria-label="Notifications"
-          className="relative text-white/40 hover:text-white transition-colors p-2 rounded-lg hover:bg-white/5"
+          className="relative text-black/50 hover:text-black transition-colors p-2 rounded-lg hover:bg-black/5"
         >
           <Bell size={16} />
           {/* Unread dot — hardcoded for now, wired to notification system later */}
@@ -80,16 +80,16 @@ export function DashboardTopbar({
           <button
             type="button"
             onClick={() => setShowUserMenu((v) => !v)}
-            className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-black/5 transition-colors"
             aria-expanded={showUserMenu}
             aria-haspopup="true"
           >
             <Avatar src={user.profileImage} name={user.name} size="sm" />
             <div className="hidden md:block text-left">
-              <p className="text-xs font-medium text-white leading-tight">
+              <p className="text-xs font-medium text-black leading-tight">
                 {user.name.split(' ')[0]}
               </p>
-              <p className={cn('text-[9px] font-mono uppercase tracking-wider leading-tight', roleColorMap[user.role])}>
+              <p className={cn('text-[9px] font-mono uppercase tracking-wider leading-tight text-green', roleColorMap[user.role])}>
                 {ROLE_LABELS[user.role]}
               </p>
             </div>
@@ -121,7 +121,7 @@ export function DashboardTopbar({
                 <a
                   href="/dashboard/profile"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/60 hover:text-white hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/60 hover:text-black hover:bg-black/5 transition-colors"
                 >
                   <User size={14} />
                   Profile

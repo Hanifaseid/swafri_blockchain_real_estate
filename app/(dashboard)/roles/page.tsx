@@ -11,7 +11,7 @@ export default function RolesPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <ShieldAlert className="w-12 h-12 text-red-400" />
-        <p className="text-white/60 font-light">Super Admin access required.</p>
+        <p className="text-black/60 font-light">Super Admin access required.</p>
       </div>
     );
   }
@@ -21,8 +21,8 @@ export default function RolesPage() {
       <div className="flex items-center gap-3 mb-8">
         <KeyRound className="w-6 h-6 text-amber-400" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">System</p>
-          <h1 className="text-2xl font-light text-white tracking-tight">Roles</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">System</p>
+          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Roles</h1>
         </div>
       </div>
 
@@ -32,7 +32,7 @@ export default function RolesPage() {
             <div className={`text-xs font-mono uppercase tracking-widest mb-1 role-${key.toLowerCase().replace('_', '-')}`}>
               {key}
             </div>
-            <div className="text-base font-semibold text-white">{label}</div>
+            <div className="text-base font-semibold text-black">{label}</div>
           </div>
         ))}
       </div>

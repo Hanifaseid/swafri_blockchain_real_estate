@@ -40,10 +40,10 @@ export default function InquiriesPage() {
       <div className="flex items-center gap-3 mb-8">
         <MessageSquare className="w-6 h-6 text-emerald-400 shrink-0" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">
             {ROLE_LABELS[currentUser.role]}
           </p>
-          <h1 className="text-2xl font-light text-white tracking-tight">{content.title}</h1>
+          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">{content.title}</h1>
         </div>
       </div>
 
@@ -52,10 +52,10 @@ export default function InquiriesPage() {
         style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}
       >
         <div className="w-14 h-14 rounded-2xl bg-emerald-950/40 border border-emerald-900/40 flex items-center justify-center mx-auto mb-5">
-          <Clock className="w-7 h-7 text-emerald-400" />
+          <Clock className="w-7 h-7 text-emerald-600" />
         </div>
-        <p className="text-white/60 font-light mb-2">{content.desc}</p>
-        <p className="text-xs text-white/25 font-mono">Coming in: Properties Feature</p>
+        <p className="text-black/60 font-light mb-2">{content.desc}</p>
+        <p className="text-xs text-black/25 font-mono">Coming in: Properties Feature</p>
       </div>
     </div>
   );

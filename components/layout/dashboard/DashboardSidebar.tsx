@@ -82,7 +82,7 @@ export function DashboardSidebar({
           className="flex items-center gap-2.5 select-none"
           aria-label={`${siteConfig.name} dashboard`}
         >
-          <div className="bg-blue-600 text-white w-9 h-9 rounded flex items-center justify-center font-black text-xl shadow">
+          <div className="bg-green-600 text-white w-9 h-9 rounded flex items-center justify-center font-black text-xl shadow">
             V
           </div>
           <span className="text-sm font-semibold text-white tracking-tight">

@@ -31,7 +31,7 @@ export default function AuditPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <ShieldAlert className="w-12 h-12 text-red-400" />
-        <p className="text-white/60 font-light">Admin access required.</p>
+        <p className="text-black/60 font-light">Admin access required.</p>
       </div>
     );
   }
@@ -49,10 +49,10 @@ export default function AuditPage() {
     <div className="p-6 md:p-8 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <History className="w-6 h-6 text-white/50 shrink-0" />
+          <History className="w-6 h-6 text-black/50 shrink-0" />
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Platform</p>
-            <h1 className="text-2xl font-light text-white tracking-tight">Audit Logs</h1>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Platform</p>
+            <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Audit Logs</h1>
           </div>
         </div>
         <SearchInput
@@ -60,7 +60,7 @@ export default function AuditPage() {
           onChange={setSearch}
           placeholder="Search logs…"
           className="sm:w-64"
-          inputClassName="bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-emerald-400"
+          inputClassName="bg-black/5 border-black/10 text-[#0f172a] placeholder:text-black/25 focus:border-emerald-400"
         />
       </div>
 
@@ -73,7 +73,7 @@ export default function AuditPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
                 {['User', 'Action', 'Time'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-white/35">
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-black/35">
                     {h}
                   </th>
                 ))}
@@ -82,7 +82,7 @@ export default function AuditPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="px-4 py-12 text-center text-white/30 text-sm font-light">
+                  <td colSpan={3} className="px-4 py-12 text-center text-black/30 text-sm font-light">
                     No audit logs found.
                   </td>
                 </tr>
@@ -90,15 +90,15 @@ export default function AuditPage() {
                 filtered.map((log) => (
                   <tr
                     key={log.id}
-                    className="border-b transition-colors hover:bg-white/3"
+                    className="border-b transition-colors hover:bg-black/3"
                     style={{ borderColor: 'var(--color-dash-border)' }}
                   >
                     <td className="px-4 py-3">
-                      <p className="text-sm text-white">{log.user}</p>
-                      <p className="text-[10px] text-white/35 font-mono">{log.email}</p>
+                      <p className="text-sm text-black">{log.user}</p>
+                      <p className="text-[10px] text-black/35 font-mono">{log.email}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-white/60">{log.action}</td>
-                    <td className="px-4 py-3 text-[10px] text-white/35 font-mono whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-black/60">{log.action}</td>
+                    <td className="px-4 py-3 text-[10px] text-black/35 font-mono blackspace-nowrap">
                       {new Date(log.timestamp).toLocaleString('en-GB', {
                         day: '2-digit', month: 'short', year: 'numeric',
                         hour: '2-digit', minute: '2-digit',
@@ -113,7 +113,7 @@ export default function AuditPage() {
       </div>
 
       {filtered.length > 0 && (
-        <p className="mt-3 text-xs text-white/25 font-mono">{filtered.length} entries</p>
+        <p className="mt-3 text-xs text-black/25 font-mono">{filtered.length} entries</p>
       )}
     </div>
   );

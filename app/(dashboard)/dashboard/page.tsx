@@ -39,10 +39,10 @@ export default function DashboardPage() {
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-xs font-mono uppercase tracking-widest text-white/40 mb-1">
+        <p className="text-xs font-mono uppercase tracking-widest text-black/40 mb-1">
           {ROLE_LABELS[role]} Dashboard
         </p>
-        <h1 className="text-2xl font-light text-white tracking-tight">
+        <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">
           Welcome back, {currentUser.name.split(' ')[0]}
         </h1>
       </div>
@@ -50,27 +50,27 @@ export default function DashboardPage() {
       {/* Status Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="dash-card p-4">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-white/35 mb-2">Role</div>
-          <div className="text-sm font-semibold text-white">{ROLE_LABELS[role]}</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-2">Role</div>
+          <div className="text-sm font-semibold text-[#0f172a]">{ROLE_LABELS[role]}</div>
         </div>
 
         <div className="dash-card p-4">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-white/35 mb-2">Account</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-2">Account</div>
           <div className={`text-sm font-semibold status-${currentUser.status.toLowerCase()}`}>
             {ACCOUNT_STATUS_LABELS[currentUser.status]}
           </div>
         </div>
 
         <div className="dash-card p-4">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-white/35 mb-2">KYC</div>
+          <div className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-2">KYC</div>
           <div className="text-sm font-semibold" style={{ color: getKycColor(currentUser.kycStatus) }}>
             {KYC_STATUS_LABELS[currentUser.kycStatus]}
           </div>
         </div>
 
         <div className="dash-card p-4">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-white/35 mb-2">Wallet</div>
-          <div className="text-sm font-semibold text-white/70">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-2">Wallet</div>
+          <div className="text-sm font-semibold text-black/70">
             {WALLET_STATUS_LABELS[currentUser.walletStatus]}
           </div>
         </div>
@@ -131,13 +131,13 @@ function QuickCard({ icon, title, desc, href }: { icon: React.ReactNode; title: 
   return (
     <a
       href={href}
-      className="dash-card p-5 hover:border-white/20 transition-all group block"
+      className="dash-card p-5 hover:border-black/20 transition-all group block"
     >
-      <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+      <div className="w-9 h-9 rounded-xl bg-black/5 border border-black/10 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
         {icon}
       </div>
-      <div className="text-sm font-semibold text-white mb-1">{title}</div>
-      <div className="text-xs text-white/45 leading-relaxed font-light">{desc}</div>
+      <div className="text-sm font-semibold text-[#0f172a] mb-1">{title}</div>
+      <div className="text-xs text-black/45 leading-relaxed font-light">{desc}</div>
     </a>
   );
 }

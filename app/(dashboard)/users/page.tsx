@@ -52,7 +52,7 @@ export default function UsersPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <ShieldAlert className="w-12 h-12 text-red-400" />
-        <p className="text-white/60 font-light">You do not have permission to view this page.</p>
+        <p className="text-black/60 font-light">You do not have permission to view this page.</p>
       </div>
     );
   }
@@ -64,8 +64,8 @@ export default function UsersPage() {
         <div className="flex items-center gap-3">
           <Users className="w-6 h-6 text-blue-400 shrink-0" />
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Platform</p>
-            <h1 className="text-2xl font-light text-white tracking-tight">User Management</h1>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Platform</p>
+            <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">User Management</h1>
           </div>
         </div>
 
@@ -73,7 +73,7 @@ export default function UsersPage() {
           <button
             type="button"
             onClick={() => setShowCreateAdmin(true)}
-            className="inline-flex items-center gap-2 bg-white text-black text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center gap-2 bg-[#0f172a] text-black text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
           >
             <Plus size={14} />
             Create Admin
@@ -88,13 +88,13 @@ export default function UsersPage() {
           onChange={setSearch}
           placeholder="Search by name or email…"
           className="sm:w-72"
-          inputClassName="bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-emerald-400"
+          inputClassName="bg-black/5 border-black/10 text-[#0f172a] placeholder:text-black/25 focus:border-emerald-400"
         />
 
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value as UserRole | 'ALL')}
-          className="h-9 rounded-lg border px-3 text-sm font-mono bg-white/5 border-white/10 text-white/70 focus:outline-none focus:border-emerald-400 transition-all"
+          className="h-9 rounded-lg border px-3 text-sm font-mono bg-black/5 border-black/10 text-black/70 focus:outline-none focus:border-emerald-400 transition-all"
           aria-label="Filter by role"
         >
           {ROLE_FILTER_OPTIONS.map((o) => (
@@ -107,7 +107,7 @@ export default function UsersPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as AccountStatus | 'ALL')}
-          className="h-9 rounded-lg border px-3 text-sm font-mono bg-white/5 border-white/10 text-white/70 focus:outline-none focus:border-emerald-400 transition-all"
+          className="h-9 rounded-lg border px-3 text-sm font-mono bg-black/5 border-black/10 text-black/70 focus:outline-none focus:border-emerald-400 transition-all"
           aria-label="Filter by status"
         >
           {STATUS_FILTER_OPTIONS.map((o) => (
@@ -135,7 +135,7 @@ export default function UsersPage() {
                   {['User', 'Role', 'Status', 'KYC', 'Joined', ''].map((h) => (
                     <th
                       key={h}
-                      className="px-4 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-white/35"
+                      className="px-4 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-black/35"
                     >
                       {h}
                     </th>
@@ -145,7 +145,7 @@ export default function UsersPage() {
               <tbody>
                 {users.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-white/30 text-sm font-light">
+                    <td colSpan={6} className="px-4 py-12 text-center text-black/30 text-sm font-light">
                       No users found.
                     </td>
                   </tr>
@@ -170,7 +170,7 @@ export default function UsersPage() {
 
       {/* User count */}
       {!isLoading && users.length > 0 && (
-        <p className="mt-3 text-xs text-white/25 font-mono">
+        <p className="mt-3 text-xs text-black/25 font-mono">
           {users.length} user{users.length !== 1 ? 's' : ''} found
         </p>
       )}
@@ -197,11 +197,11 @@ export default function UsersPage() {
             }}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-sm font-semibold text-white">Create Admin Account</h2>
+              <h2 className="text-sm font-semibold text-black">Create Admin Account</h2>
               <button
                 type="button"
                 onClick={() => setShowCreateAdmin(false)}
-                className="text-white/40 hover:text-white transition-colors"
+                className="text-black/40 hover:text-[#0f172a] transition-colors"
                 aria-label="Close"
               >
                 <X size={16} />

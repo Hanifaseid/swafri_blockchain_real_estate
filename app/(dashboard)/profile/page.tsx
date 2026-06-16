@@ -55,10 +55,10 @@ export default function ProfilePage() {
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <User className="w-6 h-6 text-white/50 shrink-0" />
+        <User className="w-6 h-6 text-black/50 shrink-0" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Account</p>
-          <h1 className="text-2xl font-light text-white tracking-tight">My Profile</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Account</p>
+          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">My Profile</h1>
         </div>
       </div>
 
@@ -68,8 +68,8 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4 mb-6">
             <Avatar name={currentUser.name} size="xl" />
             <div>
-              <p className="text-lg font-semibold text-white">{currentUser.name}</p>
-              <p className="text-sm text-white/40 font-mono">{currentUser.email}</p>
+              <p className="text-lg font-semibold text-black">{currentUser.name}</p>
+              <p className="text-sm text-black/40 font-mono">{currentUser.email}</p>
               <span className={cn(
                 'inline-block mt-1.5 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md',
                 currentUser.role === 'SUPER_ADMIN' && 'bg-amber-950/40 text-amber-400',
@@ -94,7 +94,7 @@ export default function ProfilePage() {
                 className="rounded-xl p-3 text-center"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-dash-border)' }}
               >
-                <p className="text-[9px] font-mono uppercase text-white/30 mb-1.5">{label}</p>
+                <p className="text-[9px] font-mono uppercase text-black/30 mb-1.5">{label}</p>
                 <span className={cn('text-[10px] font-mono font-semibold', badge.color)}>
                   {badge.label}
                 </span>
@@ -105,7 +105,7 @@ export default function ProfilePage() {
 
         {/* Edit form */}
         <div className="dash-card p-6">
-          <p className="text-xs font-mono uppercase tracking-widest text-white/35 mb-5">Edit Profile</p>
+          <p className="text-xs font-mono uppercase tracking-widest text-black/35 mb-5">Edit Profile</p>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <FormField label="Full Name" error={errors.name?.message} required>
@@ -145,7 +145,7 @@ export default function ProfilePage() {
             </FormField>
 
             <div className="flex items-center justify-between pt-2">
-              <p className="text-[10px] text-white/25 font-mono">
+              <p className="text-[10px] text-black/25 font-mono">
                 Role cannot be self-updated
               </p>
               <Button type="submit" disabled={!isDirty} size="md">

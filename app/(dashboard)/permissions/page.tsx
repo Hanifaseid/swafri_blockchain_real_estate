@@ -11,7 +11,7 @@ export default function PermissionsPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <ShieldAlert className="w-12 h-12 text-red-400" />
-        <p className="text-white/60 font-light">Super Admin access required.</p>
+        <p className="text-black/60 font-light">Super Admin access required.</p>
       </div>
     );
   }
@@ -21,8 +21,8 @@ export default function PermissionsPage() {
       <div className="flex items-center gap-3 mb-8">
         <Lock className="w-6 h-6 text-amber-400" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">System</p>
-          <h1 className="text-2xl font-light text-white tracking-tight">Permissions</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">System</p>
+          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Permissions</h1>
         </div>
       </div>
 
@@ -36,7 +36,7 @@ export default function PermissionsPage() {
               {perms.map((p) => (
                 <span
                   key={p}
-                  className="text-[10px] font-mono bg-white/5 border border-white/10 text-white/60 px-2.5 py-1 rounded-lg"
+                  className="text-[10px] font-mono bg-black/5 border border-black/10 text-black/60 px-2.5 py-1 rounded-lg"
                 >
                   {p}
                 </span>
