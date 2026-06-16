@@ -61,16 +61,7 @@ export default function AuditLogsTrail({ auditLogs }: AuditLogsTrailProps) {
     }
   };
 
-  const getMockMetadata = (log: AuditLog) => {
-    const category = getLogCategoryImpl(log.action);
-    return {
-      nodeId: `VEX-NODE-CH-0${Math.floor(1 + (parseInt(log.id) || 4) % 4)}`,
-      blockHeight: `#294,${Math.floor(100 + (parseInt(log.id) || 5) * 50)}`,
-      txHash: '0x' + Array.from({ length: 32 }, (_, i) => (i % 2 === 0 ? 'a' : '9')).join(''),
-      witnessKey: '0x8f3c7...c892b',
-      consensusStatus: 'VERIFIED_MUTABLE_DEED'
-    };
-  };
+
 
   return (
     <div className="space-y-6 text-left" id="audit-logs-trail-center">
@@ -129,7 +120,6 @@ export default function AuditLogsTrail({ auditLogs }: AuditLogsTrailProps) {
             </div>
           ) : (
             filteredLogs.map(log => {
-              const meta = getMockMetadata(log);
               const isExpanded = expandedLogId === log.id;
               const cat = getLogCategoryImpl(log.action);
               return (
@@ -164,28 +154,6 @@ export default function AuditLogsTrail({ auditLogs }: AuditLogsTrailProps) {
                     <span className="text-slate-900 font-medium">{log.action}</span>
                     <span className="text-[8px] text-slate-400 uppercase tracking-wide">ID: {log.id}</span>
                   </div>
-
-                  {/* Expanded block showing low-level metadata values */}
-                  {isExpanded && (
-                    <div className="mt-3 bg-slate-950 p-3.5 rounded-xl text-emerald-400 space-y-2 text-[9px] text-slate-350 border border-slate-800 animate-slide-up leading-relaxed">
-                      <div className="flex items-center gap-1.5 text-slate-400 uppercase font-bold text-[8px] border-b border-slate-805 border-slate-800 pb-1 font-mono">
-                        <Terminal className="w-3 h-3 animate-pulse text-indigo-400" />
-                        <span>Decentralized Consensus Ledger Node Details</span>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px] text-slate-300">
-                        <div>Anchored Node: <strong className="text-white block font-mono mt-0.5">{meta.nodeId}</strong></div>
-                        <div>Block Height: <strong className="text-white block font-mono mt-0.5">{meta.blockHeight}</strong></div>
-                        <div>Consensus Standard: <strong className="text-emerald-400 block font-mono mt-0.5">RAFT-SHIELD-X</strong></div>
-                        <div>Oracle Validator: <strong className="text-indigo-400 block font-mono mt-0.5">COSE-ED25519-OK</strong></div>
-                      </div>
-
-                      <div className="pt-2 text-slate-400 truncate border-t border-slate-900 leading-none">
-                        Transaction Hash Signature: <span className="text-emerald-500 font-bold font-mono text-[9px]">{meta.txHash}</span>
-                      </div>
-                    </div>
-                  )}
-
                 </div>
               );
             })
