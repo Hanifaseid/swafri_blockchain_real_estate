@@ -150,16 +150,31 @@ export async function reactivateUser(
     throw new Error('Insufficient permissions.');
   }
 
-  const { data } = await apiClient.post<UserDetailResponse>(
-    ENDPOINTS.ADMIN.USER_REACTIVATE(userId),
-    {}
-  );
-
-  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to reactivate user');
-
-  const updated = adaptUser(extractUser(data.data));
-  logAudit(actor.name, actor.email, `Reactivated user ${updated.email}`);
-  return updated;
+  // First try the dedicated reactivate endpoint (may fail for BLOCKED users)
+  try {
+    const { data } = await apiClient.post<UserDetailResponse>(
+      ENDPOINTS.ADMIN.USER_REACTIVATE(userId),
+      {}
+    );
+    if (!data.success) {
+      throw new Error((data as { message: string }).message || 'Failed to reactivate user');
+    }
+    const updated = adaptUser(extractUser(data.data));
+    logAudit(actor.name, actor.email, `Reactivated user ${updated.email}`);
+    return updated;
+  } catch (err) {
+    // Fallback: PATCH status to ACTIVE (covers BLOCKED users)
+    const { data } = await apiClient.patch<UserDetailResponse>(
+      ENDPOINTS.ADMIN.USER_STATUS(userId),
+      { accountStatus: 'active' }
+    );
+    if (!data.success) {
+      throw new Error((data as { message: string }).message || 'Failed to reactivate user via fallback');
+    }
+    const updated = adaptUser(extractUser(data.data));
+    logAudit(actor.name, actor.email, `Reactivated user ${updated.email} via fallback`);
+    return updated;
+  }
 }
 
 // ─── getAdmins ────────────────────────────────────────────────────────────────
@@ -227,11 +242,14 @@ export async function updateUserStatus(
   actor: UserAccount,
   reason?: string
 ): Promise<UserAccount> {
+  // Reactivate (unblock) user when requested ACTIVE status
+  if (status === 'ACTIVE') {
+    return reactivateUser(userId, actor);
+  }
   if (status === 'SUSPENDED') return suspendUser(userId, actor, reason);
   if (status === 'BLOCKED')   return blockUser(userId, actor, reason);
-  if (status === 'ACTIVE')    return reactivateUser(userId, actor);
 
-  // Fallback: PATCH /admin/users/:id/status for REJECTED, PENDING
+  // Fallback for other statuses (PENDING, REJECTED, EXPIRED, etc.)
   const { data } = await apiClient.patch<UserDetailResponse>(
     ENDPOINTS.ADMIN.USER_STATUS(userId),
     { accountStatus: status.toLowerCase(), ...(reason ? { reason } : {}) }
