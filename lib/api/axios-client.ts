@@ -2,15 +2,13 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { getSession, clearSession } from '@/lib/auth/session';
 
 // ─── Axios Instance ───────────────────────────────────────────────────────────
-// Base client for all real API calls.
-// While running with mock services, this client is not used directly —
-// mock service functions return Promise<T> without hitting the network.
-// When the backend is ready, replace mock service calls with apiClient calls.
+// Base URL is injected from NEXT_PUBLIC_API_URL in .env.local
+// Confirmed: https://real-estate-management-backend-grl9.onrender.com/api/v1
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 15_000,
+  timeout: 20_000, // 20s — Render free tier can be slow on cold start
 });
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
@@ -28,19 +26,17 @@ apiClient.interceptors.request.use(
 );
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────
-// Handles global error cases:
-//   401 → session expired, clear session, redirect to login
-//   403 → forbidden, the user does not have permission
+// 401 → token expired, clear session and redirect to login.
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (typeof window !== 'undefined') {
-      if (error.response?.status === 401) {
-        // Token expired or invalid — clear session and send to login
-        clearSession();
-        window.location.href = '/login';
-      }
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      clearSession();
+      // Clear auth cookies so proxy.ts also unblocks
+      document.cookie = 'vex_authed=; path=/; max-age=0';
+      document.cookie = 'vex_user_role=; path=/; max-age=0';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
