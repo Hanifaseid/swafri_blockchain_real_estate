@@ -6,7 +6,6 @@ import { SESSION_KEYS } from '@/lib/auth/session';
 import { adaptUser, type ApiUser, ROLE_TO_API } from '@/lib/api/adapters';
 
 // ─── Audit helper ─────────────────────────────────────────────────────────────
-// Audit logs are stored locally since the API has no audit endpoint.
 
 function logAudit(actorName: string, actorEmail: string, action: string) {
   if (typeof window === 'undefined') return;
@@ -22,65 +21,149 @@ function logAudit(actorName: string, actorEmail: string, action: string) {
   localStorage.setItem(SESSION_KEYS.AUDIT_LOGS, JSON.stringify(logs));
 }
 
-// ─── API response shapes ──────────────────────────────────────────────────────
+// ─── Response shapes ──────────────────────────────────────────────────────────
+
+interface UserListData {
+  users?: ApiUser[];
+  data?: ApiUser[];
+  items?: ApiUser[];
+  results?: ApiUser[];
+}
 
 interface UsersListResponse {
   success: boolean;
   message: string;
-  data: ApiUser[] | { users: ApiUser[] } | { data: ApiUser[] };
+  data: ApiUser[] | UserListData;
 }
 
 interface UserDetailResponse {
   success: boolean;
   message: string;
-  data: ApiUser;
+  data: ApiUser | { user: ApiUser };
+}
+
+// ─── Helper: extract user array from any response shape ──────────────────────
+
+function extractUsers(responseData: ApiUser[] | UserListData): ApiUser[] {
+  if (Array.isArray(responseData)) return responseData;
+  const d = responseData as UserListData;
+  return d.users ?? d.data ?? d.items ?? d.results ?? [];
+}
+
+// ─── Helper: extract single user from response ────────────────────────────────
+
+function extractUser(responseData: ApiUser | { user: ApiUser }): ApiUser {
+  if ('user' in (responseData as { user: ApiUser })) {
+    return (responseData as { user: ApiUser }).user;
+  }
+  return responseData as ApiUser;
 }
 
 // ─── getUsers ─────────────────────────────────────────────────────────────────
+// GET /admin/users — query params: role, accountStatus, page, limit
 
 export async function getUsers(filters?: UserFilters): Promise<UserAccount[]> {
   try {
-    const params: Record<string, string> = {};
-    if (filters?.role)      params.role      = ROLE_TO_API[filters.role as UserRole] ?? filters.role;
-    if (filters?.status)    params.status    = filters.status.toLowerCase();
-    if (filters?.kycStatus) params.kycStatus = filters.kycStatus.toLowerCase();
-    if (filters?.search)    params.search    = filters.search;
+    const params: Record<string, string | number> = { page: 1, limit: 50 };
 
-    const { data } = await apiClient.get<UsersListResponse>(ENDPOINTS.USERS.LIST, { params });
+    if (filters?.role)   params.role          = ROLE_TO_API[filters.role as UserRole] ?? filters.role;
+    if (filters?.status) params.accountStatus = filters.status.toLowerCase();
+    if (filters?.search) params.search        = filters.search;
 
+    const { data } = await apiClient.get<UsersListResponse>(ENDPOINTS.ADMIN.USERS, { params });
     if (!data.success) return [];
-
-    // Handle different possible response shapes
-    let apiUsers: ApiUser[];
-    if (Array.isArray(data.data)) {
-      apiUsers = data.data;
-    } else if (data.data && 'users' in data.data && Array.isArray((data.data as { users: ApiUser[] }).users)) {
-      apiUsers = (data.data as { users: ApiUser[] }).users;
-    } else if (data.data && 'data' in data.data && Array.isArray((data.data as { data: ApiUser[] }).data)) {
-      apiUsers = (data.data as { data: ApiUser[] }).data;
-    } else {
-      return [];
-    }
-
-    return apiUsers.map(adaptUser);
+    return extractUsers(data.data).map(adaptUser);
   } catch {
     return [];
   }
 }
 
 // ─── getUserById ──────────────────────────────────────────────────────────────
+// GET /admin/users/:id
 
 export async function getUserById(id: string): Promise<UserAccount | null> {
   try {
-    const { data } = await apiClient.get<UserDetailResponse>(ENDPOINTS.USERS.DETAIL(id));
+    const { data } = await apiClient.get<UserDetailResponse>(ENDPOINTS.ADMIN.USER_DETAIL(id));
     if (!data.success) return null;
-    return adaptUser(data.data);
+    return adaptUser(extractUser(data.data));
   } catch {
     return null;
   }
 }
 
+// ─── suspendUser ──────────────────────────────────────────────────────────────
+// POST /admin/users/:id/suspend
+
+export async function suspendUser(
+  userId: string,
+  actor: UserAccount,
+  reason?: string
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'ADMIN') {
+    throw new Error('Insufficient permissions.');
+  }
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.USER_SUSPEND(userId),
+    reason ? { reason } : {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to suspend user');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Suspended user ${updated.email}${reason ? ` — ${reason}` : ''}`);
+  return updated;
+}
+
+// ─── blockUser ────────────────────────────────────────────────────────────────
+// POST /admin/users/:id/block
+
+export async function blockUser(
+  userId: string,
+  actor: UserAccount,
+  reason?: string
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'ADMIN') {
+    throw new Error('Insufficient permissions.');
+  }
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.USER_BLOCK(userId),
+    reason ? { reason } : {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to block user');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Blocked user ${updated.email}${reason ? ` — ${reason}` : ''}`);
+  return updated;
+}
+
+// ─── reactivateUser ───────────────────────────────────────────────────────────
+// POST /admin/users/:id/reactivate
+
+export async function reactivateUser(
+  userId: string,
+  actor: UserAccount
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'ADMIN') {
+    throw new Error('Insufficient permissions.');
+  }
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.USER_REACTIVATE(userId),
+    {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to reactivate user');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Reactivated user ${updated.email}`);
+  return updated;
+}
+
 // ─── updateUserStatus ─────────────────────────────────────────────────────────
+// PATCH /admin/users/:id/status  — generic status update
 
 export async function updateUserStatus(
   userId: string,
@@ -88,68 +171,19 @@ export async function updateUserStatus(
   actor: UserAccount,
   reason?: string
 ): Promise<UserAccount> {
-  // Guards
-  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'ADMIN') {
-    throw new Error('Insufficient permissions to modify user status.');
-  }
+  if (status === 'SUSPENDED') return suspendUser(userId, actor, reason);
+  if (status === 'BLOCKED')   return blockUser(userId, actor, reason);
+  if (status === 'ACTIVE')    return reactivateUser(userId, actor);
 
-  const body = reason ? { reason } : {};
+  // Fallback: PATCH /admin/users/:id/status for REJECTED, PENDING
+  const { data } = await apiClient.patch<UserDetailResponse>(
+    ENDPOINTS.ADMIN.USER_STATUS(userId),
+    { accountStatus: status.toLowerCase(), ...(reason ? { reason } : {}) }
+  );
 
-  let endpoint: string;
-  if (status === 'SUSPENDED') {
-    endpoint = ENDPOINTS.USERS.SUSPEND(userId);
-  } else if (status === 'BLOCKED') {
-    endpoint = ENDPOINTS.USERS.BLOCK(userId);
-  } else if (status === 'ACTIVE') {
-    endpoint = ENDPOINTS.USERS.REACTIVATE(userId);
-  } else {
-    endpoint = ENDPOINTS.USERS.UPDATE(userId);
-  }
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to update status');
 
-  const method = status === 'ACTIVE' ? 'patch' : 'patch';
-  const { data } = await apiClient[method]<UserDetailResponse>(endpoint, body);
-
-  if (!data.success) {
-    throw new Error(data.message || 'Failed to update user status');
-  }
-
-  const updated = adaptUser(data.data);
-
-  const actionLabel =
-    status === 'SUSPENDED' ? `Suspended user ${updated.email}` :
-    status === 'BLOCKED'   ? `Blocked user ${updated.email}` :
-    status === 'ACTIVE'    ? `Reactivated user ${updated.email}` :
-                             `Set ${updated.email} status to ${status}`;
-
-  logAudit(actor.name, actor.email, reason ? `${actionLabel} — Reason: ${reason}` : actionLabel);
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Set ${updated.email} status to ${status}`);
   return updated;
-}
-
-// ─── suspendUser ──────────────────────────────────────────────────────────────
-
-export async function suspendUser(
-  userId: string,
-  actor: UserAccount,
-  reason?: string
-): Promise<UserAccount> {
-  return updateUserStatus(userId, 'SUSPENDED', actor, reason);
-}
-
-// ─── blockUser ────────────────────────────────────────────────────────────────
-
-export async function blockUser(
-  userId: string,
-  actor: UserAccount,
-  reason?: string
-): Promise<UserAccount> {
-  return updateUserStatus(userId, 'BLOCKED', actor, reason);
-}
-
-// ─── reactivateUser ───────────────────────────────────────────────────────────
-
-export async function reactivateUser(
-  userId: string,
-  actor: UserAccount
-): Promise<UserAccount> {
-  return updateUserStatus(userId, 'ACTIVE', actor);
 }
