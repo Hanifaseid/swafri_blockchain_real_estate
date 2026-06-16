@@ -1,9 +1,12 @@
-// Root page — redirects to the (public) route group home page.
-// The actual landing page lives at app/(public)/page.tsx.
-// This redirect is instant so users never see a blank page.
+'use client';
 
-import { redirect } from 'next/navigation';
+// Root page — renders the LandingPage directly.
+// app/(public)/page.tsx is removed to avoid route conflict.
+// The (public) layout (Navbar + Footer) is applied via app/(public)/layout.tsx
+// only when navigating through that route group — landing page handles its own nav.
 
-export default function RootPage() {
-  redirect('/');
+import LandingPage from '@/components/LandingPage';
+
+export default function Home() {
+  return <LandingPage />;
 }
