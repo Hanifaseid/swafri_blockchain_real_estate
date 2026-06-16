@@ -1,32 +1,47 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+} from 'lucide-react';
 
 import { registerSchema, type RegisterFormValues } from '@/features/auth/schemas/auth.schema';
 import { useRegister } from '@/features/auth/queries/auth.queries';
 import { AuthServiceError } from '@/features/auth/services/auth.service';
+
+// Shared UI components
+import { Button } from '@/components/ui/Button';
+import { FormField } from '@/components/ui/FormField';
+import {
+  darkInputWithIconClass,
+  darkInputPasswordClass,
+  darkInputErrorClass,
+} from '@/components/forms/styles';
 import { RoleSelector } from './RoleSelector';
-import { darkInputClass } from './LoginForm';
 import { cn } from '@/lib/utils';
 
 // ─── RegisterForm ─────────────────────────────────────────────────────────────
-// Full registration form.
-// Only TENANT and PROPERTY_OWNER roles available per PRD.
-// Uses useRegister mutation from Step 5.
 
 export function RegisterForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const { mutate: registerUser, isPending, error, isSuccess } = useRegister();
+  const { mutate: registerFn, isPending, error, isSuccess } = useRegister();
 
   const {
     register,
     handleSubmit,
+    control,
     watch,
-    setValue,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -41,16 +56,7 @@ export function RegisterForm() {
   });
 
   const selectedRole = watch('role');
-
-  const onSubmit = (data: RegisterFormValues) => {
-    registerUser({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      role: data.role,
-      phone: data.phone || undefined,
-    });
-  };
+  const onSubmit = (data: RegisterFormValues) => registerFn(data);
 
   const serverError =
     error instanceof AuthServiceError
@@ -60,181 +66,211 @@ export function RegisterForm() {
       : null;
 
   return (
-    <div className="p-6 md:p-8 space-y-5">
+    <div className="space-y-5 p-6 md:p-8">
       {/* Heading */}
       <div className="text-center space-y-1">
         <h2 className="text-xl font-light text-white tracking-tight uppercase">
-          Create Your Account
+          Create Account
         </h2>
-        <p className="text-xs text-white/40 font-mono">
-          Join the blockchain real estate platform
+        <p className="text-xs text-white/35 font-mono">
+          Join the Swafir marketplace
         </p>
       </div>
 
       {/* Server alerts */}
       {serverError && (
-        <div className="flex items-start gap-2.5 bg-rose-500/10 border border-rose-500/20 p-3.5 rounded-xl text-rose-300 text-xs">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+        <div
+          role="alert"
+          className="flex items-start gap-2.5 bg-rose-500/10 border border-rose-500/20 p-3.5 rounded-xl text-rose-300 text-xs"
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
           <span>{serverError}</span>
         </div>
       )}
       {isSuccess && (
         <div className="flex items-start gap-2.5 bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-xl text-emerald-300 text-xs">
-          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>Registration successful. Taking you to your dashboard…</span>
+          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+          <span>Account created. Redirecting to dashboard…</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        {/* Role Selector */}
-        <RoleSelector
-          value={selectedRole}
-          onChange={(r) => setValue('role', r, { shouldValidate: true })}
-          error={errors.role?.message}
+        {/* Role selector — Controller wraps it for react-hook-form */}
+        <Controller
+          name="role"
+          control={control}
+          render={({ field }) => (
+            <RoleSelector
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.role?.message}
+            />
+          )}
         />
 
-        {/* Property owner notice */}
-        {selectedRole === 'PROPERTY_OWNER' && (
-          <div className="flex items-start gap-2 p-3 bg-emerald-950/20 border border-emerald-900/40 rounded-xl text-[11px] text-emerald-400 font-mono leading-relaxed">
-            <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>
-              Your account starts as <strong>PENDING</strong>. You can create draft listings immediately,
-              but an admin must approve your account before properties go live.
-            </span>
-          </div>
-        )}
-
-        {/* Full Name */}
-        <div className="space-y-1.5">
-          <label className="block text-[10px] uppercase font-mono text-white/40 tracking-widest">
-            Full Name <span className="text-rose-400">*</span>
-          </label>
+        {/* Full name */}
+        <FormField
+          label="Full Name"
+          variant="dark"
+          error={errors.name?.message}
+          required
+        >
           <div className="relative">
-            <User className="absolute left-3.5 top-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+            <User
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
+              aria-hidden="true"
+            />
             <input
               type="text"
-              placeholder="e.g. Jane Smith"
+              placeholder="e.g. John Doe"
               autoComplete="name"
               {...register('name')}
-              className={darkInputClass}
+              className={cn(
+                darkInputWithIconClass,
+                errors.name && darkInputErrorClass
+              )}
             />
           </div>
-          {errors.name && (
-            <p role="alert" className="text-xs text-rose-400 font-mono">{errors.name.message}</p>
-          )}
-        </div>
+        </FormField>
 
         {/* Email */}
-        <div className="space-y-1.5">
-          <label className="block text-[10px] uppercase font-mono text-white/40 tracking-widest">
-            Email Address <span className="text-rose-400">*</span>
-          </label>
+        <FormField
+          label="Email Address"
+          variant="dark"
+          error={errors.email?.message}
+          required
+        >
           <div className="relative">
-            <Mail className="absolute left-3.5 top-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+            <Mail
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
+              aria-hidden="true"
+            />
             <input
               type="email"
-              placeholder="e.g. jane@email.com"
+              placeholder="e.g. john@example.com"
               autoComplete="email"
               {...register('email')}
-              className={darkInputClass}
+              className={cn(
+                darkInputWithIconClass,
+                errors.email && darkInputErrorClass
+              )}
             />
           </div>
-          {errors.email && (
-            <p role="alert" className="text-xs text-rose-400 font-mono">{errors.email.message}</p>
-          )}
-        </div>
+        </FormField>
 
-        {/* Phone (optional) */}
-        <div className="space-y-1.5">
-          <label className="block text-[10px] uppercase font-mono text-white/40 tracking-widest">
-            Phone Number <span className="text-white/25">(optional)</span>
-          </label>
+        {/* Phone — optional */}
+        <FormField
+          label="Phone Number"
+          variant="dark"
+          error={errors.phone?.message}
+          hint="Optional — used for account recovery"
+        >
           <div className="relative">
-            <Phone className="absolute left-3.5 top-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+            <Phone
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
+              aria-hidden="true"
+            />
             <input
               type="tel"
-              placeholder="e.g. +1 555 000 1234"
+              placeholder="e.g. +1 (555) 000-1234"
               autoComplete="tel"
               {...register('phone')}
-              className={darkInputClass}
+              className={cn(
+                darkInputWithIconClass,
+                errors.phone && darkInputErrorClass
+              )}
             />
           </div>
-          {errors.phone && (
-            <p role="alert" className="text-xs text-rose-400 font-mono">{errors.phone.message}</p>
-          )}
-        </div>
+        </FormField>
 
         {/* Password */}
-        <div className="space-y-1.5">
-          <label className="block text-[10px] uppercase font-mono text-white/40 tracking-widest">
-            Password <span className="text-rose-400">*</span>
-          </label>
+        <FormField
+          label="Password"
+          variant="dark"
+          error={errors.password?.message}
+          hint="Min 8 characters, one uppercase, one number"
+          required
+        >
           <div className="relative">
-            <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+            <Lock
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
+              aria-hidden="true"
+            />
             <input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Min 8 chars, 1 uppercase, 1 number"
+              placeholder="••••••••"
               autoComplete="new-password"
               {...register('password')}
-              className={cn(darkInputClass, 'pr-11')}
+              className={cn(
+                darkInputPasswordClass,
+                errors.password && darkInputErrorClass
+              )}
             />
             <button
               type="button"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3.5 top-3.5 text-white/30 hover:text-white/60 transition-colors cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.password && (
-            <p role="alert" className="text-xs text-rose-400 font-mono">{errors.password.message}</p>
-          )}
-        </div>
+        </FormField>
 
-        {/* Confirm Password */}
-        <div className="space-y-1.5">
-          <label className="block text-[10px] uppercase font-mono text-white/40 tracking-widest">
-            Confirm Password <span className="text-rose-400">*</span>
-          </label>
+        {/* Confirm password */}
+        <FormField
+          label="Confirm Password"
+          variant="dark"
+          error={errors.confirmPassword?.message}
+          required
+        >
           <div className="relative">
-            <Lock className="absolute left-3.5 top-3.5 w-4 h-4 text-white/30 pointer-events-none" />
+            <Lock
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none"
+              aria-hidden="true"
+            />
             <input
               type={showConfirm ? 'text' : 'password'}
               placeholder="••••••••"
               autoComplete="new-password"
               {...register('confirmPassword')}
-              className={cn(darkInputClass, 'pr-11')}
+              className={cn(
+                darkInputPasswordClass,
+                errors.confirmPassword && darkInputErrorClass
+              )}
             />
             <button
               type="button"
               aria-label={showConfirm ? 'Hide password' : 'Show password'}
               onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3.5 top-3.5 text-white/30 hover:text-white/60 transition-colors cursor-pointer"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors cursor-pointer"
             >
               {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-          {errors.confirmPassword && (
-            <p role="alert" className="text-xs text-rose-400 font-mono">{errors.confirmPassword.message}</p>
-          )}
-        </div>
+        </FormField>
+
+        {/* Property owner notice */}
+        {selectedRole === 'PROPERTY_OWNER' && (
+          <div className="flex items-start gap-2.5 bg-emerald-950/30 border border-emerald-900/40 p-3.5 rounded-xl">
+            <Sparkles className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" aria-hidden="true" />
+            <p className="text-[11px] text-emerald-400 font-mono leading-relaxed">
+              Your account starts as <strong>PENDING</strong> and requires admin review before
+              you can publish verified properties.
+            </p>
+          </div>
+        )}
 
         {/* Submit */}
-        <button
+        <Button
           type="submit"
           disabled={isPending || isSuccess}
-          className="w-full bg-white hover:bg-neutral-100 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest font-mono uppercase transition-all shadow-xl disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+          loading={isPending}
+          className="w-full bg-white hover:bg-neutral-100 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest font-mono uppercase shadow-xl"
+          size="lg"
         >
-          {isPending ? (
-            <>
-              <span className="w-4 h-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
-              Creating account…
-            </>
-          ) : (
-            'Create Account'
-          )}
-        </button>
+          {isSuccess ? 'Redirecting…' : 'Create Account'}
+        </Button>
       </form>
     </div>
   );
