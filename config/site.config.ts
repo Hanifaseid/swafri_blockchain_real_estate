@@ -2,7 +2,9 @@
 // Static metadata used by Next.js layout, SEO, and public pages.
 
 export const siteConfig = {
-  title: "VEX Real Estate",
+  name: 'Swafir Real Estate',
+  shortName: 'Swafir',
+  title: "Swafir — Blockchain Real Estate Marketplace",
   description:
     'A blockchain-powered real estate marketplace for property owners, tenants, and investors. Verify ownership, complete KYC, and transact with confidence.',
 
