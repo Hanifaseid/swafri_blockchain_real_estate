@@ -10,14 +10,16 @@ export interface NavItem {
   icon: string;
   // Optional: hide this item if user does not have this permission
   requiredPermission?: PermissionKey;
-  // Optional: mark as coming soon / disabled
   disabled?: boolean;
   badge?: string;
 }
 
-// ─── Dashboard Nav Config ─────────────────────────────────────────────────────
-// Defines the sidebar navigation items for each role.
-// The DashboardSidebar component reads this to render the correct nav.
+// ─── Route Note ───────────────────────────────────────────────────────────────
+// The route group (dashboard) does NOT add a URL segment.
+// app/(dashboard)/users/page.tsx  → serves /users
+// app/(dashboard)/audit/page.tsx  → serves /audit
+// The "dashboard" overview is at app/(dashboard)/dashboard/page.tsx → /dashboard
+// All other pages are at their folder name directly: /users, /roles, etc.
 
 export const dashboardNav: Record<UserRole, NavItem[]> = {
   // ── Super Admin ────────────────────────────────────────────────────────
@@ -29,35 +31,35 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'All Users',
-      href: '/dashboard/users',
+      href: '/users',
       icon: 'Users',
       requiredPermission: 'users:view',
     },
     {
       label: 'Manage Admins',
-      href: '/dashboard/users?role=ADMIN',
+      href: '/users?role=ADMIN',
       icon: 'ShieldCheck',
       requiredPermission: 'users:create_admin',
     },
     {
       label: 'Roles',
-      href: '/dashboard/roles',
+      href: '/roles',
       icon: 'KeyRound',
     },
     {
       label: 'Permissions',
-      href: '/dashboard/permissions',
+      href: '/permissions',
       icon: 'Lock',
     },
     {
       label: 'Audit Logs',
-      href: '/dashboard/audit',
+      href: '/audit',
       icon: 'History',
       requiredPermission: 'audit:view',
     },
     {
       label: 'Settings',
-      href: '/dashboard/settings',
+      href: '/settings',
       icon: 'Settings',
       requiredPermission: 'settings:view',
     },
@@ -72,31 +74,31 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'Users',
-      href: '/dashboard/users',
+      href: '/users',
       icon: 'Users',
       requiredPermission: 'users:view',
     },
     {
       label: 'KYC Review',
-      href: '/dashboard/kyc',
+      href: '/kyc',
       icon: 'BadgeCheck',
       requiredPermission: 'kyc:view_all',
     },
     {
       label: 'Properties',
-      href: '/dashboard/properties',
+      href: '/properties',
       icon: 'Building2',
       requiredPermission: 'properties:view_all',
     },
     {
       label: 'Audit Logs',
-      href: '/dashboard/audit',
+      href: '/audit',
       icon: 'History',
       requiredPermission: 'audit:view',
     },
     {
       label: 'Settings',
-      href: '/dashboard/settings',
+      href: '/settings',
       icon: 'Settings',
       requiredPermission: 'settings:view',
     },
@@ -111,25 +113,25 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'My Properties',
-      href: '/dashboard/properties',
+      href: '/properties',
       icon: 'Building2',
       requiredPermission: 'properties:create',
     },
     {
       label: 'Inquiries',
-      href: '/dashboard/inquiries',
+      href: '/inquiries',
       icon: 'MessageSquare',
       requiredPermission: 'inquiries:view_own',
     },
     {
       label: 'KYC & Wallet',
-      href: '/dashboard/kyc',
+      href: '/kyc',
       icon: 'BadgeCheck',
       requiredPermission: 'kyc:view_own',
     },
     {
       label: 'Profile',
-      href: '/dashboard/profile',
+      href: '/profile',
       icon: 'User',
     },
   ],
@@ -143,37 +145,36 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'Browse Properties',
-      href: '/dashboard/properties',
+      href: '/properties',
       icon: 'Compass',
       requiredPermission: 'properties:view_published',
     },
     {
       label: 'Saved',
-      href: '/dashboard/saved',
+      href: '/saved',
       icon: 'Heart',
     },
     {
       label: 'My Inquiries',
-      href: '/dashboard/inquiries',
+      href: '/inquiries',
       icon: 'MessageSquare',
       requiredPermission: 'inquiries:view_own',
     },
     {
       label: 'KYC & Wallet',
-      href: '/dashboard/kyc',
+      href: '/kyc',
       icon: 'BadgeCheck',
       requiredPermission: 'kyc:view_own',
     },
     {
       label: 'Profile',
-      href: '/dashboard/profile',
+      href: '/profile',
       icon: 'User',
     },
   ],
 };
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
-// Returns nav items for a role, filtering out disabled ones.
 
 export function getNavItems(role: UserRole): NavItem[] {
   return dashboardNav[role] ?? [];
