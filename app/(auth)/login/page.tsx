@@ -73,7 +73,7 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="py-5 border-t border-white/5 bg-black/20 text-center text-[10px] font-mono text-white/25">
+      <footer className="py-5 border-t border-white/5 bg-black/20 text-center text-[10px] font-mono text-white/65">
         © {new Date().getFullYear()} Swafir Real Estate Platform. All rights reserved.
       </footer>
     </div>
