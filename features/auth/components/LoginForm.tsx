@@ -142,7 +142,7 @@ export function LoginForm() {
           </span>
           <button
             type="button"
-            className="text-[10px] font-mono text-white/35 hover:text-white/60 transition-colors cursor-pointer"
+            className="text-[10px] font-mono text-white/75 hover:text-white/60 transition-colors cursor-pointer"
             onClick={() => alert('Password reset coming in Phase 3.')}
           >
             Forgot password?
