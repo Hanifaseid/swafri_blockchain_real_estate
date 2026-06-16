@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { siteConfig } from '@/config/site.config';
-
-// Providers added in Step 9 (QueryProvider + AuthProvider)
+import { QueryProvider } from '@/components/providers/QueryProvider';
 
 export const metadata: Metadata = {
   title: siteConfig.title,
@@ -19,14 +18,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* Google Fonts — Inter for UI, preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
-        {/* Preload hero image so LandingPage renders instantly */}
         <link
           rel="preload"
           as="image"
@@ -35,8 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body suppressHydrationWarning>
-        {/* Providers wrap added in Step 9 */}
-        {children}
+        {/* QueryProvider must wrap everything — required by useQuery/useMutation hooks */}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
