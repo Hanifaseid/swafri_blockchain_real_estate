@@ -27,7 +27,7 @@
 
   /* Dashboard surfaces — slightly lighter than pure black */
   --color-dash-bg:       #0d0d0d;
-  --color-dash-sidebar:  #111111;
+  --color-dash-sidebar:  #0f172a;
   --color-dash-card:     #161616;
   --color-dash-border:   rgba(255,255,255,0.08);
   --color-dash-hover:    rgba(255,255,255,0.05);
