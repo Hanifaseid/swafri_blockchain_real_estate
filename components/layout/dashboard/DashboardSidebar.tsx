@@ -121,10 +121,32 @@ export function DashboardSidebar({
       >
         <ul className="flex flex-col gap-0.5" role="list">
           {navItems.map((item) => {
+            // Split item href into path and query parts
+            const questionIdx = item.href.indexOf('?');
+            const itemPath  = questionIdx >= 0 ? item.href.slice(0, questionIdx) : item.href;
+            const itemQuery = questionIdx >= 0 ? item.href.slice(questionIdx + 1) : '';
+
+            // Next.js usePathname() never includes query string
+            // We need to detect if ANY sibling nav item "owns" the current query
+            // to prevent a no-query item (e.g. /users) from being active when
+            // the user is on /users?role=ADMIN (owned by another item)
+            const currentPathOwnsQuery = navItems.some((other) => {
+              if (other.href === item.href) return false;
+              const otherQ = other.href.includes('?') ? other.href.slice(other.href.indexOf('?') + 1) : '';
+              if (!otherQ) return false;
+              const otherPath = other.href.slice(0, other.href.indexOf('?'));
+              // Only relevant when we're currently on that same path
+              return otherPath === pathname;
+            });
+
             const isActive =
-              pathname === item.href ||
-              (item.href !== '/dashboard' && pathname.startsWith(item.href + '/')) ||
-              (item.href.includes('?') && pathname === item.href.split('?')[0]);
+              // Item has a query string — active only when URL also carries that exact query
+              // (Since usePathname strips query, we check sessionStorage/URL for the query part)
+              (!!itemQuery && pathname === itemPath && typeof window !== 'undefined' && window.location.search === `?${itemQuery}`) ||
+              // Item has NO query — exact path match, BUT not if another sibling item owns this path with a query
+              (!itemQuery && pathname === itemPath && !currentPathOwnsQuery) ||
+              // Item has NO query — sub-path match for nested routes like /users/123
+              (!itemQuery && item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
 
             return (
               <li key={item.href + item.label}>
