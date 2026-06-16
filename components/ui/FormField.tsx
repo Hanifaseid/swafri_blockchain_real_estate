@@ -60,7 +60,7 @@ export function FormField({
         htmlFor={id}
         className={cn(
           isDark
-            ? 'text-[10px] uppercase tracking-widest font-mono text-white/40'
+            ? 'text-[10px] uppercase tracking-widest font-mono text-white'
             : 'text-sm font-medium text-gray-700'
         )}
       >
