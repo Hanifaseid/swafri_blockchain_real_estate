@@ -61,7 +61,7 @@ export function FormField({
         className={cn(
           isDark
             ? 'text-[10px] uppercase tracking-widest font-mono text-white'
-            : 'text-sm font-medium text-gray-700'
+            : 'text-sm font-medium text-white-700'
         )}
       >
         {label}

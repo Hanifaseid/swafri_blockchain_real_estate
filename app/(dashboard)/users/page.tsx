@@ -73,7 +73,7 @@ export default function UsersPage() {
           <button
             type="button"
             onClick={() => setShowCreateAdmin(true)}
-            className="inline-flex items-center gap-2 bg-[#0f172a] text-black text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
+            className="inline-flex items-center gap-2 bg-white  text-black text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
           >
             <Plus size={14} />
             Create Admin
@@ -197,7 +197,7 @@ export default function UsersPage() {
             }}
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-sm font-semibold text-black">Create Admin Account</h2>
+              <h2 className="text-sm font-semibold text-white">Create Admin Account</h2>
               <button
                 type="button"
                 onClick={() => setShowCreateAdmin(false)}
