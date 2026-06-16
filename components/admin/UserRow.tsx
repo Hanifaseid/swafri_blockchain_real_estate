@@ -22,6 +22,7 @@ interface UserRowProps {
   onBlock: (userId: string) => void;
   onReactivate: (userId: string) => void;
   canModify: boolean;
+  hideBlock?: boolean;
 }
 
 export function UserRow({
@@ -31,6 +32,7 @@ export function UserRow({
   onBlock,
   onReactivate,
   canModify,
+  hideBlock = false,
 }: UserRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -70,7 +72,7 @@ export function UserRow({
 
       {/* KYC status */}
       <td className="px-4 py-3">
-        <span className={cn('text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-md', kycBadge.color)}>
+        <span className={cn('text-[10px]  font-mono uppercase tracking-wider px-2 py-1 rounded-md', kycBadge.color)}>
           {kycBadge.label}
         </span>
       </td>
@@ -127,7 +129,7 @@ export function UserRow({
                         Suspend
                       </button>
                     )}
-                    {user.status !== 'BLOCKED' && (
+                    {!hideBlock && user.status !== 'BLOCKED' && (
                       <button
                         type="button"
                         onClick={() => { onBlock(user.id); setMenuOpen(false); }}

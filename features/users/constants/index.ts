@@ -4,21 +4,21 @@ import type { UserRole } from '@/features/roles/types/role.types';
 // ─── Account Status ───────────────────────────────────────────────────────────
 
 export const ACCOUNT_STATUS_BADGE: Record<AccountStatus, { label: string; color: string }> = {
-  ACTIVE:    { label: 'Active',    color: 'bg-emerald-950/40 text-emerald-400' },
-  PENDING:   { label: 'Pending',   color: 'bg-amber-950/40 text-amber-400' },
-  SUSPENDED: { label: 'Suspended', color: 'bg-orange-950/40 text-orange-400' },
-  BLOCKED:   { label: 'Blocked',   color: 'bg-red-950/40 text-red-400' },
-  REJECTED:  { label: 'Rejected',  color: 'bg-red-950/40 text-red-500' },
+  ACTIVE:    { label: 'Active',    color: 'bg-emerald-950/10 text-emerald-600' },
+  PENDING:   { label: 'Pending',   color: 'bg-amber-950/10 text-amber-600' },
+  SUSPENDED: { label: 'Suspended', color: 'bg-orange-950/10 text-orange-600' },
+  BLOCKED:   { label: 'Blocked',   color: 'bg-red-950/10 text-red-600' },
+  REJECTED:  { label: 'Rejected',  color: 'bg-red-950/10 text-red-700' },
 };
 
 // ─── KYC Status ───────────────────────────────────────────────────────────────
 
 export const KYC_STATUS_BADGE: Record<KycStatus, { label: string; color: string }> = {
-  NOT_STARTED:  { label: 'Not Started',  color: 'bg-white/5 text-white/35' },
-  PENDING:      { label: 'Pending',      color: 'bg-amber-950/40 text-amber-400' },
-  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-950/40 text-blue-400' },
-  APPROVED:     { label: 'Approved',     color: 'bg-emerald-950/40 text-emerald-400' },
-  REJECTED:     { label: 'Rejected',     color: 'bg-red-950/40 text-red-400' },
+  NOT_STARTED:  { label: 'Not Started',  color: 'bg-white/5 text-black/60' },
+  PENDING:      { label: 'Pending',      color: 'bg-amber-950/40 text-amber-900' },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-950/40 text-blue' },
+  APPROVED:     { label: 'Approved',     color: 'bg-emerald-950/40 text-emerald' },
+  REJECTED:     { label: 'Rejected',     color: 'bg-red-950/40 text-red' },
   EXPIRED:      { label: 'Expired',      color: 'bg-gray-900/60 text-gray-500' },
 };
 
@@ -34,10 +34,10 @@ export const WALLET_STATUS_BADGE: Record<WalletStatus, { label: string; color: s
 // ─── Role Badge ───────────────────────────────────────────────────────────────
 
 export const ROLE_BADGE: Record<UserRole, { label: string; color: string }> = {
-  SUPER_ADMIN:    { label: 'Super Admin',    color: 'bg-amber-950/40 text-amber-400' },
-  ADMIN:          { label: 'Admin',          color: 'bg-blue-950/40 text-blue-400' },
-  PROPERTY_OWNER: { label: 'Property Owner', color: 'bg-purple-950/40 text-purple-400' },
-  TENANT:         { label: 'Tenant',         color: 'bg-emerald-950/40 text-emerald-400' },
+  SUPER_ADMIN:    { label: 'Super Admin',    color: 'bg-emerald-950/10 text-black' },
+  ADMIN:          { label: 'Admin',          color: 'bg-emerald-950/10 text-black' },
+  PROPERTY_OWNER: { label: 'Property Owner', color: 'bg-emerald-950/10 text-black' },
+  TENANT:         { label: 'Tenant',         color: 'bg-emerald-950/10 text-black' },
 };
 
 // ─── Filter Options ───────────────────────────────────────────────────────────

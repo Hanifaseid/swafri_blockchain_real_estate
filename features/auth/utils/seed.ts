@@ -1,17 +1,24 @@
-// ─── Dev Seed Credentials ─────────────────────────────────────────────────────
-// These credentials are used by the dev QuickFillBar component only.
-// They must match accounts that exist on the real backend.
-// This file no longer manages any localStorage database.
-//
-// Quick-fill credentials (for dev use against real API):
-//   superadmin@swafir.com / Admin@1234
-//   admin@swafir.com      / Admin@1234
-//   owner@swafir.com      / Owner@1234
-//   tenant@swafir.com     / Tenant@1234
+// ─── Dev Credentials ──────────────────────────────────────────────────────────
+// Real API credentials for the dev QuickFillBar.
+// Only rendered in development mode (process.env.NODE_ENV !== 'production').
 
 export const SEED_CREDENTIALS = [
-  { role: 'SUPER_ADMIN',    email: 'superadmin@swafir.com', password: 'Admin@1234'  },
-  { role: 'ADMIN',          email: 'admin@swafir.com',      password: 'Admin@1234'  },
-  { role: 'PROPERTY_OWNER', email: 'owner@swafir.com',      password: 'Owner@1234'  },
-  { role: 'TENANT',         email: 'tenant@swafir.com',     password: 'Tenant@1234' },
+  {
+    role:     'SUPER_ADMIN',
+    label:    'SUPERADMIN',
+    email:    'superadmin@realestate.dev',
+    password: 'SuperAdmin1!',
+  },
+  {
+    role:     'TENANT',
+    label:    'TENANT',
+    email:    'test@swafir.com',
+    password: 'Test@1234',
+  },
+  {
+    role:     'PROPERTY_OWNER',
+    label:    'OWNER',
+    email:    'owner.test2@swafir.com',
+    password: 'Owner@1234',
+  },
 ] as const;

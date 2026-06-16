@@ -5,9 +5,12 @@ import type { UserFilters } from '@/features/users/types/user.types';
 import {
   getUsers,
   getUserById,
+  getAdmins,
   suspendUser,
   blockUser,
   reactivateUser,
+  suspendAdmin,
+  reactivateAdmin,
 } from '@/features/users/services/users.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { queryKeys } from '@/lib/query/query-keys';
@@ -18,6 +21,15 @@ export function useUsers(filters?: UserFilters) {
   return useQuery({
     queryKey: queryKeys.users.list(filters ?? {}),
     queryFn: () => getUsers(filters),
+  });
+}
+
+// ─── useAdmins ────────────────────────────────────────────────────────────────
+
+export function useAdmins() {
+  return useQuery({
+    queryKey: ['admins', 'list'],
+    queryFn: getAdmins,
   });
 }
 
@@ -83,6 +95,44 @@ export function useReactivateUser() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.users.all() });
       toast.success('User reactivated.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── useSuspendAdmin ──────────────────────────────────────────────────────────
+
+export function useSuspendAdmin() {
+  const qc = useQueryClient();
+  const actor = useAuthStore((s) => s.currentUser);
+
+  return useMutation({
+    mutationFn: ({ adminId, reason }: { adminId: string; reason?: string }) => {
+      if (!actor) throw new Error('Not authenticated');
+      return suspendAdmin(adminId, actor, reason);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admins'] });
+      toast.success('Admin suspended.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── useReactivateAdmin ───────────────────────────────────────────────────────
+
+export function useReactivateAdmin() {
+  const qc = useQueryClient();
+  const actor = useAuthStore((s) => s.currentUser);
+
+  return useMutation({
+    mutationFn: (adminId: string) => {
+      if (!actor) throw new Error('Not authenticated');
+      return reactivateAdmin(adminId, actor);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admins'] });
+      toast.success('Admin reactivated.');
     },
     onError: (err: Error) => toast.error(err.message),
   });

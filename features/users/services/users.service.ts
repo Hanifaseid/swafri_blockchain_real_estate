@@ -162,7 +162,63 @@ export async function reactivateUser(
   return updated;
 }
 
-// ─── updateUserStatus ─────────────────────────────────────────────────────────
+// ─── getAdmins ────────────────────────────────────────────────────────────────
+// GET /admin/admins — super_admin only
+
+export async function getAdmins(): Promise<UserAccount[]> {
+  try {
+    const { data } = await apiClient.get<UsersListResponse>(ENDPOINTS.ADMIN.ADMINS, {
+      params: { page: 1, limit: 50 },
+    });
+    if (!data.success) return [];
+    return extractUsers(data.data).map(adaptUser);
+  } catch {
+    return [];
+  }
+}
+
+// ─── suspendAdmin ─────────────────────────────────────────────────────────────
+// POST /admin/admins/:id/suspend — super_admin only
+
+export async function suspendAdmin(
+  adminId: string,
+  actor: UserAccount,
+  reason?: string
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN') throw new Error('Only Super Admin can suspend admins.');
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.ADMIN_SUSPEND(adminId),
+    reason ? { reason } : {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to suspend admin');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Suspended admin ${updated.email}`);
+  return updated;
+}
+
+// ─── reactivateAdmin ──────────────────────────────────────────────────────────
+// POST /admin/admins/:id/reactivate — super_admin only
+
+export async function reactivateAdmin(
+  adminId: string,
+  actor: UserAccount
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN') throw new Error('Only Super Admin can reactivate admins.');
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.ADMIN_REACTIVATE(adminId),
+    {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to reactivate admin');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Reactivated admin ${updated.email}`);
+  return updated;
+}
 // PATCH /admin/users/:id/status  — generic status update
 
 export async function updateUserStatus(

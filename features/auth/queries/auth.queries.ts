@@ -107,7 +107,7 @@ export function useLogout() {
 
 // ─── useCreateAdmin ───────────────────────────────────────────────────────────
 // SUPER_ADMIN only — creates a new ADMIN account.
-// Invalidates the users list cache so the table refreshes.
+// Invalidates both the users list and the admins list cache.
 
 export function useCreateAdmin() {
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -120,8 +120,9 @@ export function useCreateAdmin() {
     },
 
     onSuccess: () => {
-      // Refresh the users list in the admin table
+      // Refresh both the users list and the admins list
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
+      queryClient.invalidateQueries({ queryKey: ['admins'] });
     },
   });
 }

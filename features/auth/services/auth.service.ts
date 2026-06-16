@@ -202,9 +202,9 @@ export async function createAdmin(
     const { data } = await apiClient.post<{
       success: boolean;
       message: string;
-      data: { user: import('@/lib/api/adapters').ApiUser };
+      data: import('@/lib/api/adapters').ApiUser;   // flat user, no .user wrapper
     }>(
-      ENDPOINTS.ADMIN.ADMINS,          // POST /admin/admins
+      ENDPOINTS.ADMIN.ADMINS,
       {
         name:     payload.name,
         email:    payload.email,
@@ -216,7 +216,7 @@ export async function createAdmin(
       throw new AuthServiceError(mapApiError(data.message));
     }
 
-    const newAdmin = adaptUser(data.data.user);
+    const newAdmin = adaptUser(data.data);  // data.data is the user directly
     logAudit(createdBy, `Super admin created new admin: ${newAdmin.email}`);
     return newAdmin;
 
