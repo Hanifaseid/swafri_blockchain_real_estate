@@ -40,6 +40,9 @@ export const protectedRoutes: RoutePermission[] = [
   // Inquiries — owners and tenants
   { path: '/inquiries', allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'PROPERTY_OWNER', 'TENANT'] },
 
+  // Offers — owners and tenants
+  { path: '/offers', allowedRoles: ['SUPER_ADMIN', 'ADMIN', 'PROPERTY_OWNER', 'TENANT'] },
+
   // Saved — tenant only
   { path: '/saved', allowedRoles: ['TENANT'] },
 ];

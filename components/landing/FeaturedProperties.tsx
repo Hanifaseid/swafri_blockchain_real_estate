@@ -45,15 +45,23 @@ export default function FeaturedProperties({ properties, onBuyTokens }: Featured
           <FadeIn key={prop.id} delay={i * 120} duration={600}>
             <div className="liquid-glass border border-white/15 rounded-2xl overflow-hidden group shadow-xl flex flex-col">
               {/* Image */}
-              <div className="relative h-56 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={prop.image}
-                  alt={prop.name}
-                  loading="lazy"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="relative h-56 overflow-hidden bg-gray-900">
+                {prop.image ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={prop.image}
+                      alt={prop.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-500">
+                    No image
+                  </div>
+                )}
                 <div className="absolute top-3 left-3 bg-black/70 backdrop-blur text-[10px] font-mono font-bold text-emerald-400 px-2.5 py-1 rounded-lg border border-emerald-900/40 uppercase">
                   {prop.type}
                 </div>

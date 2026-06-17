@@ -160,6 +160,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'inquiries:view_own',
     },
     {
+      label: 'Offers',
+      href: '/offers',
+      icon: 'ArrowRightLeft',
+    },
+    {
       label: 'Transactions',
       href: '/transactions',
       icon: 'CreditCard',
@@ -211,6 +216,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       href: '/inquiries',
       icon: 'MessageSquare',
       requiredPermission: 'inquiries:view_own',
+    },
+    {
+      label: 'My Offers',
+      href: '/offers',
+      icon: 'ArrowRightLeft',
     },
     {
       label: 'KYC & Wallet',

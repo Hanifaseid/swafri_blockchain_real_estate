@@ -7,14 +7,6 @@ import { cn } from '@/lib/utils';
 
 /**
  * Modal — accessible dialog built on Radix Dialog.
- * - Focus trapped inside when open.
- * - Closable via Escape key, backdrop click, or close button.
- * - Animated overlay + panel (CSS transitions, no framer-motion dep).
- *
- * Usage:
- *   <Modal open={open} onOpenChange={setOpen} title="Confirm Action">
- *     <p>Are you sure?</p>
- *   </Modal>
  */
 
 interface ModalProps {
@@ -23,7 +15,6 @@ interface ModalProps {
   title: string;
   description?: string;
   children: React.ReactNode;
-  /** Max width class — defaults to max-w-md */
   maxWidth?: string;
   className?: string;
 }
@@ -41,13 +32,15 @@ export function Modal({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         {/* Overlay */}
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Overlay
+          className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+        />
 
         {/* Panel */}
         <Dialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2',
-            'rounded-xl border border-gray-200 bg-white p-6 shadow-xl',
+            'rounded-xl border border-gray-200 bg-white text-gray-900 p-6 shadow-xl',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
             'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -63,12 +56,14 @@ export function Modal({
               <Dialog.Title className="text-base font-semibold text-gray-900">
                 {title}
               </Dialog.Title>
+
               {description && (
-                <Dialog.Description className="mt-1 text-sm text-gray-500">
+                <Dialog.Description className="mt-1 text-sm text-gray-600">
                   {description}
                 </Dialog.Description>
               )}
             </div>
+
             <Dialog.Close
               aria-label="Close"
               className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
@@ -77,7 +72,10 @@ export function Modal({
             </Dialog.Close>
           </div>
 
-          {children}
+          {/* Body wrapper ensures text visibility consistency */}
+          <div className="text-gray-900">
+            {children}
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bath, Bed, MapPin, Maximize2, Star, Image as ImageIcon } from 'lucide-react';
+import { Bath, Bed, MapPin, Maximize2, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { PropertySummary } from './types';
@@ -45,7 +45,7 @@ export function ListingCard({
         )}
       >
         {/* Thumbnail */}
-        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200">
           {listing.image ? (
             <Image
               src={listing.image}
@@ -55,8 +55,8 @@ export function ListingCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-              <ImageIcon size={20} />
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-xs text-gray-500">
+              No img
             </div>
           )}
         </div>
@@ -95,8 +95,8 @@ export function ListingCard({
             priority={priority}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-            <ImageIcon size={40} />
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400">
+            <span>No image</span>
           </div>
         )}
 

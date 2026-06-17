@@ -15,6 +15,7 @@ import {
   Compass,
   Heart,
   MessageSquare,
+  ArrowRightLeft,
   User,
   LogOut,
   X,
@@ -43,6 +44,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Compass,
   Heart,
   MessageSquare,
+  ArrowRightLeft,
   User,
 };
 
