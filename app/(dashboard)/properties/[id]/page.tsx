@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Upload, CheckCircle2, XCircle, Clock, AlertCircle,
   Loader2, Building2, MapPin, Bed, Bath, Maximize2, Calendar,
-  Image as ImageIcon, FileText, BarChart2, ShieldCheck, Trash2, Star,
+  Image as ImageIcon, FileText, BarChart2, ShieldCheck, Trash2, Star, Send,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import {
@@ -15,6 +15,7 @@ import {
   useListingAnalytics, useListingTitle,
   useMintTitle, useDisputeTitle, useClearTitleDispute, useRevokeTitle,
 } from '@/features/listings/queries/listing.queries';
+import { useSendInquiry } from '@/features/inquiries/queries/inquiry.queries';
 import type { TransitionAction, RejectionReason } from '@/features/listings/types/listing.types';
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
@@ -50,6 +51,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const { mutate: doDisputeTitle, isPending: disputing } = useDisputeTitle(id);
   const { mutate: doClearDispute } = useClearTitleDispute(id);
   const { mutate: doRevokeTitle } = useRevokeTitle(id);
+  const { mutate: doSendInquiry, isPending: sendingInquiry } = useSendInquiry();
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef   = useRef<HTMLInputElement>(null);
@@ -59,6 +61,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [titleAction, setTitleAction]           = useState<'dispute' | 'clear' | 'revoke' | null>(null);
   const [titleReason, setTitleReason]           = useState('');
   const [uploadingDocs, setUploadingDocs]       = useState(false);
+  const [showInquiryForm, setShowInquiryForm]   = useState(false);
+  const [inquiryMsg, setInquiryMsg]             = useState('');
+  const [inquiryType, setInquiryType]           = useState<'rent' | 'buy' | 'general'>('general');
 
   if (!currentUser) return null;
   const role    = currentUser.role;
@@ -177,6 +182,40 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap gap-1.5 mt-2">{listing.amenities.map((a) => <span key={a} className="text-[10px] font-mono bg-gray-100 text-black/50 px-2 py-0.5 rounded">{a}</span>)}</div>
         )}
       </div>
+
+      {/* Inquiry form for tenants */}
+      {role === 'TENANT' && listing.status === 'published' && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Send an Inquiry</p>
+            <button type="button" onClick={() => setShowInquiryForm((v) => !v)}
+              className="text-xs text-emerald-500 hover:text-emerald-600 font-medium">
+              {showInquiryForm ? 'Cancel' : '+ Ask a question'}
+            </button>
+          </div>
+          {showInquiryForm && (
+            <div className="space-y-3">
+              <select value={inquiryType} onChange={(e) => setInquiryType(e.target.value as 'rent' | 'buy' | 'general')}
+                className="h-9 w-full rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
+                <option value="general">General Question</option>
+                {listing.listingType === 'rent' && <option value="rent">Interested in Renting</option>}
+                {listing.listingType === 'sale' && <option value="buy">Interested in Buying</option>}
+              </select>
+              <textarea value={inquiryMsg} onChange={(e) => setInquiryMsg(e.target.value)} rows={4}
+                placeholder="Is this property still available? I'd like to schedule a viewing…"
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400 resize-none" />
+              <button type="button" disabled={sendingInquiry || !inquiryMsg.trim()}
+                onClick={() => doSendInquiry({ listingId: id, message: inquiryMsg.trim(), inquiryType }, {
+                  onSuccess: () => { setInquiryMsg(''); setShowInquiryForm(false); },
+                })}
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors w-full justify-center">
+                {sendingInquiry ? <Loader2 size={13} className="animate-spin" /> : null}
+                Send Inquiry
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Photos section */}
       {(isOwner || isAdmin) && (
