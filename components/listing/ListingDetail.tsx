@@ -26,6 +26,7 @@ interface ListingProp {
   id: string;
   title?: string;
   description?: string;
+  listingType?: 'sale' | 'rent';
   price?: number;
   monthlyRent?: number;
   currency?: string;
@@ -194,44 +195,46 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
           />
 
 
-          <div className="bg-white p-4 rounded-2xl border shadow-sm">
+          {listing.listingType === 'sale' && (
+            <div className="bg-white p-4 rounded-2xl border shadow-sm">
 
-            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3">
 
-              <div>
-                <p className="text-xs text-gray-500">
-                  Make an offer
-                </p>
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Make an offer
+                  </p>
 
-                <p className="font-semibold">
-                  Instant offer request
-                </p>
+                  <p className="font-semibold">
+                    Instant offer request
+                  </p>
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!currentUser) {
+                      toast.error('Please sign in to submit an offer.');
+                      return;
+                    }
+                    setShowOfferModal(true);
+                  }}
+                  className="bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm"
+                >
+                  Offer Now
+                </button>
+
+
               </div>
 
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (!currentUser) {
-                    toast.error('Please sign in to submit an offer.');
-                    return;
-                  }
-                  setShowOfferModal(true);
-                }}
-                className="bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm"
-              >
-                Offer Now
-              </button>
-
+              <p className="text-sm text-gray-600">
+                Submit an offer to the owner directly from this page.
+              </p>
 
             </div>
-
-
-            <p className="text-sm text-gray-600">
-              Submit an offer to the owner directly from this page.
-            </p>
-
-          </div>
+          )}
 
 
           <div className="bg-white p-4 rounded-2xl border shadow-sm text-sm text-gray-600">

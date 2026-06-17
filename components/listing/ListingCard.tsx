@@ -45,14 +45,20 @@ export function ListingCard({
         )}
       >
         {/* Thumbnail */}
-        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg">
-          <Image
-            src={listing.image}
-            alt={listing.title}
-            fill
-            sizes="96px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+          {listing.image ? (
+            <Image
+              src={listing.image}
+              alt={listing.title}
+              fill
+              sizes="96px"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-xs text-gray-500">
+              No img
+            </div>
+          )}
         </div>
         {/* Info */}
         <div className="flex min-w-0 flex-col justify-between py-0.5">
@@ -79,14 +85,20 @@ export function ListingCard({
     >
       {/* Image */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-        <Image
-          src={listing.image}
-          alt={listing.title}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          priority={priority}
-        />
+        {listing.image ? (
+          <Image
+            src={listing.image}
+            alt={listing.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            priority={priority}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400">
+            <span>No image</span>
+          </div>
+        )}
 
         {/* Badges overlay — top left */}
         <div className="absolute left-3 top-3 flex gap-1.5">

@@ -38,7 +38,14 @@ function normalizeArray<T>(data: ApiResp<T[]> | ApiPaginatedResp<T>): T[] {
 }
 
 export async function submitOffer(input: CreateOfferInput): Promise<Offer> {
-  const { data } = await apiClient.post<ApiResp<Offer>>(ENDPOINTS.OFFERS.SUBMIT, input);
+  // Backend expects 'amount', not 'offerPrice'
+  const payload = {
+    listingId: input.listingId,
+    amount: input.offerPrice,
+    currency: input.currency,
+    message: input.message,
+  };
+  const { data } = await apiClient.post<ApiResp<Offer>>(ENDPOINTS.OFFERS.SUBMIT, payload);
   if (!data.success) throw new Error(data.message);
   return data.data;
 }
