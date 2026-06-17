@@ -18,12 +18,22 @@ interface ApiPaginatedResp<T> {
   limit?: number;
 }
 
+function isArrayPayload<T>(payload: T[] | { items: T[] } | undefined): payload is T[] {
+  return Array.isArray(payload);
+}
+
 function normalizeArray<T>(data: ApiResp<T[]> | ApiPaginatedResp<T>): T[] {
-  if (Array.isArray((data as ApiResp<T[]>).data)) return (data as ApiResp<T[]>).data;
-  if (Array.isArray((data as ApiPaginatedResp<T>).data)) return (data as ApiPaginatedResp<T>).data;
-  if (Array.isArray((data as ApiPaginatedResp<T>).items)) return (data as ApiPaginatedResp<T>).items as T[];
-  const nested = (data as ApiPaginatedResp<T>).data as any;
-  if (nested?.items && Array.isArray(nested.items)) return nested.items as T[];
+  if (isArrayPayload(data.data)) return data.data;
+
+  if ('items' in data && Array.isArray(data.items)) {
+    return data.items;
+  }
+
+  const nested = data.data;
+  if (nested && typeof nested === 'object' && Array.isArray((nested as { items?: unknown }).items)) {
+    return (nested as { items: T[] }).items;
+  }
+
   return [];
 }
 

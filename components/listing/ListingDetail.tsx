@@ -9,6 +9,7 @@ import { SESSION_KEYS, getCurrentUser } from "@/lib/auth/session";
 import { apiClient } from "@/lib/api/axios-client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
 import Link from "next/link";
+import toast from "react-hot-toast";
 import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
 import { Modal } from "@/components/ui/Modal";
 import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
@@ -45,6 +46,7 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
   const { mutate: submitOffer, isPending: creatingOffer } =
     useSubmitOffer();
+  const currentUser = getCurrentUser();
 
   const [showOfferModal, setShowOfferModal] = React.useState(false);
   const [offerAmount, setOfferAmount] = React.useState<number>(
@@ -209,7 +211,13 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
               <button
                 type="button"
-                onClick={() => setShowOfferModal(true)}
+                onClick={() => {
+                  if (!currentUser) {
+                    toast.error('Please sign in to submit an offer.');
+                    return;
+                  }
+                  setShowOfferModal(true);
+                }}
                 className="bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm"
               >
                 Offer Now
@@ -233,20 +241,15 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
             </h4>
 
 
-            <p className="text-xs break-words">
-
+            <p className="text-xs wrap-break-word">
               {listing.blockchainHash ??
                 "No on-chain proof available for this listing."}
-
             </p>
 
-
             {listing.certificateId && (
-
               <p className="mt-2 text-xs text-emerald-600">
                 Certificate: {listing.certificateId}
               </p>
-
             )}
 
           </div>
@@ -266,48 +269,60 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
       >
 
         <form
-          onSubmit={(e)=>{
+          onSubmit={(e) => {
             e.preventDefault();
 
-            submitOffer({
-              listingId: listing.id,
-              offerPrice: offerAmount,
-              currency:"USD",
-              message: offerMessage.trim() || undefined,
-            });
+            if (!currentUser) {
+              toast.error('Please sign in to submit an offer.');
+              return;
+            }
 
-            setShowOfferModal(false);
+            if (offerAmount <= 0 || Number.isNaN(offerAmount)) {
+              toast.error('Enter a valid offer amount.');
+              return;
+            }
+
+            submitOffer(
+              {
+                listingId: listing.id,
+                offerPrice: offerAmount,
+                currency: listing.currency ?? 'USD',
+                message: offerMessage.trim() || undefined,
+              },
+              {
+                onSuccess: () => {
+                  setShowOfferModal(false);
+                  setOfferMessage('');
+                  setOfferAmount(listing.price ?? listing.monthlyRent ?? 0);
+                },
+              }
+            );
           }}
-
           className="space-y-4"
         >
 
           <input
             type="number"
+            min={1}
             value={offerAmount}
-            onChange={(e)=>setOfferAmount(Number(e.target.value))}
+            onChange={(e) => setOfferAmount(Number(e.target.value))}
             className="w-full border rounded-xl p-3"
           />
-
 
           <textarea
             value={offerMessage}
-            onChange={(e)=>setOfferMessage(e.target.value)}
+            onChange={(e) => setOfferMessage(e.target.value)}
             className="w-full border rounded-xl p-3"
+            placeholder="Add a message to the owner (optional)"
           />
 
-
           <button
-            disabled={creatingOffer}
-            className="w-full bg-emerald-600 text-white rounded-xl py-3"
+            type="submit"
+            disabled={creatingOffer || offerAmount <= 0 || Number.isNaN(offerAmount)}
+            className="w-full bg-emerald-600 text-white rounded-xl py-3 disabled:bg-gray-200 disabled:text-gray-400"
           >
-
-            {creatingOffer
-              ? "Submitting offer..."
-              : "Send Offer"}
-
+            {creatingOffer ? 'Submitting offer...' : 'Send Offer'}
           </button>
-
 
         </form>
 
@@ -322,24 +337,16 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
 function VerificationBadge({
   blockchainHash,
-}:{
-  blockchainHash?:string;
-}){
-
+  certificateId,
+}: {
+  blockchainHash?: string;
+  certificateId?: string;
+}) {
   return blockchainHash ? (
-
-    <span className="text-xs text-emerald-600">
-      Verified
-    </span>
-
-  ):(
-
-    <span className="text-xs text-gray-500">
-      Unverified
-    </span>
-
+    <span className="text-xs text-emerald-600">Verified</span>
+  ) : (
+    <span className="text-xs text-gray-500">Unverified</span>
   );
-
 }
 
 

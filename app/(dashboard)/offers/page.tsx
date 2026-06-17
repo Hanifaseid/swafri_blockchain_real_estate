@@ -103,6 +103,7 @@ function OwnerOffersView() {
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
   const { data: receivedOffers = [], isLoading: loadingReceived } = useReceivedOffers();
   const { data: sentOffers = [], isLoading: loadingSent } = useMyOffers();
+  const cancelOfferMutation = useCancelOffer();
 
   const items = activeTab === 'received' ? receivedOffers : sentOffers;
   const isLoading = activeTab === 'received' ? loadingReceived : loadingSent;
@@ -138,7 +139,7 @@ function OwnerOffersView() {
         <div className="space-y-4">
           {activeTab === 'received'
             ? items.map((offer) => <ReceivedOfferCard key={offer.id} offer={offer} />)
-            : items.map((offer) => <SentOfferCard key={offer.id} offer={offer} />)}
+            : items.map((offer) => <SentOfferCard key={offer.id} offer={offer} cancelOfferMutation={cancelOfferMutation} />)}
         </div>
       )}
     </div>
