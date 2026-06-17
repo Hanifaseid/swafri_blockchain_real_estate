@@ -146,12 +146,12 @@ function QuickCard({ icon, title, desc, href }: { icon: React.ReactNode; title: 
 
 function getKycColor(status: string): string {
   const map: Record<string, string> = {
-    NOT_STARTED: 'rgba(255,255,255,0.3)',
+    NOT_STARTED: '#475569',
     PENDING: '#f59e0b',
     UNDER_REVIEW: '#3b82f6',
     APPROVED: '#10b981',
     REJECTED: '#ef4444',
     EXPIRED: '#6b7280',
   };
-  return map[status] ?? 'rgba(255,255,255,0.5)';
+  return map[status] ?? '#475569';
 }
