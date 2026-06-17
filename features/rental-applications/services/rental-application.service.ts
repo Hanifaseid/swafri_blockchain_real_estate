@@ -34,11 +34,15 @@ export async function submitRentalApplication(payload: SubmitRentalApplicationPa
 }
 
 export async function getMyRentalApplications(): Promise<RentalApplication[]> {
-  const { data } = await apiClient.get<ApiListResponse<RentalApplication>>(
+  const { data } = await apiClient.get<any>(
     ENDPOINTS.RENTAL_APPS.MINE
   );
   if (!data.success) throw new Error(data.message || 'Failed to get applications');
-  return data.data.items || [];
+  
+  if (Array.isArray(data.data)) {
+    return data.data;
+  }
+  return data.data?.items || [];
 }
 
 export async function getRentalApplication(id: string): Promise<RentalApplication> {

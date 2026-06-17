@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { FileText, Loader2, Calendar } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { useSubmitRentalApplication } from '@/features/rental-applications/queries/rental-application.queries';
+import { useSubmitRentalApplication, useMyRentalApplications } from '@/features/rental-applications/queries/rental-application.queries';
 import { WalletConnectButton } from '@/components/ui/WalletConnectButton';
 
 export function RentalApplicationCard({
@@ -19,7 +19,16 @@ export function RentalApplicationCard({
   currency?: string;
 }) {
   const { currentUser } = useAuthStore();
+  const { data: myApps = [] } = useMyRentalApplications();
   const { mutate: submitApplication, isPending } = useSubmitRentalApplication();
+  
+  const existingApp = currentUser ? myApps.find(a => {
+    const appListingId = a.listingId || (a as any).propertyId || (a as any).listing?.id || (a as any).property?.id;
+    const idMatches = appListingId === listingId;
+    const status = (a.status || '').toUpperCase();
+    const isActive = status !== 'WITHDRAWN' && status !== 'REJECTED';
+    return idMatches && isActive;
+  }) : null;
   
   const [open, setOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
@@ -53,8 +62,8 @@ export function RentalApplicationCard({
         desiredEndDate: formData.desiredEndDate,
         occupants: Number(formData.occupants),
         monthlyIncome: Number(formData.monthlyIncome),
-        employer: formData.employer.trim() || undefined,
-        message: formData.message.trim() || undefined,
+        employer: formData.employer.trim(),
+        message: formData.message.trim(),
       },
       {
         onSuccess: () => {
@@ -80,16 +89,26 @@ export function RentalApplicationCard({
           <p className="text-xs text-emerald-600 font-medium">Available for Rent</p>
           <p className="font-semibold text-lg">{monthlyRent.toLocaleString()} {currency} <span className="text-xs text-gray-500 font-normal">/ mo</span></p>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors"
-        >
-          <FileText className="w-4 h-4" />
-          Apply Now
-        </button>
+        {existingApp ? (
+          <Link
+            href={`/applications/${existingApp.id}`}
+            className="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            View Application
+          </Link>
+        ) : (
+          <button
+            onClick={() => setOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors"
+          >
+            <FileText className="w-4 h-4" />
+            Apply Now
+          </button>
+        )}
       </div>
 
-      {open && (
+      {open && !existingApp && (
         <div className="mt-4 pt-4 border-t border-gray-100">
           {!currentUser ? (
             <div className="space-y-3">

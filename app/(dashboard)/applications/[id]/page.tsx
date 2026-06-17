@@ -17,11 +17,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function ApplicationDetailPage({ params }: { params: { id: string } }) {
+export default function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const router = useRouter();
   const { currentUser } = useAuthStore();
   
-  const { data: app, isLoading } = useRentalApplication(params.id);
+  const { data: app, isLoading } = useRentalApplication(id);
   const { mutate: withdraw, isPending: withdrawing } = useWithdrawRentalApplication();
   
   const isTenant = currentUser?.role === 'TENANT';
@@ -37,7 +38,8 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
     <div className="p-8 text-center text-red-500">Application not found</div>
   );
 
-  const isActive = app.status !== 'WITHDRAWN' && app.status !== 'REJECTED';
+  const normalizedStatus = (app.status || '').toUpperCase();
+  const isActive = normalizedStatus !== 'WITHDRAWN' && normalizedStatus !== 'REJECTED';
   const canReview = isOwner && isActive;
 
   return (
@@ -53,8 +55,8 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
             <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Application #{app.id.slice(-6)}</h1>
             <span className={cn(
               "px-3 py-1 text-xs font-mono uppercase rounded-lg border",
-              app.status === 'APPROVED' ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
-              app.status === 'REJECTED' || app.status === 'WITHDRAWN' ? "bg-red-50 border-red-200 text-red-700" :
+              normalizedStatus === 'APPROVED' ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
+              normalizedStatus === 'REJECTED' || normalizedStatus === 'WITHDRAWN' ? "bg-red-50 border-red-200 text-red-700" :
               "bg-amber-50 border-amber-200 text-amber-700"
             )}>
               {app.status.replace('_', ' ')}
@@ -63,7 +65,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
           <p className="text-sm text-black/50 mt-1">For Listing ID: <span className="font-mono text-xs">{app.listingId}</span></p>
         </div>
         
-        {isTenant && isActive && app.status === 'PENDING' && (
+        {isTenant && isActive && normalizedStatus === 'PENDING' && (
           <button 
             onClick={() => {
               if (confirm('Are you sure you want to withdraw this application?')) {
@@ -71,7 +73,7 @@ export default function ApplicationDetailPage({ params }: { params: { id: string
               }
             }}
             disabled={withdrawing}
-            className="px-4 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-xl font-medium transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-800 rounded-xl font-medium transition-colors disabled:opacity-50"
           >
             {withdrawing ? <Loader2 size={16} className="animate-spin inline" /> : 'Withdraw Application'}
           </button>
@@ -155,7 +157,9 @@ function OwnerActionsPanel({ app }: { app: any }) {
   const [note, setNote] = React.useState('');
   const [actionStep, setActionStep] = React.useState<'review'|'screening'|'lease'>('review');
 
-  if (app.status === 'APPROVED') {
+  const normalizedStatus = (app.status || '').toUpperCase();
+
+  if (normalizedStatus === 'APPROVED') {
     return (
       <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
         <h3 className="text-sm font-semibold text-black/80 flex items-center gap-2">
@@ -200,7 +204,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
     <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <h3 className="text-sm font-semibold text-black/80">Owner Review</h3>
       
-      {app.status === 'PENDING' && (
+      {normalizedStatus === 'PENDING' && (
         <div className="space-y-3">
           <textarea 
             value={note}
@@ -234,7 +238,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
         </div>
       )}
 
-      {app.status === 'SCREENING' && (
+      {normalizedStatus === 'SCREENING' && (
         <div className="space-y-3">
           <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded-xl flex gap-2">
             <ShieldCheck size={14} className="shrink-0"/>
