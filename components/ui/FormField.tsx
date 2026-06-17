@@ -59,6 +59,10 @@ export function FormField({
       <LabelPrimitive.Root
         htmlFor={id}
         className={cn(
+<<<<<<< Updated upstream
+=======
+          'inline-flex items-center gap-1 whitespace-nowrap',
+>>>>>>> Stashed changes
           isDark
             ? 'text-white/80'
             : 'text-gray-700'
@@ -67,7 +71,11 @@ export function FormField({
         <span>{label}</span>
         {required && (
           <span
+<<<<<<< Updated upstream
             className={cn('ml-0.5', isDark ? 'text-emerald-400' : 'text-red-500')}
+=======
+            className={cn('leading-none', isDark ? 'text-emerald-400' : 'text-red-500')}
+>>>>>>> Stashed changes
             aria-hidden="true"
           >
             *
