@@ -95,6 +95,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'kyc:view_all',
     },
     {
+      label: 'Leases & Escrow',
+      href: '/leases',
+      icon: 'FileSignature',
+    },
+    {
       label: 'Properties',
       href: '/properties',
       icon: 'Building2',
@@ -144,6 +149,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       icon: 'FileText',
     },
     {
+      label: 'Leases & Escrow',
+      href: '/leases',
+      icon: 'FileSignature',
+    },
+    {
       label: 'Inquiries',
       href: '/inquiries',
       icon: 'MessageSquare',
@@ -185,6 +195,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       label: 'Applications',
       href: '/applications',
       icon: 'FileText',
+    },
+    {
+      label: 'Leases & Escrow',
+      href: '/leases',
+      icon: 'FileSignature',
     },
     {
       label: 'Saved',
