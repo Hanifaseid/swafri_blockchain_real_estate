@@ -221,12 +221,20 @@ export async function changePassword(
 // DELETE /auth/wallet         → unlink
 
 export async function requestWalletChallenge(walletAddress: string): Promise<string> {
-  const { data } = await apiClient.post<{ success: boolean; data: { nonce: string } }>(
+  const { data } = await apiClient.post<any>(
     ENDPOINTS.AUTH.WALLET_CHALLENGE,
     { walletAddress }
   );
-  if (!data.success) throw new Error('Failed to get wallet challenge');
-  return data.data.nonce;
+  
+  if (typeof data === 'string') return data;
+  if (data?.nonce) return data.nonce;
+  if (data?.data?.nonce) return data.data.nonce;
+  
+  if (data?.success === false) {
+    throw new Error(data.message || 'Failed to get wallet challenge');
+  }
+  
+  return JSON.stringify(data);
 }
 
 export async function linkWallet(
@@ -234,21 +242,36 @@ export async function linkWallet(
   signature: string,
   currentUser: UserAccount
 ): Promise<UserAccount> {
-  const { data } = await apiClient.post<ApiProfileResponse>(
+  const { data } = await apiClient.post<any>(
     ENDPOINTS.AUTH.WALLET_LINK,
     { walletAddress, signature }
   );
-  if (!data.success) throw new Error('Failed to link wallet');
-  const updated = adaptUser(data.data);
+  
+  if (data?.success === false) {
+    throw new Error(data.message || 'Failed to link wallet');
+  }
+
+  // If the API returns the updated profile, use it. Otherwise, patch locally.
+  const updated = data?.data && data.data.id 
+    ? adaptUser(data.data) 
+    : { ...currentUser, walletStatus: 'VERIFIED' as const, linkedWalletAddress: walletAddress };
+
   setSession(updated);
   logAudit(currentUser, `Wallet linked: ${walletAddress}`);
   return updated;
 }
 
 export async function unlinkWallet(currentUser: UserAccount): Promise<UserAccount> {
-  const { data } = await apiClient.delete<ApiProfileResponse>(ENDPOINTS.AUTH.WALLET_UNLINK);
-  if (!data.success) throw new Error('Failed to unlink wallet');
-  const updated = adaptUser(data.data);
+  const { data } = await apiClient.delete<any>(ENDPOINTS.AUTH.WALLET_UNLINK);
+  
+  if (data?.success === false) {
+    throw new Error(data.message || 'Failed to unlink wallet');
+  }
+
+  const updated = data?.data && data.data.id
+    ? adaptUser(data.data)
+    : { ...currentUser, walletStatus: 'NOT_LINKED' as const, linkedWalletAddress: undefined };
+
   setSession(updated);
   logAudit(currentUser, 'Wallet unlinked');
   return updated;
