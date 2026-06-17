@@ -26,7 +26,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   const { mutate: withdraw, isPending: withdrawing } = useWithdrawRentalApplication();
   
   const isTenant = currentUser?.role === 'TENANT';
-  const isOwner = currentUser?.role === 'PROPERTY_OWNER';
+  const isOwner = ['PROPERTY_OWNER', 'ADMIN', 'SUPER_ADMIN'].includes(currentUser?.role || '');
 
   if (!currentUser) return null;
   
