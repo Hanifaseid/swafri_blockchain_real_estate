@@ -1,17 +1,28 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Initialize the GoogleGenAI client with the required User-Agent header
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    },
-  },
-});
-
 export async function POST(req: NextRequest) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('Missing GEMINI_API_KEY environment variable.');
+    return NextResponse.json(
+      {
+        error:
+          'Gemini API key is missing. Set GEMINI_API_KEY in .env.local or your deployment secrets and restart the server.',
+      },
+      { status: 500 }
+    );
+  }
+
+  const ai = new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      headers: {
+        'User-Agent': 'aistudio-build',
+      },
+    },
+  });
+
   try {
     const { messages } = await req.json();
 
