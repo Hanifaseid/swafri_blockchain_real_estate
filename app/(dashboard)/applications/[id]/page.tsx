@@ -135,6 +135,17 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
              <OwnerActionsPanel app={app} />
           )}
           
+          {isTenant && normalizedStatus === 'APPROVED' && (
+            <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-2xl shadow-sm text-center">
+              <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
+              <h3 className="text-lg font-bold text-emerald-900 mb-2">Application Approved!</h3>
+              <p className="text-sm text-emerald-700 leading-relaxed">
+                Congratulations, the property owner has approved your rental application. 
+                They are currently drafting the formal lease agreement. You will be notified once it is ready for your signature and funding.
+              </p>
+            </div>
+          )}
+
           {!isOwner && app.adminNote && (
             <div className="bg-amber-50 border border-amber-200 p-5 rounded-2xl">
               <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider mb-2">Message from Owner</h4>
@@ -247,10 +258,30 @@ function OwnerActionsPanel({ app }: { app: any }) {
           <button 
             disabled={screening}
             onClick={() => updateScreening({ id: app.id, payload: { status: 'passed', provider: 'TransUnion', score: 750, reference: 'REF-' + Date.now(), notes: 'Background check cleared successfully' }})}
-            className="w-full py-2 bg-black text-white hover:bg-gray-800 rounded-xl text-xs font-semibold"
+            className="w-full py-2 bg-black text-white hover:bg-gray-800 rounded-xl text-xs font-semibold disabled:opacity-50"
           >
-            Mark Screening Passed
+            {screening ? 'Updating...' : 'Update Screening (Passed)'}
           </button>
+          
+          <div className="pt-4 border-t border-gray-100 mt-2 space-y-2">
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-gray-500 mb-2">Final Decision</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                disabled={reviewing}
+                onClick={() => review({ id: app.id, payload: { status: 'approved', note: 'Screening passed, application approved.' }})}
+                className="py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-semibold"
+              >
+                Approve Application
+              </button>
+              <button 
+                disabled={reviewing}
+                onClick={() => review({ id: app.id, payload: { status: 'rejected', note: 'Screening failed.' }})}
+                className="py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-semibold"
+              >
+                Reject Application
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

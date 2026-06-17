@@ -71,6 +71,7 @@ export function useReviewRentalApplication() {
       reviewRentalApplication(id, payload),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: rentalAppKeys.detail(id) });
+      qc.invalidateQueries({ queryKey: rentalAppKeys.mine() });
       toast.success('Application review updated.');
     },
     onError: (err: Error) => toast.error(err.message),
