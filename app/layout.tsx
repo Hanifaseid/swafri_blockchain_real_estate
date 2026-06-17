@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { siteConfig } from '@/config/site.config';
-import { QueryProvider } from '@/components/providers/QueryProvider';
-import { AuthProvider } from '@/components/providers/AuthProvider';
-import { ToastProvider } from '@/components/providers/ToastProvider';
+import type { Metadata } from "next";
+import "./globals.css";
+import { siteConfig } from "@/config/site.config";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 
 // ─── Root Metadata ────────────────────────────────────────────────────────────
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: siteConfig.og.title,
     description: siteConfig.og.description,
-    type: 'website',
+    type: "website",
   },
 };
 
@@ -25,12 +25,20 @@ export const metadata: Metadata = {
 //   ToastProvider  — mounts react-hot-toast Toaster
 //   children       — all pages
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
