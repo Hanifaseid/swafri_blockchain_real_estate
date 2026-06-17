@@ -154,7 +154,7 @@ export default function ProfilePage() {
                 <input
                   type="text" autoComplete="name"
                   {...profileForm.register('name')}
-                  className={cn('pl-9', inputClass, profileForm.formState.errors.name && inputErrorClass)}
+                  className={cn(inputWithIconClass, profileForm.formState.errors.name && inputErrorClass)}
                 />
               </div>
             </FormField>
@@ -165,7 +165,7 @@ export default function ProfilePage() {
                 <input
                   type="tel" autoComplete="tel"
                   {...profileForm.register('phone')}
-                  className={cn('pl-9', inputClass, profileForm.formState.errors.phone && inputErrorClass)}
+                  className={cn(inputWithIconClass, profileForm.formState.errors.phone && inputErrorClass)}
                 />
               </div>
             </FormField>
@@ -174,7 +174,7 @@ export default function ProfilePage() {
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input type="email" value={currentUser.email} disabled
-                  className={cn('pl-9', inputClass, 'opacity-50 cursor-not-allowed')} />
+                  className={cn(inputWithIconClass, 'opacity-50 cursor-not-allowed')} />
               </div>
             </FormField>
 
@@ -205,7 +205,7 @@ export default function ProfilePage() {
                   type={showCurrent ? 'text' : 'password'}
                   autoComplete="current-password"
                   {...passForm.register('currentPassword')}
-                  className={cn('pl-9 pr-10', inputClass, passForm.formState.errors.currentPassword && inputErrorClass)}
+                  className={cn(inputWithIconClass, 'pr-10', passForm.formState.errors.currentPassword && inputErrorClass)}
                 />
                 <button type="button" onClick={() => setShowCurrent(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -221,7 +221,7 @@ export default function ProfilePage() {
                   type={showNew ? 'text' : 'password'}
                   autoComplete="new-password"
                   {...passForm.register('newPassword')}
-                  className={cn('pl-9 pr-10', inputClass, passForm.formState.errors.newPassword && inputErrorClass)}
+                  className={cn(inputWithIconClass, 'pr-10', passForm.formState.errors.newPassword && inputErrorClass)}
                 />
                 <button type="button" onClick={() => setShowNew(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -237,7 +237,7 @@ export default function ProfilePage() {
                   type="password"
                   autoComplete="new-password"
                   {...passForm.register('confirmPassword')}
-                  className={cn('pl-9', inputClass, passForm.formState.errors.confirmPassword && inputErrorClass)}
+                  className={cn(inputWithIconClass, passForm.formState.errors.confirmPassword && inputErrorClass)}
                 />
               </div>
             </FormField>

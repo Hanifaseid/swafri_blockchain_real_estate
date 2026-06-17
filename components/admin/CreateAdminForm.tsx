@@ -8,7 +8,7 @@ import { createAdminSchema, type CreateAdminFormValues } from '@/features/users/
 import { useCreateAdmin } from '@/features/auth/queries/auth.queries';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
-import { inputClass, inputErrorClass } from '@/components/forms/styles';
+import { inputClass, inputErrorClass, inputWithIconClass } from '@/components/forms/styles';
 import { cn } from '@/lib/utils';
 
 // ─── CreateAdminForm ──────────────────────────────────────────────────────────
@@ -67,7 +67,7 @@ export function CreateAdminForm({ onSuccess }: CreateAdminFormProps) {
             placeholder="e.g. John Admin"
             autoComplete="name"
             {...register('name')}
-            className={cn('pl-9', inputClass, errors.name && inputErrorClass)}
+            className={cn(inputWithIconClass, errors.name && inputErrorClass)}
           />
         </div>
       </FormField>
@@ -80,7 +80,7 @@ export function CreateAdminForm({ onSuccess }: CreateAdminFormProps) {
             placeholder="e.g. admin@swafir.com"
             autoComplete="email"
             {...register('email')}
-            className={cn('pl-9', inputClass, errors.email && inputErrorClass)}
+            className={cn(inputWithIconClass, errors.email && inputErrorClass)}
           />
         </div>
       </FormField>
@@ -98,7 +98,7 @@ export function CreateAdminForm({ onSuccess }: CreateAdminFormProps) {
             placeholder="••••••••"
             autoComplete="new-password"
             {...register('password')}
-            className={cn('pl-9', inputClass, errors.password && inputErrorClass)}
+            className={cn(inputWithIconClass, errors.password && inputErrorClass)}
           />
         </div>
       </FormField>

@@ -59,15 +59,16 @@ export function FormField({
       <LabelPrimitive.Root
         htmlFor={id}
         className={cn(
+          'inline-flex flex-wrap items-center gap-1',
           isDark
             ? 'text-[10px] uppercase tracking-widest font-mono text-white'
             : 'text-sm font-medium text-white-700'
         )}
       >
-        {label}
+        <span>{label}</span>
         {required && (
           <span
-            className={cn('ml-0.5', isDark ? 'text-emerald-400' : 'text-red-500')}
+            className={cn('text-red-500 leading-none', isDark ? 'text-emerald-400' : 'text-red-500')}
             aria-hidden="true"
           >
             *
