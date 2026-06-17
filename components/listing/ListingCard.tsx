@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bath, Bed, MapPin, Maximize2, Star } from 'lucide-react';
+import { Bath, Bed, MapPin, Maximize2, Star, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { PropertySummary } from './types';
@@ -46,13 +46,19 @@ export function ListingCard({
       >
         {/* Thumbnail */}
         <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg">
-          <Image
-            src={listing.image}
-            alt={listing.title}
-            fill
-            sizes="96px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+          {listing.image ? (
+            <Image
+              src={listing.image}
+              alt={listing.title}
+              fill
+              sizes="96px"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+              <ImageIcon size={20} />
+            </div>
+          )}
         </div>
         {/* Info */}
         <div className="flex min-w-0 flex-col justify-between py-0.5">
@@ -79,14 +85,20 @@ export function ListingCard({
     >
       {/* Image */}
       <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-        <Image
-          src={listing.image}
-          alt={listing.title}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          priority={priority}
-        />
+        {listing.image ? (
+          <Image
+            src={listing.image}
+            alt={listing.title}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            priority={priority}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+            <ImageIcon size={40} />
+          </div>
+        )}
 
         {/* Badges overlay — top left */}
         <div className="absolute left-3 top-3 flex gap-1.5">
