@@ -106,13 +106,14 @@ export async function updateAppointment(id: string, payload: AppointmentUpdatePa
   if (!data.success) throw new Error(data.message || 'Failed to update appointment');
 }
 
-export async function createLeaseFromApplication(id: string, payload: CreateLeasePayload): Promise<void> {
+export async function createLeaseFromApplication(id: string, payload: CreateLeasePayload): Promise<{ id: string }> {
   try {
-    const { data } = await apiClient.post<{ success: boolean; message: string }>(
+    const { data } = await apiClient.post<{ success: boolean; message: string; data: { id: string } }>(
       ENDPOINTS.RENTAL_APPS.CREATE_LEASE(id),
       payload
     );
     if (!data.success) throw new Error(data.message || 'Failed to create lease');
+    return data.data;
   } catch (error: any) {
     if (error.response?.data?.errors) {
       throw new Error(error.response.data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', '));
