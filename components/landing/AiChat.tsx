@@ -44,14 +44,21 @@ export default function AiChat() {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      const data = await response.json();
+      let data: any;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = { error: await response.text() };
+      }
+
       if (!response.ok) {
         throw new Error(data?.error || `Chat API error: ${response.status}`);
       }
 
       setChatMessages((prev) => [
         ...prev,
-        { role: 'assistant' as const, content: data.text },
+        { role: 'assistant' as const, content: data.text || data.error },
       ]);
     } catch (err: any) {
       const errorMessage =
