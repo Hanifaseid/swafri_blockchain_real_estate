@@ -1,0 +1,72 @@
+import { apiClient } from '@/lib/api/axios-client';
+import { ENDPOINTS } from '@/lib/api/endpoints';
+import type { Offer, CreateOfferInput, RespondOfferInput } from '@/features/offers/types/offer.types';
+
+interface ApiResp<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+interface ApiPaginatedResp<T> {
+  success: boolean;
+  message: string;
+  data: T[] | { items: T[]; total?: number; page?: number; limit?: number };
+  items?: T[];
+  total?: number;
+  page?: number;
+  limit?: number;
+}
+
+function normalizeArray<T>(data: ApiResp<T[]> | ApiPaginatedResp<T>): T[] {
+  if (Array.isArray((data as ApiResp<T[]>).data)) return (data as ApiResp<T[]>).data;
+  if (Array.isArray((data as ApiPaginatedResp<T>).data)) return (data as ApiPaginatedResp<T>).data;
+  if (Array.isArray((data as ApiPaginatedResp<T>).items)) return (data as ApiPaginatedResp<T>).items as T[];
+  const nested = (data as ApiPaginatedResp<T>).data as any;
+  if (nested?.items && Array.isArray(nested.items)) return nested.items as T[];
+  return [];
+}
+
+export async function submitOffer(input: CreateOfferInput): Promise<Offer> {
+  const { data } = await apiClient.post<ApiResp<Offer>>(ENDPOINTS.OFFERS.SUBMIT, input);
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function getMyOffers(): Promise<Offer[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<Offer[]> | ApiPaginatedResp<Offer>>(ENDPOINTS.OFFERS.MINE);
+    return normalizeArray<Offer>(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function getReceivedOffers(): Promise<Offer[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<Offer[]> | ApiPaginatedResp<Offer>>(ENDPOINTS.OFFERS.RECEIVED);
+    return normalizeArray<Offer>(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function respondOffer(id: string, input: RespondOfferInput): Promise<Offer> {
+  const { data } = await apiClient.patch<ApiResp<Offer>>(ENDPOINTS.OFFERS.RESPOND(id), input);
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function cancelOffer(id: string): Promise<Offer> {
+  const { data } = await apiClient.post<ApiResp<Offer>>(ENDPOINTS.OFFERS.CANCEL(id));
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export const offerService = {
+  submitOffer,
+  getMyOffers,
+  getReceivedOffers,
+  respondOffer,
+  cancelOffer,
+};
