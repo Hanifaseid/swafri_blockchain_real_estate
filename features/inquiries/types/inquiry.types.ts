@@ -51,6 +51,13 @@ export interface UpdateInquiryInput {
   status?: InquiryStatus;
 }
 
+export interface AdminInquiriesParams {
+  status?: string;
+  listingId?: string;
+  page?: number;
+  limit?: number;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function getInquiryListingTitle(inquiry: Inquiry): string {
