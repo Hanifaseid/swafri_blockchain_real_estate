@@ -91,6 +91,7 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     // Own wallet
     'wallet:link_own',
     'wallet:view_own',
+    'transactions:view_own',
     'dashboard:owner',
   ],
 
