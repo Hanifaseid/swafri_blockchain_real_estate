@@ -63,6 +63,16 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       icon: 'Settings',
       requiredPermission: 'settings:view',
     },
+    {
+      label: 'KYC & Wallet',
+      href: '/kyc',
+      icon: 'BadgeCheck',
+    },
+    {
+      label: 'Profile',
+      href: '/profile',
+      icon: 'User',
+    },
   ],
 
   // ── Admin ──────────────────────────────────────────────────────────────
@@ -101,6 +111,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       href: '/settings',
       icon: 'Settings',
       requiredPermission: 'settings:view',
+    },
+    {
+      label: 'Profile',
+      href: '/profile',
+      icon: 'User',
     },
   ],
 
