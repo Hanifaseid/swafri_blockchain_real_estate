@@ -163,7 +163,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 {label}
               </button>
             ))}
-            {role === 'TENANT' && listing.listingType === 'sale' && listing.status === 'published' && (
+            {role === 'TENANT' && listing.status === 'published' && (
               <button type="button" onClick={() => setShowOfferModal(true)}
                 className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
                 Make Offer
