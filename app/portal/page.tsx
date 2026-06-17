@@ -22,8 +22,10 @@ import {
   Layers,
   MessageSquare,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import { Property, Inquiry, AuditLog, UserAccount } from './types';
+import { useCreatePurchaseTransaction } from '@/features/transactions/queries/transaction.queries';
 
 import PropertyDetail from './shared/PropertyDetail';
 import PrdDoc from '@/components/PrdDoc';
@@ -634,6 +636,8 @@ export default function PortalPage() {
   };
 
   // Simulate property buy order
+  const { mutate: createTransaction } = useCreatePurchaseTransaction();
+
   const handleBuyInvestment = (property: Property) => {
     if (!currentUser) return;
     if (currentUser.walletStatus === 'NOT_LINKED') {
@@ -662,6 +666,17 @@ export default function PortalPage() {
       persistProperties(updated);
       setMockTxnStatus('success');
       logAudit(`Purchased ${buyAmount} fractional keys in ${property.name}`);
+
+      // Create transaction record in backend
+      const buyTotal = buyAmount * property.tokenPrice;
+      createTransaction({
+        listingId: property.id,
+        listingTitle: property.name,
+        listingPrice: property.tokenPrice,
+        currency: 'USD',
+        buyerAmount: buyAmount,
+        depositAmount: Math.round(buyTotal * 0.1), // 10% deposit
+      });
 
       // Alert about success
       setTimeout(() => {

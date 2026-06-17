@@ -59,17 +59,18 @@ export function FormField({
       <LabelPrimitive.Root
         htmlFor={id}
         className={cn(
-          'text-sm font-medium',
+          'inline-flex items-center gap-1 whitespace-nowrap',
           isDark
             ? 'text-white/80'
             : 'text-gray-700'
         )}
       >
-        {label}
+        <span>{label}</span>
+
         {required && (
           <span
             className={cn(
-              'ml-0.5 inline-block',
+              'leading-none',
               isDark ? 'text-emerald-400' : 'text-red-500'
             )}
             aria-hidden="true"
@@ -82,14 +83,23 @@ export function FormField({
       {childWithId}
 
       {hint && !error && (
-        <p className={cn('text-xs mt-1', isDark ? 'text-white/30 font-mono' : 'text-gray-400')}>
+        <p
+          className={cn(
+            'text-xs mt-1',
+            isDark ? 'text-white/30 font-mono' : 'text-gray-400'
+          )}
+        >
           {hint}
         </p>
       )}
+
       {error && (
         <p
           role="alert"
-          className={cn('text-xs font-mono mt-1', isDark ? 'text-rose-400' : 'text-red-600')}
+          className={cn(
+            'text-xs font-mono mt-1',
+            isDark ? 'text-rose-400' : 'text-red-600'
+          )}
         >
           {error}
         </p>

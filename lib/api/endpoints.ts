@@ -74,6 +74,7 @@ export const ENDPOINTS = {
     MINE:     '/inquiries/mine',
     RECEIVED: '/inquiries/received',
     UPDATE:   (id: string) => `/inquiries/${id}`,
+    ADMIN:    '/inquiries/admin',
   },
 
   // ── Offers ────────────────────────────────────────────────────────────────

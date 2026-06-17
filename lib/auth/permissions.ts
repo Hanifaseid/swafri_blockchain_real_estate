@@ -45,6 +45,9 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     'audit:view',
     'settings:view',
     'settings:update',
+    'chain-transactions:view',
+    'chain-transactions:reconcile',
+    'chain-transactions:mark_stale',
     'dashboard:tenant',
     'dashboard:owner',
     'dashboard:admin',
@@ -72,6 +75,9 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     // Audit
     'audit:view',
     'settings:view',
+    'chain-transactions:view',
+    'chain-transactions:reconcile',
+    'chain-transactions:mark_stale',
     'dashboard:admin',
   ],
 
@@ -91,6 +97,7 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     // Own wallet
     'wallet:link_own',
     'wallet:view_own',
+    'transactions:view_own',
     'dashboard:owner',
   ],
 

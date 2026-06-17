@@ -235,7 +235,7 @@ function OwnerListingsTable({ listings, onDelete, isDeleting }: {
   const STATUS_COLORS: Record<string, string> = {
     draft:        'bg-gray-100 text-gray-500',
     submitted:    'bg-amber-50 text-amber-600',
-    under_review: 'bg-blue-50 text-blue-600',
+    under_review: 'bg-emerald-50 text-emerald-600',
     approved:     'bg-emerald-50 text-emerald-600',
     published:    'bg-emerald-100 text-emerald-700',
     rejected:     'bg-red-50 text-red-600',
@@ -291,7 +291,7 @@ function OwnerListingsTable({ listings, onDelete, isDeleting }: {
                     </Link>
                     {(l.status === 'draft' || l.status === 'rejected') && (
                       <Link href={`/properties/${l.id}/edit`}
-                        className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+                        className="text-[10px] font-mono text-emerald-500 hover:text-emerald-600 px-2 py-1 rounded hover:bg-emerald-50 transition-colors">
                         Edit
                       </Link>
                     )}
@@ -324,7 +324,7 @@ function AdminView() {
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <Building2 className="w-6 h-6 text-blue-500 shrink-0" />
+        <Building2 className="w-6 h-6 text-emerald-500 shrink-0" />
         <div>
           <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Admin</p>
           <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Listing Review Queue</h1>
@@ -336,7 +336,7 @@ function AdminView() {
         {STATUS_TABS.map((s) => (
           <button key={s} type="button" onClick={() => setStatusFilter(s)}
             className={cn('text-[10px] font-mono uppercase tracking-wide px-3 py-1.5 rounded-lg transition-colors',
-              statusFilter === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}>
+              statusFilter === s ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}>
             {s.replace('_', ' ')}
           </button>
         ))}
@@ -344,7 +344,7 @@ function AdminView() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+          <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
         </div>
       ) : listings.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
@@ -389,13 +389,13 @@ function AdminListingsTable({ listings }: { listings: Listing[] }) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-[10px] font-mono uppercase bg-blue-50 text-blue-600 px-2 py-0.5 rounded">
+                  <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded">
                     {l.status}
                   </span>
                 </td>
                 <td className="px-4 py-3">
                   <Link href={`/properties/${l.id}`}
-                    className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+                    className="text-[10px] font-mono text-emerald-500 hover:text-emerald-600 px-2 py-1 rounded hover:bg-emerald-50 transition-colors">
                     Review
                   </Link>
                 </td>

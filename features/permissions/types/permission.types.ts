@@ -40,6 +40,15 @@ export type PermissionKey =
   | 'wallet:view_own'
   | 'wallet:view_all'
 
+  // Transactions
+  | 'transactions:view_own'
+  | 'transactions:update_status'
+
+  // Chain transactions
+  | 'chain-transactions:view'
+  | 'chain-transactions:reconcile'
+  | 'chain-transactions:mark_stale'
+
   // Audit logs
   | 'audit:view'
 
