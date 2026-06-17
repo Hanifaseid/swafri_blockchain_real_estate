@@ -57,3 +57,15 @@ export async function updateInquiry(id: string, input: UpdateInquiryInput): Prom
   if (!data.success) throw new Error(data.message);
   return data.data;
 }
+
+// ─── getAllInquiriesAdmin ─────────────────────────────────────────────────────
+// GET /inquiries/admin — admin list all inquiries
+
+export async function getAllInquiriesAdmin(params?: import('@/features/inquiries/types/inquiry.types').AdminInquiriesParams): Promise<Inquiry[]> {
+  try {
+    const { data } = await apiClient.get(ENDPOINTS.INQUIRIES.ADMIN, { params });
+    return extractArray<Inquiry>(data);
+  } catch {
+    return [];
+  }
+}
