@@ -50,6 +50,11 @@ export const queryKeys = {
     status: () => ['wallet', 'status'] as const,
   },
 
+  // ── Favorites ─────────────────────────────────────────────────────────────
+  favorites: {
+    all: () => ['favorites'] as const,
+  },
+
   // ── Dashboard ────────────────────────────────────────────────────────────
   dashboard: {
     stats: () => ['dashboard', 'stats'] as const,
