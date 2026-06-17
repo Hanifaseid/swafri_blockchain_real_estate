@@ -121,7 +121,7 @@ export function DashboardTopbar({
                 <a
                   href="/dashboard/profile"
                   onClick={() => setShowUserMenu(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/60 hover:text-black hover:bg-black/5 transition-colors"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-black hover:bg-slate-100 transition-colors"
                 >
                   <User size={14} />
                   Profile
@@ -131,7 +131,7 @@ export function DashboardTopbar({
                 <button
                   type="button"
                   onClick={() => { setShowUserMenu(false); onSignOut(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-white/40 hover:text-red-400 hover:bg-red-950/20 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-red-500 hover:bg-red-50 transition-colors"
                 >
                   <LogOut size={14} />
                   Sign out
