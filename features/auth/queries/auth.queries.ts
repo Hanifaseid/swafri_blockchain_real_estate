@@ -47,19 +47,21 @@ export function useLogin() {
 
     onSuccess: (data) => {
       setUser(data.user);
-      // Seed the query cache so useCurrentUser() is immediately satisfied
       queryClient.setQueryData(queryKeys.auth.me(), data.user);
 
-      // Set auth cookies immediately so proxy.ts allows the redirect.
-      // AuthProvider also sets these on mount, but we need them NOW before navigation.
       if (typeof document !== 'undefined') {
-        const maxAge = 60 * 60 * 24 * 7; // 7 days
+        const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
         document.cookie = `vex_user_role=${data.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
-      // Role-based redirect
-      router.push(appConfig.auth.loginRedirect);
+      // If admin assigned a temporary password, force change before dashboard access
+      const mustReset = typeof window !== 'undefined' && localStorage.getItem('vex_must_reset_password') === '1';
+      if (mustReset) {
+        router.push('/profile?mustReset=1');
+      } else {
+        router.push(appConfig.auth.loginRedirect);
+      }
     },
   });
 }

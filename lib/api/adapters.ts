@@ -66,7 +66,8 @@ export interface ApiUser {
   createdAt?: string;
   updatedAt?: string;
   profileImage?: string;
-  linkedWalletAddress?: string;
+  walletAddress?: string;        // API field name (not linkedWalletAddress)
+  linkedWalletAddress?: string;  // fallback alias
 }
 
 export interface ApiTokens {
@@ -105,6 +106,7 @@ export function adaptUser(apiUser: ApiUser): UserAccount {
     createdAt:           apiUser.createdAt ?? new Date().toISOString(),
     updatedAt:           apiUser.updatedAt,
     profileImage:        apiUser.profileImage,
-    linkedWalletAddress: apiUser.linkedWalletAddress,
+    // API uses walletAddress; fallback to linkedWalletAddress for compatibility
+    linkedWalletAddress: apiUser.walletAddress ?? apiUser.linkedWalletAddress,
   };
 }

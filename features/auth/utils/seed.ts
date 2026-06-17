@@ -1,24 +1,10 @@
 // ─── Dev Credentials ──────────────────────────────────────────────────────────
-// Real API credentials for the dev QuickFillBar.
-// Only rendered in development mode (process.env.NODE_ENV !== 'production').
+// Real seeded accounts from the backend (npm run seed:users).
+// Only shown in development mode.
 
 export const SEED_CREDENTIALS = [
-  {
-    role:     'SUPER_ADMIN',
-    label:    'SUPERADMIN',
-    email:    'superadmin@realestate.dev',
-    password: 'SuperAdmin1!',
-  },
-  {
-    role:     'TENANT',
-    label:    'TENANT',
-    email:    'test@swafir.com',
-    password: 'Test@1234',
-  },
-  {
-    role:     'PROPERTY_OWNER',
-    label:    'OWNER',
-    email:    'owner.test2@swafir.com',
-    password: 'Owner@1234',
-  },
+  { role: 'SUPER_ADMIN',    label: 'SUPERADMIN', email: 'superadmin@realestate.dev', password: 'SuperAdmin1!'    },
+  { role: 'ADMIN',          label: 'ADMIN',      email: 'admin@realestate.dev',      password: 'PlatformAdmin1!' },
+  { role: 'PROPERTY_OWNER', label: 'OWNER',      email: 'owner@realestate.dev',      password: 'PropertyOwner1!' },
+  { role: 'TENANT',         label: 'TENANT',     email: 'tenant@realestate.dev',     password: 'TenantUser1!'    },
 ] as const;
