@@ -153,7 +153,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-5">Edit Profile</p>
           <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4" noValidate>
-            <FormField label="Full Name" error={profileForm.formState.errors.name?.message} required>
+            <FormField label="Full Name" error={profileForm.formState.errors.name?.message} required variant="light">
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                   autoComplete="name"
                   {...profileForm.register('name')}
                   className={cn(
-                    'w-full rounded-xl border bg-white text-sm transition-colors',
+                    'w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors',
                     'border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none',
                     'pl-9 pr-3 py-2.5',
                     profileForm.formState.errors.name && 'border-red-300 focus:border-red-400 focus:ring-red-500/20',
@@ -171,7 +171,7 @@ export default function ProfilePage() {
               </div>
             </FormField>
 
-            <FormField label="Phone Number" error={profileForm.formState.errors.phone?.message} hint="Optional">
+            <FormField label="Phone Number" error={profileForm.formState.errors.phone?.message} hint="Optional" variant="light">
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
@@ -179,7 +179,7 @@ export default function ProfilePage() {
                   autoComplete="tel"
                   {...profileForm.register('phone')}
                   className={cn(
-                    'w-full rounded-xl border bg-white text-sm transition-colors',
+                    'w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors',
                     'border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none',
                     'pl-9 pr-3 py-2.5',
                     profileForm.formState.errors.phone && 'border-red-300 focus:border-red-400 focus:ring-red-500/20',
@@ -189,7 +189,7 @@ export default function ProfilePage() {
               </div>
             </FormField>
 
-            <FormField label="Email Address" hint="Email cannot be changed">
+            <FormField label="Email Address" hint="Email cannot be changed" variant="light">
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input 
@@ -197,8 +197,8 @@ export default function ProfilePage() {
                   value={currentUser.email} 
                   disabled
                   className={cn(
-                    'w-full rounded-xl border bg-gray-50 text-sm cursor-not-allowed',
-                    'border-gray-200 text-black/50',
+                    'w-full rounded-xl border bg-gray-50 text-sm text-gray-500 cursor-not-allowed',
+                    'border-gray-200',
                     'pl-9 pr-3 py-2.5'
                   )} 
                 />
@@ -225,7 +225,7 @@ export default function ProfilePage() {
           <p className="text-xs text-black/40 mb-5">Changing your password will sign you out of all sessions.</p>
 
           <form onSubmit={passForm.handleSubmit(onPasswordSubmit)} className="space-y-4" noValidate>
-            <FormField label="Current Password" error={passForm.formState.errors.currentPassword?.message} required>
+            <FormField label="Current Password" error={passForm.formState.errors.currentPassword?.message} required variant="light">
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
@@ -233,7 +233,7 @@ export default function ProfilePage() {
                   autoComplete="current-password"
                   {...passForm.register('currentPassword')}
                   className={cn(
-                    'w-full rounded-xl border bg-white text-sm transition-colors',
+                    'w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors',
                     'border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none',
                     'pl-9 pr-10 py-2.5',
                     passForm.formState.errors.currentPassword && 'border-red-300 focus:border-red-400 focus:ring-red-500/20',
@@ -250,7 +250,7 @@ export default function ProfilePage() {
               </div>
             </FormField>
 
-            <FormField label="New Password" error={passForm.formState.errors.newPassword?.message} hint="Min 8 chars, one uppercase, one number" required>
+            <FormField label="New Password" error={passForm.formState.errors.newPassword?.message} hint="Min 8 chars, one uppercase, one number" required variant="light">
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
@@ -258,7 +258,7 @@ export default function ProfilePage() {
                   autoComplete="new-password"
                   {...passForm.register('newPassword')}
                   className={cn(
-                    'w-full rounded-xl border bg-white text-sm transition-colors',
+                    'w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors',
                     'border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none',
                     'pl-9 pr-10 py-2.5',
                     passForm.formState.errors.newPassword && 'border-red-300 focus:border-red-400 focus:ring-red-500/20',
@@ -275,7 +275,7 @@ export default function ProfilePage() {
               </div>
             </FormField>
 
-            <FormField label="Confirm New Password" error={passForm.formState.errors.confirmPassword?.message} required>
+            <FormField label="Confirm New Password" error={passForm.formState.errors.confirmPassword?.message} required variant="light">
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
@@ -283,7 +283,7 @@ export default function ProfilePage() {
                   autoComplete="new-password"
                   {...passForm.register('confirmPassword')}
                   className={cn(
-                    'w-full rounded-xl border bg-white text-sm transition-colors',
+                    'w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors',
                     'border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none',
                     'pl-9 pr-3 py-2.5',
                     passForm.formState.errors.confirmPassword && 'border-red-300 focus:border-red-400 focus:ring-red-500/20',
