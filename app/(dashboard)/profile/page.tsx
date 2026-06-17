@@ -2,7 +2,9 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User, Mail, Phone, CheckCircle2 } from 'lucide-react';
+import { User, Mail, Phone, Lock, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { z } from 'zod';
 import toast from 'react-hot-toast';
 
 import { useAuthStore } from '@/stores/auth.store';
@@ -11,6 +13,7 @@ import { updateSessionUser } from '@/lib/auth/session';
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
 import { adaptUser, type ApiUser } from '@/lib/api/adapters';
+import { useChangePassword } from '@/features/auth/queries/auth.queries';
 import { Button } from '@/components/ui/Button';
 import { FormField } from '@/components/ui/FormField';
 import { inputClass, inputErrorClass } from '@/components/forms/styles';
@@ -25,52 +28,76 @@ interface UpdateProfileResponse {
   data: ApiUser;
 }
 
+// ─── Change password schema ───────────────────────────────────────────────────
+
+const changePassSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z
+    .string()
+    .min(8, 'Min 8 characters')
+    .regex(/[A-Z]/, 'Must contain an uppercase letter')
+    .regex(/[0-9]/, 'Must contain a number'),
+  confirmPassword: z.string().min(1, 'Please confirm your new password'),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+
+type ChangePassValues = z.infer<typeof changePassSchema>;
+
+// ─── ProfilePage ──────────────────────────────────────────────────────────────
+
 export default function ProfilePage() {
   const { currentUser, updateUser } = useAuthStore();
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty, isSubmitting },
-  } = useForm<UpdateProfileFormValues>({
+  const profileForm = useForm<UpdateProfileFormValues>({
     resolver: zodResolver(updateProfileSchema),
-    defaultValues: {
-      name: currentUser?.name ?? '',
-      phone: currentUser?.phone ?? '',
-    },
+    defaultValues: { name: currentUser?.name ?? '', phone: currentUser?.phone ?? '' },
   });
+
+  const passForm = useForm<ChangePassValues>({
+    resolver: zodResolver(changePassSchema),
+    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
+  });
+
+  const { mutate: doChangePassword, isPending: changingPass } = useChangePassword();
 
   if (!currentUser) return null;
 
-  const onSubmit = async (data: UpdateProfileFormValues) => {
+  // ── Update profile ──
+  const onProfileSubmit = async (data: UpdateProfileFormValues) => {
     try {
       const { data: res } = await apiClient.patch<UpdateProfileResponse>(
         ENDPOINTS.AUTH.PROFILE,
-        {
-          name:  data.name.trim(),
-          phone: data.phone || undefined,
-        }
+        { name: data.name.trim(), phone: data.phone || undefined }
       );
-
-      if (!res.success) {
-        toast.error(res.message || 'Failed to update profile.');
-        return;
-      }
-
+      if (!res.success) { toast.error(res.message || 'Failed to update profile.'); return; }
       const updated = adaptUser(res.data);
       updateSessionUser({ name: updated.name, phone: updated.phone });
       updateUser({ name: updated.name, phone: updated.phone });
       toast.success('Profile updated.');
     } catch {
-      // Fallback: update session/store optimistically if API fails
       updateSessionUser({ name: data.name.trim(), phone: data.phone || undefined });
       updateUser({ name: data.name.trim(), phone: data.phone || undefined });
-      toast.success('Profile updated locally.');
+      toast.success('Profile updated.');
     }
   };
 
+  // ── Change password ──
+  const onPasswordSubmit = (data: ChangePassValues) => {
+    doChangePassword(
+      { currentPassword: data.currentPassword, newPassword: data.newPassword },
+      {
+        onSuccess: () => toast.success('Password changed. Please sign in again.'),
+        onError: (err) => toast.error((err as Error).message),
+      }
+    );
+  };
+
   const statusBadge = ACCOUNT_STATUS_BADGE[currentUser.status];
-  const kycBadge = KYC_STATUS_BADGE[currentUser.kycStatus];
+  const kycBadge    = KYC_STATUS_BADGE[currentUser.kycStatus];
   const walletBadge = WALLET_STATUS_BADGE[currentUser.walletStatus];
 
   return (
@@ -84,8 +111,8 @@ export default function ProfilePage() {
       </div>
 
       <div className="space-y-5">
-        {/* Identity card */}
-        <div className="dash-card p-6">
+        {/* ── Identity card ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center gap-4 mb-6">
             <Avatar name={currentUser.name} size="xl" />
             <div>
@@ -93,62 +120,52 @@ export default function ProfilePage() {
               <p className="text-sm text-black/40 font-mono">{currentUser.email}</p>
               <span className={cn(
                 'inline-block mt-1.5 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-md',
-                currentUser.role === 'SUPER_ADMIN' && 'bg-amber-950/40 text-amber-400',
-                currentUser.role === 'ADMIN' && 'bg-blue-950/40 text-blue-400',
-                currentUser.role === 'PROPERTY_OWNER' && 'bg-purple-950/40 text-purple-400',
-                currentUser.role === 'TENANT' && 'bg-emerald-950/40 text-emerald-400',
+                currentUser.role === 'SUPER_ADMIN' && 'bg-amber-50 text-amber-600 border border-amber-200',
+                currentUser.role === 'ADMIN' && 'bg-blue-50 text-blue-600 border border-blue-200',
+                currentUser.role === 'PROPERTY_OWNER' && 'bg-purple-50 text-purple-600 border border-purple-200',
+                currentUser.role === 'TENANT' && 'bg-emerald-50 text-emerald-600 border border-emerald-200',
               )}>
                 {ROLE_LABELS[currentUser.role]}
               </span>
             </div>
           </div>
 
-          {/* Status cards */}
           <div className="grid grid-cols-3 gap-3">
             {[
               { label: 'Account', badge: statusBadge },
-              { label: 'KYC', badge: kycBadge },
-              { label: 'Wallet', badge: walletBadge },
+              { label: 'KYC',     badge: kycBadge },
+              { label: 'Wallet',  badge: walletBadge },
             ].map(({ label, badge }) => (
-              <div
-                key={label}
-                className="rounded-xl p-3 text-center"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-dash-border)' }}
-              >
+              <div key={label} className="rounded-xl p-3 text-center bg-gray-50 border border-gray-200">
                 <p className="text-[9px] font-mono uppercase text-black/30 mb-1.5">{label}</p>
-                <span className={cn('text-[10px] font-mono font-semibold', badge.color)}>
-                  {badge.label}
-                </span>
+                <span className={cn('text-[10px] font-mono font-semibold', badge.color)}>{badge.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Edit form */}
-        <div className="dash-card p-6">
-          <p className="text-xs font-mono uppercase tracking-widest text-black/35 mb-5">Edit Profile</p>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-            <FormField label="Full Name" error={errors.name?.message} required>
+        {/* ── Edit profile ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-5">Edit Profile</p>
+          <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4" noValidate>
+            <FormField label="Full Name" error={profileForm.formState.errors.name?.message} required>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
-                  type="text"
-                  autoComplete="name"
-                  {...register('name')}
-                  className={cn('pl-9', inputClass, errors.name && inputErrorClass)}
+                  type="text" autoComplete="name"
+                  {...profileForm.register('name')}
+                  className={cn('pl-9', inputClass, profileForm.formState.errors.name && inputErrorClass)}
                 />
               </div>
             </FormField>
 
-            <FormField label="Phone Number" error={errors.phone?.message} hint="Optional">
+            <FormField label="Phone Number" error={profileForm.formState.errors.phone?.message} hint="Optional">
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
-                  type="tel"
-                  autoComplete="tel"
-                  {...register('phone')}
-                  className={cn('pl-9', inputClass, errors.phone && inputErrorClass)}
+                  type="tel" autoComplete="tel"
+                  {...profileForm.register('phone')}
+                  className={cn('pl-9', inputClass, profileForm.formState.errors.phone && inputErrorClass)}
                 />
               </div>
             </FormField>
@@ -156,22 +173,78 @@ export default function ProfilePage() {
             <FormField label="Email Address" hint="Email cannot be changed">
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input
-                  type="email"
-                  value={currentUser.email}
-                  disabled
-                  className={cn('pl-9', inputClass, 'opacity-50 cursor-not-allowed')}
-                />
+                <input type="email" value={currentUser.email} disabled
+                  className={cn('pl-9', inputClass, 'opacity-50 cursor-not-allowed')} />
               </div>
             </FormField>
 
             <div className="flex items-center justify-between pt-2">
-              <p className="text-[10px] text-black/25 font-mono">
-                Role cannot be self-updated
-              </p>
-              <Button type="submit" disabled={!isDirty || isSubmitting} size="md">
+              <p className="text-[10px] text-black/25 font-mono">Role cannot be self-updated</p>
+              <Button
+                type="submit"
+                disabled={!profileForm.formState.isDirty || profileForm.formState.isSubmitting}
+                size="md"
+              >
                 <CheckCircle2 size={14} />
-                {isSubmitting ? 'Saving…' : 'Save Changes'}
+                {profileForm.formState.isSubmitting ? 'Saving…' : 'Save Changes'}
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* ── Change password ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Change Password</p>
+          <p className="text-xs text-black/40 mb-5">Changing your password will sign you out of all sessions.</p>
+
+          <form onSubmit={passForm.handleSubmit(onPasswordSubmit)} className="space-y-4" noValidate>
+            <FormField label="Current Password" error={passForm.formState.errors.currentPassword?.message} required>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type={showCurrent ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  {...passForm.register('currentPassword')}
+                  className={cn('pl-9 pr-10', inputClass, passForm.formState.errors.currentPassword && inputErrorClass)}
+                />
+                <button type="button" onClick={() => setShowCurrent(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showCurrent ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </FormField>
+
+            <FormField label="New Password" error={passForm.formState.errors.newPassword?.message} hint="Min 8 chars, one uppercase, one number" required>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type={showNew ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  {...passForm.register('newPassword')}
+                  className={cn('pl-9 pr-10', inputClass, passForm.formState.errors.newPassword && inputErrorClass)}
+                />
+                <button type="button" onClick={() => setShowNew(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showNew ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </FormField>
+
+            <FormField label="Confirm New Password" error={passForm.formState.errors.confirmPassword?.message} required>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  {...passForm.register('confirmPassword')}
+                  className={cn('pl-9', inputClass, passForm.formState.errors.confirmPassword && inputErrorClass)}
+                />
+              </div>
+            </FormField>
+
+            <div className="flex justify-end">
+              <Button type="submit" loading={changingPass} variant="destructive" size="md">
+                Change Password
               </Button>
             </div>
           </form>
