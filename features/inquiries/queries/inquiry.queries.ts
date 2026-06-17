@@ -36,10 +36,14 @@ export function useSendInquiry() {
 export function useUpdateInquiry(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateInquiryInput) => updateInquiry(id, input),
+    mutationFn: (input: UpdateInquiryInput) => {
+      if (!id) throw new Error('Inquiry ID is missing — cannot update.');
+      return updateInquiry(id, input);
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.received });
       qc.invalidateQueries({ queryKey: KEYS.mine });
+      qc.invalidateQueries({ queryKey: ['inquiries', 'admin'] });
       toast.success('Inquiry updated.');
     },
     onError: (e: Error) => toast.error(e.message),
