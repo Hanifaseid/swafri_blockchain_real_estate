@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMyRentalApplications } from '@/features/rental-applications/queries/rental-application.queries';
 import { FileText, Loader2, Calendar } from 'lucide-react';
@@ -62,7 +63,9 @@ export default function ApplicationsPage() {
                   ${app.monthlyIncome?.toLocaleString()}
                 </div>
                 <div className="flex items-center justify-end">
-                  <button className="text-emerald-600 font-medium hover:text-emerald-700">View Details →</button>
+                  <Link href={`/applications/${app.id}`} className="text-emerald-600 font-medium hover:text-emerald-700">
+                    View Details →
+                  </Link>
                 </div>
               </div>
             </div>
