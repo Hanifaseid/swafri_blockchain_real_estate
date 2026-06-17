@@ -1,25 +1,41 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
-import type { Notification, NotificationsResponse } from '@/features/notifications/types/notification.types';
+import type {
+  Notification,
+  NotificationsResponse,
+  NotificationsParams,
+} from '@/features/notifications/types/notification.types';
 
 interface ApiResp<T> { success: boolean; message: string; data: T; }
 
 function normalizeId(n: Record<string, unknown>): Notification {
   const id = (n.id ?? n._id ?? '') as string;
-  return { ...(n as Notification), id };
+  return { ...(n as unknown as Notification), id };
 }
 
-// ─── getNotifications ────────────────────────────────────────────────────────
-// GET /notifications
+// ─── getNotifications ─────────────────────────────────────────────────────────
+// GET /notifications?unreadOnly=false&page=1&limit=20
 
-export async function getNotifications(): Promise<NotificationsResponse> {
+export async function getNotifications(
+  params: NotificationsParams = {}
+): Promise<NotificationsResponse> {
   try {
-    const { data } = await apiClient.get<ApiResp<unknown>>(ENDPOINTS.NOTIFICATIONS.LIST);
+    const { data } = await apiClient.get<ApiResp<unknown>>(
+      ENDPOINTS.NOTIFICATIONS.LIST,
+      {
+        params: {
+          unreadOnly: params.unreadOnly ?? false,
+          page:       params.page  ?? 1,
+          limit:      params.limit ?? 20,
+        },
+      }
+    );
+
     if (!data.success) return { notifications: [], unreadCount: 0, total: 0 };
 
     const raw = data.data as Record<string, unknown>;
 
-    // The API may return { notifications: [...], unreadCount: N } or just an array
+    // Shape A: data is a plain array
     if (Array.isArray(raw)) {
       const notifications = (raw as Record<string, unknown>[]).map(normalizeId);
       return {
@@ -29,15 +45,17 @@ export async function getNotifications(): Promise<NotificationsResponse> {
       };
     }
 
+    // Shape B: data is { notifications: [...], unreadCount: N, total: N }
     const list = Array.isArray(raw?.notifications)
       ? (raw.notifications as Record<string, unknown>[]).map(normalizeId)
       : [];
 
     return {
       notifications: list,
-      unreadCount: typeof raw?.unreadCount === 'number'
-        ? raw.unreadCount
-        : list.filter((n) => !n.isRead).length,
+      unreadCount:
+        typeof raw?.unreadCount === 'number'
+          ? raw.unreadCount
+          : list.filter((n) => !n.isRead).length,
       total: typeof raw?.total === 'number' ? raw.total : list.length,
     };
   } catch {

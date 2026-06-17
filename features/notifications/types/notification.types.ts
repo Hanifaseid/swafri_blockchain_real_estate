@@ -17,3 +17,10 @@ export interface NotificationsResponse {
   unreadCount: number;
   total: number;
 }
+
+// ─── Query params for GET /notifications ─────────────────────────────────────
+export interface NotificationsParams {
+  unreadOnly?: boolean;
+  page?: number;
+  limit?: number;
+}
