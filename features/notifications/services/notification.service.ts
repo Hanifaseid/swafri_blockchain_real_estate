@@ -45,20 +45,27 @@ export async function getNotifications(
       };
     }
 
-    // Shape B: data is { notifications: [...], unreadCount: N, total: N }
-    const list = Array.isArray(raw?.notifications)
-      ? (raw.notifications as Record<string, unknown>[]).map(normalizeId)
+    // Shape B (actual API): { items: [...], unread: N, total: N, page: N, limit: N }
+    // Shape C (fallback):   { notifications: [...], unreadCount: N, total: N }
+    const rawItems =
+      Array.isArray(raw?.items)         ? (raw.items as Record<string, unknown>[])
+      : Array.isArray(raw?.notifications) ? (raw.notifications as Record<string, unknown>[])
       : [];
+
+    const list = rawItems.map(normalizeId);
+
+    const unreadCount =
+      typeof raw?.unread      === 'number' ? raw.unread      :
+      typeof raw?.unreadCount === 'number' ? raw.unreadCount :
+      list.filter((n) => !n.isRead).length;
 
     return {
       notifications: list,
-      unreadCount:
-        typeof raw?.unreadCount === 'number'
-          ? raw.unreadCount
-          : list.filter((n) => !n.isRead).length,
+      unreadCount,
       total: typeof raw?.total === 'number' ? raw.total : list.length,
     };
-  } catch {
+  } catch (err) {
+    console.error('[Notifications API] error:', err);
     return { notifications: [], unreadCount: 0, total: 0 };
   }
 }

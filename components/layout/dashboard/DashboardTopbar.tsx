@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Menu, Bell, LogOut, User, Check, CheckCheck, Inbox } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils";
@@ -11,6 +12,7 @@ import {
   useMarkAllRead,
   useMarkOneRead,
 } from "@/features/notifications/queries/notification.queries";
+import { getNotificationHref } from "@/features/notifications/types/notification.types";
 
 // ─── DashboardTopbar ──────────────────────────────────────────────────────────
 
@@ -32,6 +34,7 @@ export function DashboardTopbar({
   const [showUserMenu, setShowUserMenu]     = useState(false);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const router   = useRouter();
 
   const { data } = useNotifications();
   const { mutate: markAll }  = useMarkAllRead();
@@ -146,14 +149,21 @@ export function DashboardTopbar({
                   </div>
                 ) : (
                   <ul>
-                    {notifications.map((n) => (
+                    {notifications.map((n) => {
+                      const href = getNotificationHref(n);
+                      return (
                       <li
                         key={n.id}
                         onClick={() => {
                           if (!n.isRead) markOne(n.id);
+                          if (href) {
+                            setShowNotifPanel(false);
+                            router.push(href);
+                          }
                         }}
                         className={cn(
-                          "flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors",
+                          "flex items-start gap-3 px-4 py-3 transition-colors",
+                          href ? "cursor-pointer" : "cursor-default",
                           n.isRead
                             ? "hover:bg-black/[0.02]"
                             : "bg-emerald-50/60 hover:bg-emerald-50"
@@ -187,7 +197,8 @@ export function DashboardTopbar({
                           <Check size={11} className="text-emerald-500 shrink-0 mt-1" />
                         )}
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </div>
