@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { MessageSquare, Loader2, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { useMyInquiries, useReceivedInquiries, useUpdateInquiry } from '@/features/inquiries/queries/inquiry.queries';
+import { useMyInquiries, useReceivedInquiries, useUpdateInquiry, useAllInquiriesAdmin } from '@/features/inquiries/queries/inquiry.queries';
 import type { Inquiry, InquiryStatus } from '@/features/inquiries/types/inquiry.types';
 import { getInquiryListingTitle, getInquirerName } from '@/features/inquiries/types/inquiry.types';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,7 @@ export default function InquiriesPage() {
         </div>
       </div>
 
-      {isOwner || isAdmin ? <OwnerView /> : <TenantView />}
+      {isAdmin ? <AdminView /> : isOwner ? <OwnerView /> : <TenantView />}
     </div>
   );
 }
@@ -105,7 +105,7 @@ function OwnerView() {
 
 // ─── Inquiry Card ─────────────────────────────────────────────────────────────
 
-function InquiryCard({ inquiry, mode }: { inquiry: Inquiry; mode: 'sent' | 'received' }) {
+function InquiryCard({ inquiry, mode }: { inquiry: Inquiry; mode: 'sent' | 'received' | 'admin' }) {
   const [expanded, setExpanded] = useState(false);
   const [responseText, setResponseText] = useState(inquiry.response ?? '');
   const [newStatus, setNewStatus] = useState<InquiryStatus>(inquiry.status);
@@ -125,7 +125,7 @@ function InquiryCard({ inquiry, mode }: { inquiry: Inquiry; mode: 'sent' | 'rece
             <span className="text-[10px] font-mono uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{inquiry.inquiryType}</span>
           </div>
           <p className="text-sm font-medium text-black/80 truncate">
-            {mode === 'received' ? `From: ${inquirerName}` : `Re: ${listingTitle}`}
+            {mode === 'received' ? `From: ${inquirerName}` : mode === 'admin' ? `Re: ${listingTitle} (From: ${inquirerName})` : `Re: ${listingTitle}`}
           </p>
           <p className="text-xs text-black/40 mt-0.5 truncate">{inquiry.message}</p>
         </div>
@@ -159,8 +159,8 @@ function InquiryCard({ inquiry, mode }: { inquiry: Inquiry; mode: 'sent' | 'rece
             </div>
           )}
 
-          {/* Owner: respond form */}
-          {mode === 'received' && (
+          {/* Owner/Admin: respond form */}
+          {(mode === 'received' || mode === 'admin') && (
             <div className="space-y-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">
                 {inquiry.response ? 'Update Response' : 'Write Response'}
@@ -202,4 +202,42 @@ function InquiryCard({ inquiry, mode }: { inquiry: Inquiry; mode: 'sent' | 'rece
 
 function LoadingSpinner() {
   return <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
+}
+
+// ─── Admin: All Inquiries ───────────────────────────────────────────────────
+
+function AdminView() {
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const { data: inquiries = [], isLoading } = useAllInquiriesAdmin({ status: statusFilter || undefined });
+
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-5">
+        <select 
+          value={statusFilter} 
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400"
+        >
+          <option value="">All Statuses</option>
+          <option value="open">Open</option>
+          <option value="responded">Responded</option>
+          <option value="in_discussion">In Discussion</option>
+          <option value="closed">Closed</option>
+          <option value="spam">Spam</option>
+        </select>
+      </div>
+
+      {isLoading ? <LoadingSpinner /> : inquiries.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+          <MessageSquare className="w-10 h-10 text-black/15 mx-auto mb-3" />
+          <p className="text-sm text-black/40 font-light">No inquiries found.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <p className="text-xs text-black/35 font-mono">{inquiries.length} total inquiries</p>
+          {inquiries.map((inq) => <InquiryCard key={inq.id} inquiry={inq} mode="admin" />)}
+        </div>
+      )}
+    </div>
+  );
 }
