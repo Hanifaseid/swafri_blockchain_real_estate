@@ -6,7 +6,6 @@ export function useKycStatus() {
   return useQuery({
     queryKey: ['kyc', 'me'],
     queryFn: getKycStatus,
-    staleTime: 1000 * 60 * 2, // re-fetch every 2 min
   });
 }
 

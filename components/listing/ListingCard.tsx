@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bath, Bed, MapPin, Maximize2, Star } from 'lucide-react';
+import { Bath, Bed, MapPin, Maximize2, Star, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { PropertySummary } from './types';
@@ -55,7 +55,9 @@ export function ListingCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full bg-gray-200" />
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+              <ImageIcon size={20} />
+            </div>
           )}
         </div>
         {/* Info */}
@@ -93,7 +95,9 @@ export function ListingCard({
             priority={priority}
           />
         ) : (
-          <div className="h-full w-full bg-gray-200" />
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
+            <ImageIcon size={40} />
+          </div>
         )}
 
         {/* Badges overlay — top left */}

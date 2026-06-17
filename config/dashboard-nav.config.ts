@@ -139,6 +139,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'properties:create',
     },
     {
+      label: 'Applications',
+      href: '/applications',
+      icon: 'FileText',
+    },
+    {
       label: 'Inquiries',
       href: '/inquiries',
       icon: 'MessageSquare',
@@ -175,6 +180,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       href: '/properties',
       icon: 'Compass',
       requiredPermission: 'properties:view_published',
+    },
+    {
+      label: 'Applications',
+      href: '/applications',
+      icon: 'FileText',
     },
     {
       label: 'Saved',

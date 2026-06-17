@@ -10,6 +10,7 @@ import { apiClient } from "@/lib/api/axios-client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
 import Link from "next/link";
 import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
+import { RentalApplicationCard } from "./RentalApplicationCard";
 import type { PropertyPhoto } from "./types";
 
 type ListingAddress = {
@@ -149,6 +150,13 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
             </div>
             <FavoriteButton listingId={listing.id} />
           </div>
+
+          <RentalApplicationCard 
+            listingId={listing.id} 
+            title={listing.title} 
+            monthlyRent={listing.monthlyRent} 
+            currency={listing.currency} 
+          />
 
           <InquiryCard listingId={listing.id} title={listing.title} />
 

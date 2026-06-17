@@ -10,7 +10,10 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/stores/auth.store';
 import { useKycStatus, useSubmitKycDocuments } from '@/features/kyc/queries/kyc.queries';
 import { useWalletChallenge, useLinkWallet, useUnlinkWallet } from '@/features/auth/queries/auth.queries';
+import { useUsers } from '@/features/users/queries/users.queries';
+import { useAdminKycDetails, useReviewUserKyc, useAdminKycDocUrl } from '@/features/kyc/queries/kyc.admin.queries';
 import { cn } from '@/lib/utils';
+import { ENDPOINTS } from '@/lib/api/endpoints';
 
 const KYC_STEPS = [
   { key: 'not_started',  label: 'Not Started',  Icon: AlertCircle,  color: 'text-black/30',   bg: 'bg-gray-100' },
@@ -35,9 +38,14 @@ export default function KycPage() {
   const { mutate: doLinkWallet,  isPending: linkingWallet }    = useLinkWallet();
   const { mutate: doUnlinkWallet, isPending: unlinkingWallet } = useUnlinkWallet();
 
-  if (!currentUser) return null;
+  const [activeTab, setActiveTab] = useState<'mine' | 'queue'>('mine');
 
-  const kycStatus      = kycData?.kycStatus ?? currentUser.kycStatus.toLowerCase();
+  if (!currentUser) return null;
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
+
+  let kycStatus = (kycData?.kycStatus ?? currentUser.kycStatus).toLowerCase();
+  if (kycStatus === 'verified') kycStatus = 'approved';
+
   const currentStepIdx = KYC_STEPS.findIndex((s) => s.key === kycStatus);
   const canSubmitKyc   = kycStatus === 'not_started' || kycStatus === 'rejected';
   const isKycApproved  = kycStatus === 'approved';
@@ -73,14 +81,42 @@ export default function KycPage() {
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3 mb-8">
-        <BadgeCheck className="w-6 h-6 text-emerald-500 shrink-0" />
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Verification</p>
-          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">KYC & Wallet</h1>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <BadgeCheck className="w-6 h-6 text-emerald-500 shrink-0" />
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Verification</p>
+            <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">KYC & Wallet</h1>
+          </div>
         </div>
+        
+        {isAdmin && (
+          <div className="flex items-center gap-1 bg-gray-100/50 p-1 rounded-xl border border-gray-200">
+            <button
+              onClick={() => setActiveTab('mine')}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
+                activeTab === 'mine' ? "bg-white text-black shadow-sm" : "text-black/50 hover:text-black"
+              )}
+            >
+              My Verification
+            </button>
+            <button
+              onClick={() => setActiveTab('queue')}
+              className={cn(
+                "px-4 py-1.5 rounded-lg text-xs font-medium transition-all",
+                activeTab === 'queue' ? "bg-white text-black shadow-sm" : "text-black/50 hover:text-black"
+              )}
+            >
+              Admin Queue
+            </button>
+          </div>
+        )}
       </div>
 
+      {activeTab === 'queue' ? (
+        <AdminKycQueue />
+      ) : (
       <div className="space-y-5">
         {/* ── KYC card ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
@@ -252,6 +288,139 @@ export default function KycPage() {
           )}
         </div>
       </div>
+      )}
     </div>
+  );
+}
+
+// ─── Admin KYC Queue ──────────────────────────────────────────────────────────
+
+function AdminKycQueue() {
+  const { data: users = [], isLoading } = useUsers({ kycStatus: 'PENDING' });
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+
+  if (isLoading) return <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>;
+
+  return (
+    <div className="space-y-5">
+      {users.length === 0 ? (
+        <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+          <BadgeCheck className="w-10 h-10 text-black/15 mx-auto mb-3" />
+          <p className="text-sm text-black/40 font-light">No pending KYC reviews.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          {users.map((u, i) => (
+            <div key={u.id}>
+              <div 
+                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => setSelectedUser(selectedUser === u.id ? null : u.id)}
+              >
+                <div>
+                  <p className="text-sm font-medium text-black/80">{u.name}</p>
+                  <p className="text-[10px] font-mono text-black/40">{u.email}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-600">Pending</span>
+                  <span className="text-[10px] text-emerald-500 hover:text-emerald-600 font-medium">
+                    {selectedUser === u.id ? 'Close' : 'Review →'}
+                  </span>
+                </div>
+              </div>
+              
+              {selectedUser === u.id && (
+                <div className="px-4 pb-4 bg-gray-50/50 border-t border-gray-100 pt-4">
+                  <AdminKycReview userId={u.id} onReviewed={() => setSelectedUser(null)} />
+                </div>
+              )}
+              
+              {i < users.length - 1 && <div className="border-b border-gray-100" />}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminKycReview({ userId, onReviewed }: { userId: string, onReviewed: () => void }) {
+  const { data: kycDetails, isLoading } = useAdminKycDetails(userId);
+  const { mutate: review, isPending } = useReviewUserKyc();
+  const [note, setNote] = useState('');
+
+  if (isLoading) return <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>;
+  if (!kycDetails) return <div className="text-sm text-red-500">Failed to load documents.</div>;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-2">Submitted Documents</p>
+        {kycDetails.documents.length === 0 ? (
+          <p className="text-xs text-black/40">No documents found.</p>
+        ) : (
+          <div className="grid gap-2">
+            {kycDetails.documents.map(doc => (
+              <div key={doc.id} className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-3">
+                <div>
+                  <p className="text-xs font-medium text-black/70">{doc.type.replace('_', ' ')}</p>
+                  <p className="text-[10px] font-mono text-black/40">{new Date(doc.uploadedAt).toLocaleDateString()}</p>
+                </div>
+                <KycDocLink userId={userId} docId={doc.id} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 pt-2">
+        <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Admin Decision</p>
+        <textarea
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Optional note to the user..."
+          rows={2}
+          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400 resize-none"
+        />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => review({ userId, decision: 'approve', note }, { onSuccess: onReviewed })}
+            className="flex-1 flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold py-2 rounded-xl transition-colors"
+          >
+            {isPending ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+            Approve
+          </button>
+          <button
+            type="button"
+            disabled={isPending || !note.trim()}
+            onClick={() => review({ userId, decision: 'reject', note }, { onSuccess: onReviewed })}
+            className="flex-1 flex justify-center items-center gap-2 bg-red-50 hover:bg-red-100 disabled:bg-gray-50 disabled:text-gray-400 text-red-600 text-xs font-semibold py-2 rounded-xl transition-colors"
+            title={!note.trim() ? "A note is required for rejection" : ""}
+          >
+            {isPending ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+            Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KycDocLink({ userId, docId }: { userId: string, docId: string }) {
+  const { data: url, isLoading } = useAdminKycDocUrl(userId, docId);
+
+  if (isLoading) return <Loader2 size={13} className="animate-spin text-emerald-500" />;
+  if (!url) return <span className="text-[10px] text-red-500">Error loading link</span>;
+
+  return (
+    <a 
+      href={url} 
+      target="_blank" 
+      rel="noreferrer"
+      className="flex items-center gap-1.5 text-xs text-emerald-600 hover:text-emerald-700 font-medium bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition-colors"
+    >
+      <Link2 size={12} /> View File
+    </a>
   );
 }
