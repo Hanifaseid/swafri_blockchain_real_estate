@@ -16,6 +16,8 @@ import {
   useMintTitle, useDisputeTitle, useClearTitleDispute, useRevokeTitle,
 } from '@/features/listings/queries/listing.queries';
 import type { TransitionAction, RejectionReason } from '@/features/listings/types/listing.types';
+import { apiClient } from '@/lib/api/axios-client';
+import { ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -101,8 +103,6 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       const form = new FormData();
       form.append('type', 'title_deed');
       files.forEach((f) => form.append('documents', f));
-      const { apiClient } = await import('@/lib/api/axios-client');
-      const { ENDPOINTS }  = await import('@/lib/api/endpoints');
       await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(id), form, { headers: { 'Content-Type': 'multipart/form-data' } });
       toast.success('Documents uploaded.');
       refetch();

@@ -14,15 +14,45 @@ interface ApiResp<T> { success: boolean; message: string; data: T; }
 interface ApiPaginatedResp<T> { success: boolean; message: string; data: T[]; meta?: { page: number; limit: number; total: number }; items?: T[]; total?: number; page?: number; limit?: number; }
 
 function extractList<T>(data: ApiPaginatedResp<T>): { items: T[]; total: number; page: number; limit: number } {
-  // Handle both { data: [...] } and { items: [...] } response shapes
-  const items = Array.isArray(data.data) ? data.data : (data as { items?: T[] }).items ?? [];
-  const meta = (data as { meta?: { page: number; limit: number; total: number } }).meta;
-  return {
-    items,
-    total: meta?.total ?? (data as { total?: number }).total ?? items.length,
-    page:  meta?.page  ?? (data as { page?: number }).page  ?? 1,
-    limit: meta?.limit ?? (data as { limit?: number }).limit ?? items.length,
-  };
+  const d = data as unknown as Record<string, unknown>;
+
+  // Shape: { data: { items: [...], total, page, limit } } — what the real API returns
+  if (d.data && typeof d.data === 'object' && !Array.isArray(d.data)) {
+    const nested = d.data as Record<string, unknown>;
+    if (Array.isArray(nested.items)) {
+      return {
+        items: nested.items as T[],
+        total: (nested.total as number)  ?? (nested.items as T[]).length,
+        page:  (nested.page  as number)  ?? 1,
+        limit: (nested.limit as number)  ?? (nested.items as T[]).length,
+      };
+    }
+  }
+
+  // Shape: { data: [...] }
+  if (Array.isArray(d.data)) {
+    const items = d.data as T[];
+    const meta = (d.meta as { page: number; limit: number; total: number } | undefined);
+    return {
+      items,
+      total: meta?.total ?? (d.total as number) ?? items.length,
+      page:  meta?.page  ?? (d.page  as number) ?? 1,
+      limit: meta?.limit ?? (d.limit as number) ?? items.length,
+    };
+  }
+
+  // Shape: top-level { items: [...] }
+  if (Array.isArray(d.items)) {
+    const items = d.items as T[];
+    return {
+      items,
+      total: (d.total as number) ?? items.length,
+      page:  (d.page  as number) ?? 1,
+      limit: (d.limit as number) ?? items.length,
+    };
+  }
+
+  return { items: [], total: 0, page: 1, limit: 20 };
 }
 
 // ─── getListings (public discovery) ──────────────────────────────────────────
