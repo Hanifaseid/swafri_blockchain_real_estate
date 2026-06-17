@@ -19,6 +19,7 @@ const baseLight =
   'transition-colors';
 
 export const inputClass = `${baseLight} h-9 px-3 py-2`;
+export const inputWithIconClass = `${baseLight} h-9 pl-11 pr-3 py-2`;
 export const textareaClass = `${baseLight} px-3 py-2 resize-none`;
 export const selectClass = `${baseLight} h-9 px-3 py-2 pr-8 appearance-none cursor-pointer`;
 
