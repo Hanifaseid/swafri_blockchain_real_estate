@@ -135,8 +135,12 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Listed by</p>
-                <p className="text-sm font-semibold text-gray-900">{listing.ownerName ?? "Platform"}</p>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
+                  Listed by
+                </p>
+                <p className="text-sm font-semibold text-gray-900">
+                  {listing.ownerName ?? "Platform"}
+                </p>
               </div>
               <VerificationBadge
                 blockchainHash={listing.blockchainHash}
@@ -155,7 +159,8 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
               Blockchain Proof
             </h4>
             <p className="text-xs text-gray-500 break-all leading-relaxed">
-              {listing.blockchainHash ?? "No on-chain proof available for this listing."}
+              {listing.blockchainHash ??
+                "No on-chain proof available for this listing."}
             </p>
             {listing.certificateId && (
               <p className="mt-2 text-xs font-medium text-emerald-600">
@@ -209,29 +214,42 @@ function FavoriteButton({ listingId }: { listingId: string }) {
   const [fav, setFav] = React.useState<boolean>(() => {
     try {
       const user = getCurrentUser();
-      const key = user ? SESSION_KEYS.FAVORITES(user.id) : "vex_favorites_user_guest";
-      const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+      const key = user
+        ? SESSION_KEYS.FAVORITES(user.id)
+        : "vex_favorites_user_guest";
+      const raw =
+        typeof window !== "undefined" ? localStorage.getItem(key) : null;
       const favs = raw ? (JSON.parse(raw) as string[]) : [];
       return favs.includes(listingId);
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   });
 
   const toggle = async () => {
     try {
       const user = getCurrentUser();
-      if (!user) { window.location.href = "/portal/login"; return; }
+      if (!user) {
+        window.location.href = "/portal/login";
+        return;
+      }
       const key = SESSION_KEYS.FAVORITES(user.id);
       const raw = localStorage.getItem(key);
       const favs = raw ? (JSON.parse(raw) as string[]) : [];
       const isSaved = favs.includes(listingId);
-      const next = isSaved ? favs.filter((f) => f !== listingId) : [...favs, listingId];
+      const next = isSaved
+        ? favs.filter((f) => f !== listingId)
+        : [...favs, listingId];
       if (process.env.NEXT_PUBLIC_API_URL) {
-        if (isSaved) await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId));
+        if (isSaved)
+          await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId));
         else await apiClient.post(ENDPOINTS.FAVORITES.SAVE, { listingId });
       }
       localStorage.setItem(key, JSON.stringify(next));
       setFav(!isSaved);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -240,48 +258,76 @@ function FavoriteButton({ listingId }: { listingId: string }) {
       aria-pressed={fav}
       className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
         fav
-          ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
-          : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+          ? "bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100"
+          : "bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100"
       }`}
     >
-      <Heart className={`w-4 h-4 ${fav ? 'fill-rose-500 text-rose-500' : 'text-gray-400'}`} />
-      {fav ? 'Saved' : 'Save listing'}
+      <Heart
+        className={`w-4 h-4 ${fav ? "fill-rose-500 text-rose-500" : "text-gray-400"}`}
+      />
+      {fav ? "Saved" : "Save listing"}
     </button>
   );
 }
 
-function InquiryCard({ listingId, title }: { listingId: string; title?: string }) {
+function InquiryCard({
+  listingId,
+  title,
+}: {
+  listingId: string;
+  title?: string;
+}) {
   const [open, setOpen] = React.useState(false);
   const [msg, setMsg] = React.useState("");
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const user = getCurrentUser();
-    if (!user) { window.location.href = "/portal/login"; return; }
+    if (!user) {
+      window.location.href = "/portal/login";
+      return;
+    }
     if (!msg.trim()) return alert("Please write an inquiry message");
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         await apiClient.post(ENDPOINTS.INQUIRIES.SEND, {
-          propertyId: listingId, message: msg,
-          tenantName: user.name, tenantEmail: user.email,
+          propertyId: listingId,
+          message: msg,
+          tenantName: user.name,
+          tenantEmail: user.email,
         });
       } else {
         const raw = localStorage.getItem("vex_inquiries");
         const arr = raw ? JSON.parse(raw) : [];
-        arr.push({ id: Math.random().toString(36).slice(2), propertyId: listingId, message: msg, tenantName: user.name, tenantEmail: user.email, createdAt: new Date().toISOString() });
+        arr.push({
+          id: Math.random().toString(36).slice(2),
+          propertyId: listingId,
+          message: msg,
+          tenantName: user.name,
+          tenantEmail: user.email,
+          createdAt: new Date().toISOString(),
+        });
         localStorage.setItem("vex_inquiries", JSON.stringify(arr));
       }
-      setMsg(""); setOpen(false);
+      setMsg("");
+      setOpen(false);
       alert("Inquiry submitted!");
-    } catch (err) { console.error(err); alert("Failed to submit inquiry"); }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit inquiry");
+    }
   };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Interested?</p>
-          <p className="text-sm font-semibold text-gray-900">Contact the lister</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
+            Interested?
+          </p>
+          <p className="text-sm font-semibold text-gray-900">
+            Contact the lister
+          </p>
         </div>
         {!open && (
           <button
@@ -298,13 +344,21 @@ function InquiryCard({ listingId, title }: { listingId: string; title?: string }
         <div className="mt-4">
           {!getCurrentUser() ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">Please sign in to contact the lister.</p>
+              <p className="text-sm text-gray-600">
+                Please sign in to contact the lister.
+              </p>
               <div className="flex gap-2">
-                <Link href="/portal/login" className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <Link
+                  href="/portal/login"
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
                   Sign in
                 </Link>
                 <WalletConnectButton />
-                <button onClick={() => setOpen(false)} className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
                   Cancel
                 </button>
               </div>
