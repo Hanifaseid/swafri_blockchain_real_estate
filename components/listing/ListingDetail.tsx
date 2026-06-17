@@ -39,7 +39,7 @@ interface ListingProp {
 }
 
 export default function ListingDetail({ listing }: { listing: ListingProp }) {
-  const placeholderImage = "https://picsum.photos/1200/800?blur=2";
+  const placeholderImage = "/placeholder-property.jpg";
 
   const photos: PropertyPhoto[] =
     listing.photos && listing.photos.length > 0
