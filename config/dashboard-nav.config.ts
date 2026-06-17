@@ -107,6 +107,12 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'audit:view',
     },
     {
+      label: 'Chain Transactions',
+      href: '/chain-transactions',
+      icon: 'ServerCog',
+      requiredPermission: 'chain-transactions:view',
+    },
+    {
       label: 'Settings',
       href: '/settings',
       icon: 'Settings',

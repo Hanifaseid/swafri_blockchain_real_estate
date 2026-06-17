@@ -45,6 +45,16 @@ export interface UpdatePurchaseStatusPayload {
   closingChecklist?: ClosingChecklist;
 }
 
+export interface CreatePurchaseTransactionPayload {
+  listingId: string;
+  listingTitle: string;
+  listingPrice: number;
+  currency?: string;
+  buyerAmount: number;
+  depositAmount?: number;
+  note?: string;
+}
+
 export interface PaginatedTransactions {
   items: PurchaseTransaction[];
   total: number;

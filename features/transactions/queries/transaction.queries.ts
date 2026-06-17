@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 import {
+  createPurchaseTransaction,
   getPurchaseTransactions,
   getPurchaseTransactionDetail,
   updatePurchaseTransactionStatus,
 } from '@/features/transactions/services/transaction.service';
-import type { UpdatePurchaseStatusPayload } from '@/features/transactions/types/transaction.types';
+import type { CreatePurchaseTransactionPayload, UpdatePurchaseStatusPayload } from '@/features/transactions/types/transaction.types';
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
@@ -17,6 +18,25 @@ const transactionKeys = {
   details: () => [...transactionKeys.all, 'detail'] as const,
   detail: (id: string) => [...transactionKeys.details(), id] as const,
 };
+
+// ─── useCreatePurchaseTransaction ────────────────────────────────────────────
+
+export function useCreatePurchaseTransaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreatePurchaseTransactionPayload) => createPurchaseTransaction(payload),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.setQueryData(transactionKeys.detail(data.id), data);
+      toast.success('Purchase transaction created successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to create transaction';
+      toast.error(message);
+    },
+  });
+}
 
 // ─── usePurchaseTransactions ──────────────────────────────────────────────────
 

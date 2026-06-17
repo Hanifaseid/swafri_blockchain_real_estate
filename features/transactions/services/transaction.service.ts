@@ -1,8 +1,23 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
-import type { PurchaseTransaction, UpdatePurchaseStatusPayload, PaginatedTransactions } from '../types/transaction.types';
+import type { 
+  PurchaseTransaction, 
+  UpdatePurchaseStatusPayload, 
+  PaginatedTransactions,
+  CreatePurchaseTransactionPayload,
+} from '../types/transaction.types';
 
 // ─── Purchase Transactions Service ────────────────────────────────────────────
+
+export async function createPurchaseTransaction(
+  payload: CreatePurchaseTransactionPayload
+): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.CREATE,
+    payload
+  );
+  return response.data;
+}
 
 export async function getPurchaseTransactions(
   page: number = 1,
@@ -39,6 +54,7 @@ export async function updatePurchaseTransactionStatus(
 
 // Export as service object for consistency
 export const transactionService = {
+  createPurchaseTransaction,
   getPurchaseTransactions,
   getPurchaseTransactionDetail,
   updatePurchaseTransactionStatus,
