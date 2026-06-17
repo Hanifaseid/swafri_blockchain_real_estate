@@ -45,7 +45,7 @@ export function ListingCard({
         )}
       >
         {/* Thumbnail */}
-        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg">
+        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100">
           {listing.image ? (
             <Image
               src={listing.image}

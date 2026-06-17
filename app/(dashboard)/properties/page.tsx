@@ -8,6 +8,7 @@ import { useListings, useMyListings, useAdminListings, useDeleteListing, useTran
 import { listingToSummary } from '@/features/listings/types/listing.types';
 import type { Listing, ListingFilters, TransitionAction } from '@/features/listings/types/listing.types';
 import { ListingCard } from '@/components/listing/ListingCard';
+import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { cn } from '@/lib/utils';
 
 // ─── Properties Page ──────────────────────────────────────────────────────────
@@ -140,7 +141,11 @@ function TenantView() {
           <p className="text-xs text-black/35 font-mono mb-4">{data?.total ?? listings.length} properties found</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {listings.map((listing) => (
-              <ListingCard key={listing.id} listing={listingToSummary(listing)} />
+              <ListingCard
+                key={listing.id}
+                listing={listingToSummary(listing)}
+                favoriteSlot={<FavoriteButton listingId={listing.id} />}
+              />
             ))}
           </div>
           {/* Pagination */}
