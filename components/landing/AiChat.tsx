@@ -43,17 +43,33 @@ export default function AiChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages }),
       });
-      const data = await response.json();
+
+      let data: any;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        data = { error: await response.text() };
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Chat API error: ${response.status}`);
+      }
+
       setChatMessages((prev) => [
         ...prev,
         { role: 'assistant' as const, content: data.text || data.error },
       ]);
-    } catch {
+    } catch (err: any) {
+      const errorMessage =
+        err?.message && err.message !== 'Failed to fetch'
+          ? err.message
+          : 'Network timeout. Please check your API configuration.';
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'assistant' as const,
-          content: 'Network timeout. Please check your API configuration.',
+          content: errorMessage,
         },
       ]);
     } finally {

@@ -16,6 +16,15 @@ import { canAccessRoute, publicRoutes, authRoutes } from '@/config/permissions.c
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // ── Skip API and static assets in proxy — these should not be auth-redirected.
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname === '/favicon.ico'
+  ) {
+    return NextResponse.next();
+  }
+
   // ── 1. Public routes — no auth needed ─────────────────────────────────
   const isPublic = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + '/')
@@ -60,13 +69,7 @@ export function proxy(request: NextRequest) {
 }
 
 // ─── Matcher ──────────────────────────────────────────────────────────────────
-// Run this proxy on all routes except:
-//   - Next.js internals  (_next/static, _next/image)
-//   - Static assets      (favicon, images, fonts, etc.)
-//   - API routes         (/api/*)
-
+// Run this proxy on all routes so it can explicitly exclude API/static routes.
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
-  ],
+  matcher: ['/:path*'],
 };
