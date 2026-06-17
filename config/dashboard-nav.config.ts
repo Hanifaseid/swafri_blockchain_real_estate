@@ -139,6 +139,12 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'inquiries:view_own',
     },
     {
+      label: 'Transactions',
+      href: '/transactions',
+      icon: 'CreditCard',
+      requiredPermission: 'transactions:view_own',
+    },
+    {
       label: 'KYC & Wallet',
       href: '/kyc',
       icon: 'BadgeCheck',
