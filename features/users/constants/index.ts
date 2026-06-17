@@ -25,7 +25,7 @@ export const KYC_STATUS_BADGE: Record<KycStatus, { label: string; color: string 
 // ─── Wallet Status ────────────────────────────────────────────────────────────
 
 export const WALLET_STATUS_BADGE: Record<WalletStatus, { label: string; color: string }> = {
-  NOT_LINKED: { label: 'Not Linked', color: 'bg-white/5 text-white/35' },
+  NOT_LINKED: { label: 'Not Linked', color: 'bg-slate-100 text-slate-700' },
   LINKED:     { label: 'Linked',     color: 'bg-blue-950/40 text-blue-400' },
   VERIFIED:   { label: 'Verified',   color: 'bg-emerald-950/40 text-emerald-400' },
   REVOKED:    { label: 'Revoked',    color: 'bg-red-950/40 text-red-400' },

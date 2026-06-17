@@ -137,11 +137,11 @@ export default function ProfilePage() {
               { label: 'Wallet',  badge: walletBadge, icon: Wallet },
             ].map(({ label, badge, icon: Icon }) => (
               <div key={label} className="rounded-xl p-3 text-center bg-gray-50 border border-gray-200">
-                <div className="flex items-center justify-center gap-1.5 mb-1.5">
-                  {Icon && <Icon className="w-3 h-3 text-black/30" />}
-                  <p className="text-[9px] font-mono uppercase text-black/30">{label}</p>
+                <div className="flex items-center justify-center gap-2 mb-1.5">
+                  {Icon && <Icon className="w-4 h-4 text-black/30" />}
+                  <p className="text-[10px] font-mono uppercase text-black/40">{label}</p>
                 </div>
-                <span className={cn('text-[10px] font-mono font-semibold', badge.color)}>
+                <span className={cn('text-sm font-mono font-semibold', badge.color)}>
                   {badge.label}
                 </span>
               </div>
