@@ -161,12 +161,21 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 // ─── Owner Actions Panel ──────────────────────────────────────────────────────
 
 function OwnerActionsPanel({ app }: { app: any }) {
+  const router = useRouter();
   const { mutate: review, isPending: reviewing } = useReviewRentalApplication();
   const { mutate: updateScreening, isPending: screening } = useUpdateScreening();
   const { mutate: createLease, isPending: leasing } = useCreateLeaseFromApplication();
   
   const [note, setNote] = React.useState('');
-  const [actionStep, setActionStep] = React.useState<'review'|'screening'|'lease'>('review');
+  const [showLeaseForm, setShowLeaseForm] = React.useState(false);
+  const [leaseForm, setLeaseForm] = React.useState({
+    monthlyRent: '',
+    depositAmount: '',
+    currency: 'USD',
+    startDate: app.desiredStartDate || '',
+    endDate: app.desiredEndDate || '',
+    terms: 'Standard residential lease agreement terms apply. Tenant agrees to maintain the property in good condition.',
+  });
 
   const normalizedStatus = (app.status || '').toUpperCase();
 
@@ -177,34 +186,115 @@ function OwnerActionsPanel({ app }: { app: any }) {
           <CheckCircle2 className="text-emerald-500" size={16}/> Application Approved
         </h3>
         <p className="text-xs text-black/50 leading-relaxed">
-          You have approved this tenant. The next step is to generate a lease agreement.
+          This tenant has been approved. Draft and send the formal lease agreement to proceed.
         </p>
-        <button 
-          onClick={() => setActionStep('lease')}
-          className="w-full py-2.5 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-xl transition-colors"
-        >
-          Draft Lease Agreement
-        </button>
-        
-        {actionStep === 'lease' && (
-          <div className="pt-4 border-t border-gray-100 space-y-3">
-             <button 
-              onClick={() => createLease({
-                id: app.id,
-                payload: {
-                  monthlyRent: app.monthlyIncome > 3000 ? 1500 : 1000, // mock payload logic
-                  depositAmount: 1500,
-                  currency: 'USD',
-                  startDate: app.desiredStartDate,
-                  endDate: app.desiredEndDate,
-                  terms: 'Standard 1 year lease terms apply.'
-                }
-              })}
-              disabled={leasing}
-              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg"
-             >
-               {leasing ? 'Processing...' : 'Confirm & Generate Lease'}
-             </button>
+
+        {!showLeaseForm ? (
+          <button 
+            onClick={() => setShowLeaseForm(true)}
+            className="w-full py-2.5 bg-black hover:bg-gray-800 text-white text-sm font-medium rounded-xl transition-colors"
+          >
+            Draft Lease Agreement
+          </button>
+        ) : (
+          <div className="pt-4 border-t border-gray-100 space-y-4">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-500">Lease Terms</p>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Monthly Rent</label>
+                <input
+                  type="number"
+                  value={leaseForm.monthlyRent}
+                  onChange={e => setLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
+                  placeholder="e.g. 1500"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Deposit Amount</label>
+                <input
+                  type="number"
+                  value={leaseForm.depositAmount}
+                  onChange={e => setLeaseForm(f => ({ ...f, depositAmount: e.target.value }))}
+                  placeholder="e.g. 3000"
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Start Date</label>
+                <input
+                  type="date"
+                  value={leaseForm.startDate}
+                  onChange={e => setLeaseForm(f => ({ ...f, startDate: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">End Date</label>
+                <input
+                  type="date"
+                  value={leaseForm.endDate}
+                  onChange={e => setLeaseForm(f => ({ ...f, endDate: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-gray-500 mb-1 block">Currency</label>
+                <select
+                  value={leaseForm.currency}
+                  onChange={e => setLeaseForm(f => ({ ...f, currency: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 bg-white"
+                >
+                  <option value="USD">USD</option>
+                  <option value="USDC">USDC</option>
+                  <option value="ETH">ETH</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Terms</label>
+              <textarea
+                value={leaseForm.terms}
+                onChange={e => setLeaseForm(f => ({ ...f, terms: e.target.value }))}
+                rows={4}
+                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none"
+              />
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <button 
+                onClick={() => setShowLeaseForm(false)}
+                className="flex-1 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold rounded-xl"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  if (!leaseForm.monthlyRent || !leaseForm.depositAmount) {
+                    return;
+                  }
+                  createLease({
+                    id: app.id,
+                    payload: {
+                      monthlyRent: Number(leaseForm.monthlyRent),
+                      depositAmount: Number(leaseForm.depositAmount),
+                      currency: leaseForm.currency,
+                      startDate: leaseForm.startDate,
+                      endDate: leaseForm.endDate,
+                      terms: leaseForm.terms,
+                    }
+                  }, {
+                    onSuccess: (lease) => router.push(`/leases/${lease.id}`)
+                  });
+                }}
+                disabled={leasing || !leaseForm.monthlyRent || !leaseForm.depositAmount}
+                className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl disabled:opacity-50 transition-colors"
+              >
+                {leasing ? 'Creating...' : 'Create Lease Draft'}
+              </button>
+            </div>
           </div>
         )}
       </div>
