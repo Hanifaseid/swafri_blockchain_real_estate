@@ -43,7 +43,9 @@ export default function KycPage() {
   if (!currentUser) return null;
   const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
 
-  const kycStatus      = kycData?.kycStatus ?? currentUser.kycStatus.toLowerCase();
+  let kycStatus = (kycData?.kycStatus ?? currentUser.kycStatus).toLowerCase();
+  if (kycStatus === 'verified') kycStatus = 'approved';
+
   const currentStepIdx = KYC_STEPS.findIndex((s) => s.key === kycStatus);
   const canSubmitKyc   = kycStatus === 'not_started' || kycStatus === 'rejected';
   const isKycApproved  = kycStatus === 'approved';
