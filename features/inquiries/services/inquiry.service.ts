@@ -4,17 +4,31 @@ import type { Inquiry, CreateInquiryInput, UpdateInquiryInput } from '@/features
 
 interface ApiResp<T> { success: boolean; message: string; data: T; }
 
-function extractArray<T>(data: unknown): T[] {
-  const d = data as Record<string, unknown>;
-  if (Array.isArray(d)) return d as T[];
-  if (d?.data && Array.isArray(d.data)) return d.data as T[];
-  if (d?.data && typeof d.data === 'object') {
-    const nested = d.data as Record<string, unknown>;
-    if (Array.isArray(nested.items))    return nested.items as T[];
-    if (Array.isArray(nested.inquiries)) return nested.inquiries as T[];
-  }
-  return [];
+type RawItem = Record<string, unknown>;
+
+function normalizeId(item: RawItem): RawItem {
+  // MongoDB returns _id; normalize it to id so the rest of the UI can use inquiry.id safely
+  if (!item.id && item._id) return { ...item, id: item._id };
+  return item;
 }
+
+function extractArray<T>(data: unknown): T[] {
+  const d = data as RawItem;
+  let arr: RawItem[] = [];
+
+  if (Array.isArray(d)) {
+    arr = d as RawItem[];
+  } else if (d?.data && Array.isArray(d.data)) {
+    arr = d.data as RawItem[];
+  } else if (d?.data && typeof d.data === 'object') {
+    const nested = d.data as RawItem;
+    if (Array.isArray(nested.items))      arr = nested.items as RawItem[];
+    else if (Array.isArray(nested.inquiries)) arr = nested.inquiries as RawItem[];
+  }
+
+  return arr.map(normalizeId) as T[];
+}
+
 
 // ─── getMyInquiries ───────────────────────────────────────────────────────────
 // GET /inquiries/mine — inquiries I sent
