@@ -30,11 +30,24 @@ export interface Session {
 
 export function setSession(user: UserAccount, token?: string): void {
   if (typeof window === 'undefined') return;
-  const session: Session = { user, token };
+  
+  // If no token is provided, try to preserve the existing one
+  let activeToken = token;
+  if (!activeToken) {
+    const existing = getSession();
+    if (existing?.token) {
+      activeToken = existing.token;
+    } else {
+      activeToken = localStorage.getItem(SESSION_KEYS.TOKEN) || undefined;
+    }
+  }
+
+  const session: Session = { user, token: activeToken };
+  
   // Write under both keys so the existing portal/page.tsx still works
   localStorage.setItem(SESSION_KEYS.ACTIVE_USER, JSON.stringify(user));
-  if (token) {
-    localStorage.setItem(SESSION_KEYS.TOKEN, token);
+  if (activeToken) {
+    localStorage.setItem(SESSION_KEYS.TOKEN, activeToken);
   }
   // Full session object
   localStorage.setItem('vex_session', JSON.stringify(session));
