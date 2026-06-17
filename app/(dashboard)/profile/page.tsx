@@ -1,42 +1,38 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  User,
-  Mail,
-  Phone,
-  Lock,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  Wallet,
-} from "lucide-react";
-import { useState } from "react";
-import { z } from "zod";
-import toast from "react-hot-toast";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Lock, 
+  CheckCircle2, 
+  Eye, 
+  EyeOff, 
+  AlertTriangle, 
+  Wallet 
+} from 'lucide-react';
+import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { z } from 'zod';
+import toast from 'react-hot-toast';
 
-import { useAuthStore } from "@/stores/auth.store";
-import {
-  updateProfileSchema,
-  type UpdateProfileFormValues,
-} from "@/features/users/schemas/user.schema";
-import { updateSessionUser } from "@/lib/auth/session";
-import { apiClient } from "@/lib/api/axios-client";
-import { ENDPOINTS } from "@/lib/api/endpoints";
-import { adaptUser, type ApiUser } from "@/lib/api/adapters";
-import { useChangePassword } from "@/features/auth/queries/auth.queries";
-import { Button } from "@/components/ui/Button";
-import { FormField } from "@/components/ui/FormField";
-import { inputClass, inputErrorClass } from "@/components/forms/styles";
-import { Avatar } from "@/components/ui/Avatar";
-import { ROLE_LABELS } from "@/features/roles/types/role.types";
-import {
-  ACCOUNT_STATUS_BADGE,
-  KYC_STATUS_BADGE,
-  WALLET_STATUS_BADGE,
-} from "@/features/users/constants";
-import { cn } from "@/lib/utils";
+import { useAuthStore } from '@/stores/auth.store';
+import { updateProfileSchema, type UpdateProfileFormValues } from '@/features/users/schemas/user.schema';
+import { updateSessionUser } from '@/lib/auth/session';
+import { apiClient } from '@/lib/api/axios-client';
+import { ENDPOINTS } from '@/lib/api/endpoints';
+import { adaptUser, type ApiUser } from '@/lib/api/adapters';
+import { useChangePassword } from '@/features/auth/queries/auth.queries';
+import { Button } from '@/components/ui/Button';
+import { FormField } from '@/components/ui/FormField';
+import { inputClass, inputErrorClass } from '@/components/forms/styles';
+import { Avatar } from '@/components/ui/Avatar';
+import { ROLE_LABELS } from '@/features/roles/types/role.types';
+import { ACCOUNT_STATUS_BADGE, KYC_STATUS_BADGE, WALLET_STATUS_BADGE } from '@/features/users/constants';
+import { cn } from '@/lib/utils';
+
 
 interface UpdateProfileResponse {
   success: boolean;
@@ -67,6 +63,8 @@ type ChangePassValues = z.infer<typeof changePassSchema>;
 
 export default function ProfilePage() {
   const { currentUser, updateUser } = useAuthStore();
+  const searchParams = useSearchParams();
+  const mustReset = searchParams.get('mustReset') === '1';
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
@@ -148,6 +146,18 @@ export default function ProfilePage() {
       </div>
 
       <div className="space-y-5">
+        {/* ── Must reset password banner ── */}
+        {mustReset && (
+          <div className="flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-700">Password change required</p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                An admin set a temporary password for your account. Please change it below before continuing.
+              </p>
+            </div>
+          </div>
+        )}
         {/* ── Identity card ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
           <div className="flex items-center gap-4 mb-6">

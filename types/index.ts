@@ -50,3 +50,65 @@ export type {
   RolePermissionMap,
   PermissionCheckResult,
 } from '@/features/permissions/types/permission.types';
+
+
+
+// ─── Property / Listing ───────────────────────────────────────────────────────
+
+export type ListingType = 'sale' | 'rent';
+export type PropertyType = 'residential' | 'commercial';
+export type ListingStatus =
+  | 'draft'
+  | 'active'
+  | 'pending'
+  | 'sold'
+  | 'rented'
+  | 'delisted'
+  | 'expired'
+  | 'flagged';
+
+export type ListingTier = 'basic' | 'premium' | 'featured';
+
+/**
+ * PropertySummary — lightweight shape used in cards, grids, and map pins.
+ * The full detail shape lives in features/listings/types/.
+ */
+export interface PropertySummary {
+  id: string;
+  title: string;
+  address: string;
+  city: string;
+  country: string;
+  price: number;
+  currency: string;
+  image: string; // primary photo URL
+  listingType: ListingType;
+  type: PropertyType;
+  status: ListingStatus;
+  tier?: ListingTier;
+  beds?: number;
+  baths?: number;
+  sqft?: number;
+  lat?: number;
+  lng?: number;
+  ownerId: string;
+  createdAt: string;
+}
+
+/**
+ * PropertyFilters — used by search page URL params, ListingFilters component,
+ * and the Zustand filter store.
+ */
+export interface PropertyFilters {
+  query?: string;
+  type?: PropertyType;
+  listingType?: ListingType;
+  minPrice?: number;
+  maxPrice?: number;
+  beds?: number;
+  status?: ListingStatus;
+  tier?: ListingTier;
+  city?: string;
+  page?: number;
+  pageSize?: number;
+}

@@ -1,0 +1,294 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, MapPin, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import toast from 'react-hot-toast';
+import Link from 'next/link';
+
+import { useAuthStore } from '@/stores/auth.store';
+import { useCreateListing } from '@/features/listings/queries/listing.queries';
+import { inputClass, inputErrorClass } from '@/components/forms/styles';
+import { cn } from '@/lib/utils';
+
+// ─── Schema ───────────────────────────────────────────────────────────────────
+
+const createSchema = z.object({
+  title:           z.string().min(5, 'Min 5 characters').max(200),
+  description:     z.string().max(5000).optional(),
+  listingType:     z.enum(['sale', 'rent']),
+  category:        z.enum(['residential', 'commercial']),
+  propertyType:    z.string().min(1, 'Required'),
+  price:           z.number().positive().optional(),
+  monthlyRent:     z.number().positive().optional(),
+  currency:        z.string().default('USD'),
+  bedrooms:        z.number().int().min(0).optional(),
+  bathrooms:       z.number().int().min(0).optional(),
+  areaValue:       z.number().positive().optional(),
+  areaUnit:        z.enum(['sqm', 'sqft']).default('sqm'),
+  furnishingStatus: z.enum(['furnished', 'semi_furnished', 'unfurnished']).optional(),
+  street:          z.string().min(1, 'Street is required'),
+  city:            z.string().min(1, 'City is required'),
+  region:          z.string().optional(),
+  country:         z.string().min(1, 'Country is required'),
+  postalCode:      z.string().optional(),
+  longitude:       z.number({ invalid_type_error: 'Enter a valid longitude' }),
+  latitude:        z.number({ invalid_type_error: 'Enter a valid latitude' }),
+  amenities:       z.string().optional(), // comma-separated
+}).refine((d) => {
+  if (d.listingType === 'sale') return !!d.price;
+  return !!d.monthlyRent;
+}, { message: 'Enter the price for this listing type', path: ['price'] });
+
+type FormValues = z.infer<typeof createSchema>;
+
+// ─── CreateListingPage ────────────────────────────────────────────────────────
+
+export default function CreateListingPage() {
+  const router = useRouter();
+  const { currentUser } = useAuthStore();
+  const { mutate: create, isPending } = useCreateListing();
+  const [listingType, setListingType] = useState<'sale' | 'rent'>('rent');
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues: {
+      listingType: 'rent',
+      category:    'residential',
+      currency:    'USD',
+      areaUnit:    'sqm',
+    },
+  });
+
+  if (!currentUser || (currentUser.role !== 'PROPERTY_OWNER' && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
+    return <div className="p-8 text-sm text-black/50">You don't have permission to create listings.</div>;
+  }
+
+  const onSubmit = (data: FormValues) => {
+    const input = {
+      title:        data.title,
+      description:  data.description,
+      listingType:  data.listingType,
+      category:     data.category,
+      propertyType: data.propertyType as import('@/features/listings/types/listing.types').PropertyType,
+      ...(data.listingType === 'sale' ? { price: data.price } : { monthlyRent: data.monthlyRent }),
+      currency: data.currency,
+      bedrooms:     data.bedrooms,
+      bathrooms:    data.bathrooms,
+      area: data.areaValue ? { value: data.areaValue, unit: data.areaUnit } : undefined,
+      furnishingStatus: data.furnishingStatus,
+      amenities: data.amenities ? data.amenities.split(',').map((s) => s.trim()).filter(Boolean) : [],
+      address: {
+        street:     data.street,
+        city:       data.city,
+        region:     data.region,
+        country:    data.country,
+        postalCode: data.postalCode,
+      },
+      location: {
+        type: 'Point' as const,
+        coordinates: [data.longitude, data.latitude] as [number, number],
+      },
+    };
+
+    create(input, {
+      onSuccess: (listing) => {
+        toast.success('Draft created! Upload documents to start verification.');
+        router.push(`/properties/${listing.id}`);
+      },
+    });
+  };
+
+  return (
+    <div className="p-6 md:p-8 max-w-3xl mx-auto">
+      <div className="flex items-center gap-3 mb-8">
+        <Link href="/properties" className="text-black/30 hover:text-black/60 transition-colors">
+          <ArrowLeft size={18} />
+        </Link>
+        <div>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Property Owner</p>
+          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Create Listing</h1>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+
+        {/* ── Listing type toggle ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-4">Listing Type</p>
+          <div className="grid grid-cols-2 gap-3">
+            {(['rent', 'sale'] as const).map((type) => (
+              <button key={type} type="button"
+                onClick={() => { setListingType(type); setValue('listingType', type); }}
+                className={cn('py-3 rounded-xl border text-sm font-medium transition-all capitalize',
+                  listingType === type ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-black/50 hover:border-gray-300')}>
+                For {type === 'rent' ? 'Rent' : 'Sale'}
+              </button>
+            ))}
+          </div>
+          {errors.listingType && <p className="text-xs text-red-500 mt-1">{errors.listingType.message}</p>}
+        </div>
+
+        {/* ── Basic info ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Basic Information</p>
+
+          <Field label="Title" error={errors.title?.message} required>
+            <input {...register('title')} placeholder="e.g. Modern 3BR Apartment in Bole" className={cn(inputClass, errors.title && inputErrorClass)} />
+          </Field>
+
+          <Field label="Description" error={errors.description?.message}>
+            <textarea {...register('description')} rows={4} placeholder="Describe the property…"
+              className={cn(inputClass, 'h-auto resize-none py-2', errors.description && inputErrorClass)} />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Category" error={errors.category?.message} required>
+              <select {...register('category')} className={cn(inputClass, errors.category && inputErrorClass)}>
+                <option value="residential">Residential</option>
+                <option value="commercial">Commercial</option>
+              </select>
+            </Field>
+
+            <Field label="Property Type" error={errors.propertyType?.message} required>
+              <select {...register('propertyType')} className={cn(inputClass, errors.propertyType && inputErrorClass)}>
+                <option value="">Select…</option>
+                {['apartment','house','villa','condominium','land','commercial_space','office','warehouse','shop','mixed_use'].map((t) => (
+                  <option key={t} value={t}>{t.replace('_', ' ')}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {listingType === 'sale' ? (
+              <Field label="Sale Price" error={errors.price?.message} required>
+                <input type="number" {...register('price', { valueAsNumber: true })} placeholder="250000"
+                  className={cn(inputClass, errors.price && inputErrorClass)} />
+              </Field>
+            ) : (
+              <Field label="Monthly Rent" error={errors.monthlyRent?.message} required>
+                <input type="number" {...register('monthlyRent', { valueAsNumber: true })} placeholder="1500"
+                  className={cn(inputClass, errors.monthlyRent && inputErrorClass)} />
+              </Field>
+            )}
+            <Field label="Currency" error={errors.currency?.message}>
+              <select {...register('currency')} className={inputClass}>
+                {['USD','ETB','EUR','GBP'].map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <Field label="Bedrooms">
+              <input type="number" {...register('bedrooms', { valueAsNumber: true })} min={0} placeholder="3" className={inputClass} />
+            </Field>
+            <Field label="Bathrooms">
+              <input type="number" {...register('bathrooms', { valueAsNumber: true })} min={0} placeholder="2" className={inputClass} />
+            </Field>
+            <Field label="Furnishing">
+              <select {...register('furnishingStatus')} className={inputClass}>
+                <option value="">Not specified</option>
+                <option value="furnished">Furnished</option>
+                <option value="semi_furnished">Semi-furnished</option>
+                <option value="unfurnished">Unfurnished</option>
+              </select>
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Area Value">
+              <input type="number" {...register('areaValue', { valueAsNumber: true })} placeholder="120" className={inputClass} />
+            </Field>
+            <Field label="Area Unit">
+              <select {...register('areaUnit')} className={inputClass}>
+                <option value="sqm">sqm</option>
+                <option value="sqft">sqft</option>
+              </select>
+            </Field>
+          </div>
+
+          <Field label="Amenities" hint="Comma-separated: parking, gym, pool">
+            <input {...register('amenities')} placeholder="parking, gym, pool, security" className={inputClass} />
+          </Field>
+        </div>
+
+        {/* ── Address ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Address</p>
+
+          <Field label="Street" error={errors.street?.message} required>
+            <input {...register('street')} placeholder="123 Main Street" className={cn(inputClass, errors.street && inputErrorClass)} />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="City" error={errors.city?.message} required>
+              <input {...register('city')} placeholder="Addis Ababa" className={cn(inputClass, errors.city && inputErrorClass)} />
+            </Field>
+            <Field label="Region">
+              <input {...register('region')} placeholder="Addis Ababa" className={inputClass} />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Country" error={errors.country?.message} required>
+              <input {...register('country')} placeholder="Ethiopia" className={cn(inputClass, errors.country && inputErrorClass)} />
+            </Field>
+            <Field label="Postal Code">
+              <input {...register('postalCode')} placeholder="1000" className={inputClass} />
+            </Field>
+          </div>
+        </div>
+
+        {/* ── Location coordinates ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+          <div className="flex items-center gap-2">
+            <MapPin size={14} className="text-black/40" />
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">GPS Coordinates</p>
+          </div>
+          <p className="text-xs text-black/40">Find coordinates at <a href="https://www.latlong.net" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:underline">latlong.net</a>. Format: [longitude, latitude]</p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Longitude" error={errors.longitude?.message} required>
+              <input type="number" step="any" {...register('longitude', { valueAsNumber: true })} placeholder="38.7578"
+                className={cn(inputClass, errors.longitude && inputErrorClass)} />
+            </Field>
+            <Field label="Latitude" error={errors.latitude?.message} required>
+              <input type="number" step="any" {...register('latitude', { valueAsNumber: true })} placeholder="8.9806"
+                className={cn(inputClass, errors.latitude && inputErrorClass)} />
+            </Field>
+          </div>
+        </div>
+
+        {/* Submit */}
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-black/35 font-light">Listing will be saved as a draft. Upload ownership documents to start verification.</p>
+          <button type="submit" disabled={isPending}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition-colors">
+            {isPending ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : 'Create Draft'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ─── Shared Field ─────────────────────────────────────────────────────────────
+
+function Field({ label, error, hint, required, children }: {
+  label: string; error?: string; hint?: string; required?: boolean; children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-sm font-medium text-gray-700">
+        {label}{required && <span className="ml-0.5 text-red-500">*</span>}
+      </label>
+      {children}
+      {hint && !error && <p className="text-xs text-gray-400">{hint}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
+  );
+}

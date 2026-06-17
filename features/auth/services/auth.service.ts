@@ -79,6 +79,12 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
     setSession(user, token);
     if (typeof window !== 'undefined') {
       localStorage.setItem('vex_refresh_token', refreshToken);
+      // Store mustResetPassword flag so queries layer can redirect
+      if (data.data.user.mustResetPassword) {
+        localStorage.setItem('vex_must_reset_password', '1');
+      } else {
+        localStorage.removeItem('vex_must_reset_password');
+      }
     }
 
     logAudit(user, 'User logged in');
