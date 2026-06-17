@@ -109,9 +109,12 @@ export function useCreateLeaseFromApplication() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: CreateLeasePayload }) => 
       createLeaseFromApplication(id, payload),
-    onSuccess: (_, { id }) => {
+    onSuccess: (lease, { id }) => {
       qc.invalidateQueries({ queryKey: rentalAppKeys.detail(id) });
-      toast.success('Lease created successfully.');
+      qc.invalidateQueries({ queryKey: rentalAppKeys.mine() });
+      // also bust lease queries so the new lease appears immediately in /leases
+      qc.invalidateQueries({ queryKey: ['leases'] });
+      toast.success('Lease draft created! Redirecting…');
     },
     onError: (err: Error) => toast.error(err.message),
   });
