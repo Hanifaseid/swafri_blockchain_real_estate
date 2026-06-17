@@ -247,7 +247,7 @@ export function listingToSummary(l: Listing): PropertySummary {
     country: l.address.country,
     price: l.price ?? l.monthlyRent ?? 0,
     currency: l.currency ?? "USD",
-    image: coverPhoto?.url ?? "https://picsum.photos/1200/800?blur=2",
+    image: coverPhoto?.url ?? '',
     listingType: l.listingType,
     type: l.category === "residential" ? "residential" : "commercial",
     status: mapStatus(l.status),
