@@ -47,7 +47,7 @@ export interface ReviewApplicationPayload {
 }
 
 export interface ScreeningUpdatePayload {
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'passed' | 'failed' | 'manual_review';
   provider: string;
   reference?: string;
   score?: number;

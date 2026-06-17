@@ -25,12 +25,19 @@ interface ApiSingleResponse<T> {
 }
 
 export async function submitRentalApplication(payload: SubmitRentalApplicationPayload): Promise<RentalApplication> {
-  const { data } = await apiClient.post<ApiSingleResponse<RentalApplication>>(
-    ENDPOINTS.RENTAL_APPS.SUBMIT,
-    payload
-  );
-  if (!data.success) throw new Error(data.message || 'Failed to submit application');
-  return data.data;
+  try {
+    const { data } = await apiClient.post<ApiSingleResponse<RentalApplication>>(
+      ENDPOINTS.RENTAL_APPS.SUBMIT,
+      payload
+    );
+    if (!data.success) throw new Error(data.message || 'Failed to submit application');
+    return data.data;
+  } catch (error: any) {
+    if (error.response?.data?.errors) {
+      throw new Error(error.response.data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', '));
+    }
+    throw new Error(error.response?.data?.message || error.message || 'Failed to submit application');
+  }
 }
 
 export async function getMyRentalApplications(): Promise<RentalApplication[]> {
@@ -61,19 +68,34 @@ export async function withdrawRentalApplication(id: string): Promise<void> {
 }
 
 export async function reviewRentalApplication(id: string, payload: ReviewApplicationPayload): Promise<void> {
-  const { data } = await apiClient.patch<{ success: boolean; message: string }>(
-    ENDPOINTS.RENTAL_APPS.REVIEW(id),
-    payload
-  );
-  if (!data.success) throw new Error(data.message || 'Failed to review application');
+  try {
+    const { data } = await apiClient.patch<{ success: boolean; message: string }>(
+      ENDPOINTS.RENTAL_APPS.REVIEW(id),
+      payload
+    );
+    if (!data.success) throw new Error(data.message || 'Failed to review application');
+  } catch (error: any) {
+    if (error.response?.data?.errors) {
+      throw new Error(error.response.data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', '));
+    }
+    throw new Error(error.response?.data?.message || error.message || 'Failed to review application');
+  }
 }
 
 export async function updateScreening(id: string, payload: ScreeningUpdatePayload): Promise<void> {
-  const { data } = await apiClient.patch<{ success: boolean; message: string }>(
-    ENDPOINTS.RENTAL_APPS.SCREENING(id),
-    payload
-  );
-  if (!data.success) throw new Error(data.message || 'Failed to update screening');
+  try {
+    const { data } = await apiClient.patch<{ success: boolean; message: string }>(
+      ENDPOINTS.RENTAL_APPS.SCREENING(id),
+      payload
+    );
+    if (!data.success) throw new Error(data.message || 'Failed to update screening');
+  } catch (error: any) {
+    if (error.response?.data?.errors) {
+      const errs = error.response.data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', ');
+      throw new Error(`Validation failed: ${errs}`);
+    }
+    throw new Error(error.response?.data?.message || error.message || 'Failed to update screening');
+  }
 }
 
 export async function updateAppointment(id: string, payload: AppointmentUpdatePayload): Promise<void> {
@@ -85,9 +107,16 @@ export async function updateAppointment(id: string, payload: AppointmentUpdatePa
 }
 
 export async function createLeaseFromApplication(id: string, payload: CreateLeasePayload): Promise<void> {
-  const { data } = await apiClient.post<{ success: boolean; message: string }>(
-    ENDPOINTS.RENTAL_APPS.CREATE_LEASE(id),
-    payload
-  );
-  if (!data.success) throw new Error(data.message || 'Failed to create lease');
+  try {
+    const { data } = await apiClient.post<{ success: boolean; message: string }>(
+      ENDPOINTS.RENTAL_APPS.CREATE_LEASE(id),
+      payload
+    );
+    if (!data.success) throw new Error(data.message || 'Failed to create lease');
+  } catch (error: any) {
+    if (error.response?.data?.errors) {
+      throw new Error(error.response.data.errors.map((e: any) => `${e.field}: ${e.message}`).join(', '));
+    }
+    throw new Error(error.response?.data?.message || error.message || 'Failed to create lease');
+  }
 }
