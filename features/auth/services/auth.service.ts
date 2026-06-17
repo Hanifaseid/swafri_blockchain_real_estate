@@ -136,6 +136,7 @@ export async function register(payload: RegisterRequest): Promise<RegisterRespon
 }
 
 // ─── logout ───────────────────────────────────────────────────────────────────
+// POST /auth/logout — must send { refreshToken } in body per spec.
 
 export async function logout(): Promise<void> {
   if (typeof window === 'undefined') return;
@@ -146,8 +147,9 @@ export async function logout(): Promise<void> {
       const user = JSON.parse(raw) as UserAccount;
       logAudit(user, 'User logged out');
 
-      // Call logout endpoint — best effort, don't block on failure
-      await apiClient.post(ENDPOINTS.AUTH.LOGOUT).catch(() => {});
+      // Send refreshToken in body so backend can revoke this specific session
+      const refreshToken = localStorage.getItem('vex_refresh_token');
+      await apiClient.post(ENDPOINTS.AUTH.LOGOUT, { refreshToken }).catch(() => {});
     } catch {
       // ignore
     }
@@ -156,8 +158,95 @@ export async function logout(): Promise<void> {
   localStorage.removeItem('vex_refresh_token');
   clearSession();
 }
+// ─── forgotPassword ────────────────────────────────────────────────────────
+export async function forgotPassword(email: string): Promise<void> {
+  const { data } = await apiClient.post<{ success: boolean; message: string }>(
+    ENDPOINTS.AUTH.FORGOT_PASSWORD,
+    { email }
+  );
+  if (!data.success) throw new AuthServiceError(mapApiError(data.message));
+}
 
-// ─── getCurrentUser ───────────────────────────────────────────────────────────
+// ─── resetPassword ──────────────────────────────────────────────────────────────
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  const { data } = await apiClient.post<{ success: boolean; message: string }>(
+    ENDPOINTS.AUTH.RESET_PASSWORD,
+    { token, password: newPassword }
+  );
+  if (!data.success) throw new AuthServiceError(mapApiError(data.message));
+  // Invalidate all sessions – client side only
+  await logoutAll();
+}
+
+// ─── logoutAll ────────────────────────────────────────────────────────────────
+export async function logoutAll(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    await apiClient.post(ENDPOINTS.AUTH.LOGOUT_ALL);
+  } catch {
+    // ignore errors – best effort
+  }
+  // clear refresh token and session
+  localStorage.removeItem('vex_refresh_token');
+  clearSession();
+}
+
+
+// ─── changePassword ───────────────────────────────────────────────────────────
+// POST /auth/change-password — revokes all sessions after success.
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<void> {
+  const { data } = await apiClient.post<{ success: boolean; message: string }>(
+    ENDPOINTS.AUTH.CHANGE_PASSWORD,
+    { currentPassword, newPassword }
+  );
+  if (!data.success) throw new AuthServiceError(mapApiError(data.message));
+  // Backend revokes all sessions — clear local session too
+  localStorage.removeItem('vex_refresh_token');
+  clearSession();
+}
+
+// ─── Wallet ───────────────────────────────────────────────────────────────────
+// POST /auth/wallet/challenge → get nonce to sign
+// POST /auth/wallet/link      → link with signed challenge
+// DELETE /auth/wallet         → unlink
+
+export async function requestWalletChallenge(walletAddress: string): Promise<string> {
+  const { data } = await apiClient.post<{ success: boolean; data: { nonce: string } }>(
+    ENDPOINTS.AUTH.WALLET_CHALLENGE,
+    { walletAddress }
+  );
+  if (!data.success) throw new Error('Failed to get wallet challenge');
+  return data.data.nonce;
+}
+
+export async function linkWallet(
+  walletAddress: string,
+  signature: string,
+  currentUser: UserAccount
+): Promise<UserAccount> {
+  const { data } = await apiClient.post<ApiProfileResponse>(
+    ENDPOINTS.AUTH.WALLET_LINK,
+    { walletAddress, signature }
+  );
+  if (!data.success) throw new Error('Failed to link wallet');
+  const updated = adaptUser(data.data);
+  setSession(updated);
+  logAudit(currentUser, `Wallet linked: ${walletAddress}`);
+  return updated;
+}
+
+export async function unlinkWallet(currentUser: UserAccount): Promise<UserAccount> {
+  const { data } = await apiClient.delete<ApiProfileResponse>(ENDPOINTS.AUTH.WALLET_UNLINK);
+  if (!data.success) throw new Error('Failed to unlink wallet');
+  const updated = adaptUser(data.data);
+  setSession(updated);
+  logAudit(currentUser, 'Wallet unlinked');
+  return updated;
+}
 // Reads the active session token and fetches the latest profile from the API.
 // Falls back to cached session if the API is unreachable.
 
