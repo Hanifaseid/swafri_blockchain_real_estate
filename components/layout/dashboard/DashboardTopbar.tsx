@@ -121,10 +121,10 @@ export function DashboardTopbar({
                   className="px-3 py-2.5 mb-1"
                   style={{ borderBottom: "1px solid var(--color-dash-border)" }}
                 >
-                  <p className="text-xs font-semibold text-white truncate">
+                  <p className="text-xs font-semibold text-black truncate">
                     {user.name}
                   </p>
-                  <p className="text-[10px] text-white/40 font-mono truncate">
+                  <p className="text-[10px] text-black/50 font-mono truncate">
                     {user.email}
                   </p>
                 </div>
