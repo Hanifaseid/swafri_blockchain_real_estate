@@ -90,9 +90,9 @@ export default function DashboardPage() {
 function TenantOverview() {
   return (
     <div className="grid md:grid-cols-3 gap-4">
-      <QuickCard icon={<Building2 className="w-5 h-5 text-emerald-400" />} title="Browse Properties" desc="Discover verified listings for rent and sale" href="/dashboard/properties" />
-      <QuickCard icon={<BadgeCheck className="w-5 h-5 text-emerald-400" />} title="Complete KYC" desc="Verify your identity to unlock full access" href="/dashboard/kyc" />
-      <QuickCard icon={<Wallet className="w-5 h-5 text-emerald-400" />} title="Link Wallet" desc="Connect your wallet for blockchain transactions" href="/dashboard/kyc" />
+      <QuickCard icon={<Building2 className="w-5 h-5 text-emerald-400" />} title="Browse Properties" desc="Discover verified listings for rent and sale" href="/properties" />
+      <QuickCard icon={<BadgeCheck className="w-5 h-5 text-emerald-400" />} title="Complete KYC" desc="Verify your identity to unlock full access" href="/kyc" />
+      <QuickCard icon={<Wallet className="w-5 h-5 text-emerald-400" />} title="Link Wallet" desc="Connect your wallet for blockchain transactions" href="/kyc" />
     </div>
   );
 }
