@@ -45,3 +45,10 @@ export function useUpdateInquiry(id: string) {
     onError: (e: Error) => toast.error(e.message),
   });
 }
+
+export function useAllInquiriesAdmin(params?: import('@/features/inquiries/types/inquiry.types').AdminInquiriesParams) {
+  return useQuery({
+    queryKey: ['inquiries', 'admin', params],
+    queryFn: () => import('@/features/inquiries/services/inquiry.service').then(m => m.getAllInquiriesAdmin(params)),
+  });
+}
