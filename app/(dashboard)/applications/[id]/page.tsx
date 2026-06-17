@@ -246,7 +246,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
           </div>
           <button 
             disabled={screening}
-            onClick={() => updateScreening({ id: app.id, payload: { status: 'approved', provider: 'TransUnion', score: 750 }})}
+            onClick={() => updateScreening({ id: app.id, payload: { status: 'approved', provider: 'TransUnion', score: 750, reference: 'REF-' + Date.now(), notes: 'Background check cleared successfully' }})}
             className="w-full py-2 bg-black text-white hover:bg-gray-800 rounded-xl text-xs font-semibold"
           >
             Mark Screening Passed
