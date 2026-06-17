@@ -131,32 +131,34 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
         </div>
 
         <aside className="space-y-4">
-          <div className="bg-white p-4 rounded-2xl border shadow-sm flex items-center justify-between">
-            <div>
-              <p className="text-xs text-gray-500">Owner</p>
-              <p className="font-semibold">{listing.ownerName ?? "Platform"}</p>
-            </div>
-            <div className="flex flex-col items-end gap-2">
+          {/* Owner card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Listed by</p>
+                <p className="text-sm font-semibold text-gray-900">{listing.ownerName ?? "Platform"}</p>
+              </div>
               <VerificationBadge
                 blockchainHash={listing.blockchainHash}
                 certificateId={listing.certificateId}
               />
-              <FavoriteButton listingId={listing.id} />
             </div>
+            <FavoriteButton listingId={listing.id} />
           </div>
 
           <InquiryCard listingId={listing.id} title={listing.title} />
 
-          <div className="bg-white p-4 rounded-2xl border shadow-sm text-sm text-gray-600">
-            <h4 className="font-bold mb-2 flex items-center gap-2">
-              <FileCheck2 /> Blockchain Proof
+          {/* Blockchain proof card */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <h4 className="text-xs font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <FileCheck2 className="w-4 h-4 text-emerald-600" />
+              Blockchain Proof
             </h4>
-            <p className="text-xs break-words">
-              {listing.blockchainHash ??
-                "No on-chain proof available for this listing."}
+            <p className="text-xs text-gray-500 break-all leading-relaxed">
+              {listing.blockchainHash ?? "No on-chain proof available for this listing."}
             </p>
             {listing.certificateId && (
-              <p className="mt-2 text-xs text-emerald-600">
+              <p className="mt-2 text-xs font-medium text-emerald-600">
                 Certificate: {listing.certificateId}
               </p>
             )}
@@ -207,174 +209,126 @@ function FavoriteButton({ listingId }: { listingId: string }) {
   const [fav, setFav] = React.useState<boolean>(() => {
     try {
       const user = getCurrentUser();
-      const key = user
-        ? SESSION_KEYS.FAVORITES(user.id)
-        : "vex_favorites_user_guest";
-      const raw =
-        typeof window !== "undefined" ? localStorage.getItem(key) : null;
+      const key = user ? SESSION_KEYS.FAVORITES(user.id) : "vex_favorites_user_guest";
+      const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null;
       const favs = raw ? (JSON.parse(raw) as string[]) : [];
       return favs.includes(listingId);
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   });
 
   const toggle = async () => {
     try {
       const user = getCurrentUser();
-      if (!user) {
-        window.location.href = "/portal/login";
-        return;
-      }
-
+      if (!user) { window.location.href = "/portal/login"; return; }
       const key = SESSION_KEYS.FAVORITES(user.id);
       const raw = localStorage.getItem(key);
       const favs = raw ? (JSON.parse(raw) as string[]) : [];
       const isSaved = favs.includes(listingId);
-      const next = isSaved
-        ? favs.filter((f) => f !== listingId)
-        : [...favs, listingId];
-
+      const next = isSaved ? favs.filter((f) => f !== listingId) : [...favs, listingId];
       if (process.env.NEXT_PUBLIC_API_URL) {
-        if (isSaved) {
-          await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId));
-        } else {
-          await apiClient.post(ENDPOINTS.FAVORITES.SAVE, { listingId });
-        }
+        if (isSaved) await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId));
+        else await apiClient.post(ENDPOINTS.FAVORITES.SAVE, { listingId });
       }
-
       localStorage.setItem(key, JSON.stringify(next));
       setFav(!isSaved);
-    } catch (err) {
-      console.error(err);
-      setFav((prev) => !prev);
-    }
+    } catch (err) { console.error(err); }
   };
 
   return (
     <button
       onClick={toggle}
       aria-pressed={fav}
-      className="px-3 py-2 rounded-full bg-white border shadow-sm hover:scale-105 transition inline-flex items-center gap-2"
+      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+        fav
+          ? 'bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100'
+          : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+      }`}
     >
-      <Heart
-        className={`w-4 h-4 ${fav ? "text-rose-500" : "text-slate-400"}`}
-      />
-      <span className="text-xs font-semibold">{fav ? "Saved" : "Save"}</span>
+      <Heart className={`w-4 h-4 ${fav ? 'fill-rose-500 text-rose-500' : 'text-gray-400'}`} />
+      {fav ? 'Saved' : 'Save listing'}
     </button>
   );
 }
 
-function InquiryCard({
-  listingId,
-  title,
-}: {
-  listingId: string;
-  title?: string;
-}) {
+function InquiryCard({ listingId, title }: { listingId: string; title?: string }) {
   const [open, setOpen] = React.useState(false);
   const [msg, setMsg] = React.useState("");
 
   const submit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const user = getCurrentUser();
-    if (!user) {
-      window.location.href = "/portal/login";
-      return;
-    }
+    if (!user) { window.location.href = "/portal/login"; return; }
     if (!msg.trim()) return alert("Please write an inquiry message");
-
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         await apiClient.post(ENDPOINTS.INQUIRIES.SEND, {
-          propertyId: listingId,
-          message: msg,
-          tenantName: user.name,
-          tenantEmail: user.email,
+          propertyId: listingId, message: msg,
+          tenantName: user.name, tenantEmail: user.email,
         });
-        alert("Inquiry submitted");
       } else {
         const raw = localStorage.getItem("vex_inquiries");
         const arr = raw ? JSON.parse(raw) : [];
-        arr.push({
-          id: Math.random().toString(36).slice(2),
-          propertyId: listingId,
-          message: msg,
-          tenantName: user.name,
-          tenantEmail: user.email,
-          createdAt: new Date().toISOString(),
-        });
+        arr.push({ id: Math.random().toString(36).slice(2), propertyId: listingId, message: msg, tenantName: user.name, tenantEmail: user.email, createdAt: new Date().toISOString() });
         localStorage.setItem("vex_inquiries", JSON.stringify(arr));
-        alert("Inquiry saved locally");
       }
-      setMsg("");
-      setOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit inquiry");
-    }
+      setMsg(""); setOpen(false);
+      alert("Inquiry submitted!");
+    } catch (err) { console.error(err); alert("Failed to submit inquiry"); }
   };
 
   return (
-    <div className="bg-white p-4 rounded-2xl border shadow-sm">
-      <div className="flex items-center justify-between">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs text-gray-500">Interested?</p>
-          <p className="font-semibold">Contact the lister</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Interested?</p>
+          <p className="text-sm font-semibold text-gray-900">Contact the lister</p>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="bg-blue-600 text-white px-3 py-2 rounded-xl text-sm flex items-center gap-2"
-        >
-          <MessageSquare className="w-4 h-4" />
-          Enquire
-        </button>
+        {!open && (
+          <button
+            onClick={() => setOpen(true)}
+            className="shrink-0 inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            Enquire
+          </button>
+        )}
       </div>
 
       {open && (
-        <div className="mt-3">
-          {/* If not authenticated, show login / wallet connect options */}
+        <div className="mt-4">
           {!getCurrentUser() ? (
             <div className="space-y-3">
-              <p className="text-sm text-slate-600">
-                Please sign in to contact the lister.
-              </p>
+              <p className="text-sm text-gray-600">Please sign in to contact the lister.</p>
               <div className="flex gap-2">
-                <Link
-                  href="/portal/login"
-                  className="px-3 py-2 rounded-xl border inline-block"
-                >
+                <Link href="/portal/login" className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                   Sign in
                 </Link>
                 <WalletConnectButton />
-                <button
-                  onClick={() => setOpen(false)}
-                  className="px-3 py-2 rounded-xl border"
-                >
+                <button onClick={() => setOpen(false)} className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={submit} className="mt-0 space-y-2">
+            <form onSubmit={submit} className="space-y-3">
               <textarea
                 value={msg}
                 onChange={(e) => setMsg(e.target.value)}
-                className="w-full p-2 border rounded-md"
+                className="w-full p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
                 rows={4}
-                placeholder={`Message about ${title ?? "this property"}`}
+                placeholder={`Message about ${title ?? "this property"}…`}
               />
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="bg-slate-900 text-white px-3 py-2 rounded-xl text-sm"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
                 >
                   Send Inquiry
                 </button>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-3 py-2 rounded-xl border"
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
