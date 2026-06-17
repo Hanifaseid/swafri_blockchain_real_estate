@@ -7,6 +7,12 @@ import {
   logout,
   getCurrentUser,
   createAdmin,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  requestWalletChallenge,
+  linkWallet,
+  unlinkWallet,
 } from '@/features/auth/services/auth.service';
 import type { LoginRequest, RegisterRequest } from '@/features/auth/types/auth.types';
 import type { CreateAdminPayload } from '@/features/users/types/user.types';
@@ -120,9 +126,91 @@ export function useCreateAdmin() {
     },
 
     onSuccess: () => {
-      // Refresh both the users list and the admins list
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all() });
       queryClient.invalidateQueries({ queryKey: ['admins'] });
+    },
+  });
+}
+
+// ─── useForgotPassword ────────────────────────────────────────────────────────
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (email: string) => forgotPassword(email),
+  });
+}
+
+// ─── useResetPassword ─────────────────────────────────────────────────────────
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: ({ token, newPassword }: { token: string; newPassword: string }) =>
+      resetPassword(token, newPassword),
+  });
+}
+
+// ─── useChangePassword ────────────────────────────────────────────────────────
+
+export function useChangePassword() {
+  const clearUser = useAuthStore((s) => s.clearUser);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      changePassword(currentPassword, newPassword),
+
+    onSuccess: () => {
+      clearUser();
+      queryClient.clear();
+      // Clear auth cookies
+      if (typeof document !== 'undefined') {
+        document.cookie = 'vex_authed=; path=/; max-age=0';
+        document.cookie = 'vex_user_role=; path=/; max-age=0';
+      }
+      router.push('/login');
+    },
+  });
+}
+
+// ─── useWalletChallenge ───────────────────────────────────────────────────────
+
+export function useWalletChallenge() {
+  return useMutation({
+    mutationFn: (walletAddress: string) => requestWalletChallenge(walletAddress),
+  });
+}
+
+// ─── useLinkWallet ────────────────────────────────────────────────────────────
+
+export function useLinkWallet() {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const updateUser = useAuthStore((s) => s.updateUser);
+
+  return useMutation({
+    mutationFn: ({ walletAddress, signature }: { walletAddress: string; signature: string }) => {
+      if (!currentUser) throw new Error('Not authenticated');
+      return linkWallet(walletAddress, signature, currentUser);
+    },
+    onSuccess: (updated) => {
+      updateUser({ walletStatus: updated.walletStatus, linkedWalletAddress: updated.linkedWalletAddress });
+    },
+  });
+}
+
+// ─── useUnlinkWallet ──────────────────────────────────────────────────────────
+
+export function useUnlinkWallet() {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const updateUser = useAuthStore((s) => s.updateUser);
+
+  return useMutation({
+    mutationFn: () => {
+      if (!currentUser) throw new Error('Not authenticated');
+      return unlinkWallet(currentUser);
+    },
+    onSuccess: (updated) => {
+      updateUser({ walletStatus: updated.walletStatus, linkedWalletAddress: undefined });
     },
   });
 }
