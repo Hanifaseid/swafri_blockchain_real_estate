@@ -65,7 +65,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
           <p className="text-sm text-black/50 mt-1">For Listing ID: <span className="font-mono text-xs">{app.listingId}</span></p>
         </div>
         
-        {isTenant && isActive && normalizedStatus === 'PENDING' && (
+        {isTenant && isActive && normalizedStatus !== 'APPROVED' && (
           <button 
             onClick={() => {
               if (confirm('Are you sure you want to withdraw this application?')) {
@@ -204,7 +204,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
     <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <h3 className="text-sm font-semibold text-black/80">Owner Review</h3>
       
-      {normalizedStatus === 'PENDING' && (
+      {normalizedStatus !== 'APPROVED' && normalizedStatus !== 'SCREENING' && (
         <div className="space-y-3">
           <textarea 
             value={note}
