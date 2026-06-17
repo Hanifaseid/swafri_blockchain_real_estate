@@ -232,9 +232,17 @@ export default function ProfilePage() {
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
-                  type="text" autoComplete="name"
-                  {...profileForm.register('name')}
-                  className={cn('pl-9', inputClass, profileForm.formState.errors.name && inputErrorClass)}
+                  type="text"
+                  autoComplete="name"
+                  {...profileForm.register("name")}
+                  className={cn(
+                    "w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors",
+                    "border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none",
+                    "pl-9 pr-3 py-2.5",
+                    profileForm.formState.errors.name &&
+                      "border-red-300 focus:border-red-400 focus:ring-red-500/20",
+                    profileForm.formState.errors.name && inputErrorClass,
+                  )}
                 />
               </div>
             </FormField>
@@ -248,9 +256,17 @@ export default function ProfilePage() {
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
                 <input
-                  type="tel" autoComplete="tel"
-                  {...profileForm.register('phone')}
-                  className={cn('pl-9', inputClass, profileForm.formState.errors.phone && inputErrorClass)}
+                  type="tel"
+                  autoComplete="tel"
+                  {...profileForm.register("phone")}
+                  className={cn(
+                    "w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors",
+                    "border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none",
+                    "pl-9 pr-3 py-2.5",
+                    profileForm.formState.errors.phone &&
+                      "border-red-300 focus:border-red-400 focus:ring-red-500/20",
+                    profileForm.formState.errors.phone && inputErrorClass,
+                  )}
                 />
               </div>
             </FormField>
@@ -261,9 +277,17 @@ export default function ProfilePage() {
               variant="light"
             >
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input type="email" value={currentUser.email} disabled
-                  className={cn('pl-9', inputClass, 'opacity-50 cursor-not-allowed')} />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                <input
+                  type="email"
+                  value={currentUser.email}
+                  disabled
+                  className={cn(
+                    "w-full rounded-xl border bg-gray-50 text-sm text-gray-500 cursor-not-allowed",
+                    "border-gray-200",
+                    "pl-9 pr-3 py-2.5",
+                  )}
+                />
               </div>
             </FormField>
 
@@ -313,8 +337,16 @@ export default function ProfilePage() {
                 <input
                   type={showCurrent ? "text" : "password"}
                   autoComplete="current-password"
-                  {...passForm.register('currentPassword')}
-                  className={cn('pl-9 pr-10', inputClass, passForm.formState.errors.currentPassword && inputErrorClass)}
+                  {...passForm.register("currentPassword")}
+                  className={cn(
+                    "w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors",
+                    "border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none",
+                    "pl-9 pr-10 py-2.5",
+                    passForm.formState.errors.currentPassword &&
+                      "border-red-300 focus:border-red-400 focus:ring-red-500/20",
+                    passForm.formState.errors.currentPassword &&
+                      inputErrorClass,
+                  )}
                 />
                 <button
                   type="button"
@@ -338,8 +370,15 @@ export default function ProfilePage() {
                 <input
                   type={showNew ? "text" : "password"}
                   autoComplete="new-password"
-                  {...passForm.register('newPassword')}
-                  className={cn('pl-9 pr-10', inputClass, passForm.formState.errors.newPassword && inputErrorClass)}
+                  {...passForm.register("newPassword")}
+                  className={cn(
+                    "w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors",
+                    "border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none",
+                    "pl-9 pr-10 py-2.5",
+                    passForm.formState.errors.newPassword &&
+                      "border-red-300 focus:border-red-400 focus:ring-red-500/20",
+                    passForm.formState.errors.newPassword && inputErrorClass,
+                  )}
                 />
                 <button
                   type="button"
@@ -362,8 +401,16 @@ export default function ProfilePage() {
                 <input
                   type="password"
                   autoComplete="new-password"
-                  {...passForm.register('confirmPassword')}
-                  className={cn('pl-9', inputClass, passForm.formState.errors.confirmPassword && inputErrorClass)}
+                  {...passForm.register("confirmPassword")}
+                  className={cn(
+                    "w-full rounded-xl border bg-white text-sm text-gray-900 transition-colors",
+                    "border-gray-200 focus:border-gray-300 focus:ring-2 focus:ring-brand-500/20 focus:outline-none",
+                    "pl-9 pr-3 py-2.5",
+                    passForm.formState.errors.confirmPassword &&
+                      "border-red-300 focus:border-red-400 focus:ring-red-500/20",
+                    passForm.formState.errors.confirmPassword &&
+                      inputErrorClass,
+                  )}
                 />
               </div>
             </FormField>
