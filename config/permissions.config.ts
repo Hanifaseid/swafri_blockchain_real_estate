@@ -45,7 +45,7 @@ export const protectedRoutes: RoutePermission[] = [
 ];
 
 export const publicRoutes: string[] = ['/', '/about', '/contact'];
-export const authRoutes: string[] = ['/login', '/register'];
+export const authRoutes: string[] = ['/login', '/register', '/forgot-password', '/reset-password'];
 
 export function canAccessRoute(path: string, role: UserRole): boolean {
   const matched = protectedRoutes
