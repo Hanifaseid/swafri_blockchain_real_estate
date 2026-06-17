@@ -68,6 +68,7 @@ export async function getUsers(filters?: UserFilters): Promise<UserAccount[]> {
 
     if (filters?.role)   params.role          = ROLE_TO_API[filters.role as UserRole] ?? filters.role;
     if (filters?.status) params.accountStatus = filters.status.toLowerCase();
+    if (filters?.kycStatus) params.kycStatus  = filters.kycStatus.toLowerCase();
     if (filters?.search) params.search        = filters.search;
 
     const { data } = await apiClient.get<UsersListResponse>(ENDPOINTS.ADMIN.USERS, { params });
