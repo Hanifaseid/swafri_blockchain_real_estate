@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Clear auth cookies so proxy.ts stops treating user as authenticated
     document.cookie = 'vex_authed=; path=/; max-age=0';
     document.cookie = 'vex_user_role=; path=/; max-age=0';
-    router.replace('/login');
+    window.location.href = '/login';
   };
 
   const getPageTitle = (): string => {

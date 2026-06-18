@@ -95,6 +95,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'kyc:view_all',
     },
     {
+      label: 'Leases & Escrow',
+      href: '/leases',
+      icon: 'FileSignature',
+    },
+    {
       label: 'Properties',
       href: '/properties',
       icon: 'Building2',
@@ -139,10 +144,25 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'properties:create',
     },
     {
+      label: 'Applications',
+      href: '/applications',
+      icon: 'FileText',
+    },
+    {
+      label: 'Leases & Escrow',
+      href: '/leases',
+      icon: 'FileSignature',
+    },
+    {
       label: 'Inquiries',
       href: '/inquiries',
       icon: 'MessageSquare',
       requiredPermission: 'inquiries:view_own',
+    },
+    {
+      label: 'Offers',
+      href: '/offers',
+      icon: 'ArrowRightLeft',
     },
     {
       label: 'Transactions',
@@ -177,6 +197,16 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'properties:view_published',
     },
     {
+      label: 'Applications',
+      href: '/applications',
+      icon: 'FileText',
+    },
+    {
+      label: 'Leases & Escrow',
+      href: '/leases',
+      icon: 'FileSignature',
+    },
+    {
       label: 'Saved',
       href: '/saved',
       icon: 'Heart',
@@ -186,6 +216,11 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       href: '/inquiries',
       icon: 'MessageSquare',
       requiredPermission: 'inquiries:view_own',
+    },
+    {
+      label: 'My Offers',
+      href: '/offers',
+      icon: 'ArrowRightLeft',
     },
     {
       label: 'KYC & Wallet',

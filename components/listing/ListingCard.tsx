@@ -45,7 +45,7 @@ export function ListingCard({
         )}
       >
         {/* Thumbnail */}
-        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200">
           {listing.image ? (
             <Image
               src={listing.image}
@@ -55,7 +55,9 @@ export function ListingCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full bg-gray-200" />
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-xs text-gray-500">
+              No img
+            </div>
           )}
         </div>
         {/* Info */}
@@ -93,7 +95,9 @@ export function ListingCard({
             priority={priority}
           />
         ) : (
-          <div className="h-full w-full bg-gray-200" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400">
+            <span>No image</span>
+          </div>
         )}
 
         {/* Badges overlay — top left */}

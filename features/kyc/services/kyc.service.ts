@@ -29,9 +29,16 @@ interface KycResponse {
 
 export async function getKycStatus(): Promise<KycStatusData | null> {
   try {
-    const { data } = await apiClient.get<KycResponse>(ENDPOINTS.KYC.ME);
+    const { data } = await apiClient.get<KycResponse | Record<string, any>>(ENDPOINTS.KYC.ME);
     if (!data.success) return null;
-    return data.data;
+
+    const raw = data.data as any;
+    return {
+      kycStatus: raw?.kycStatus || raw?.status || 'NOT_STARTED',
+      accountStatus: raw?.accountStatus || 'ACTIVE',
+      reviewNote: raw?.reviewNote,
+      documents: raw?.documents || []
+    };
   } catch {
     return null;
   }
