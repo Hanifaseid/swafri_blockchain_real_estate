@@ -25,13 +25,24 @@ const RESPONSE_ACTIONS = [
 
 type OfferResponseAction = 'accepted' | 'rejected' | 'countered';
 
-function formatCurrency(amount: number, currency: string) {
-  const num = Number(amount);
-  if (!isFinite(num)) return '—';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD',
-  }).format(num);
+// --- FIX APPLIED HERE ---
+function formatCurrency(amount: number | string | null | undefined, currency: string) {
+  // 1. Explicitly handle null, undefined, and empty strings to prevent the minus sign
+  if (amount == null || amount === '') return '—';
+
+  // 2. Convert to number (strips out currency symbols or commas safely)
+  const num = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]+/g, '')) : amount;
+  
+  // 3. Check if it's a valid finite number
+  if (!isNaN(num) && isFinite(num)) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+    }).format(num);
+  }
+  
+  // 4. Final fallback if parsing failed
+  return '—';
 }
 
 function LoadingState() {
@@ -156,6 +167,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
   const [counterPrice, setCounterPrice] = useState<number>(offer.counterOfferPrice ?? offer.offerPrice);
   const { mutate: respond, isPending } = useRespondOffer();
 
+  // Safety check: If listing or offerer is just an ID string, we handle it gracefully
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
   const offerer = typeof offer.offerer === 'string' ? null : offer.offerer;
 
@@ -173,7 +185,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
               {offer.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] font-mono uppercase bg-gray-100 text-black/50 px-2 py-0.5 rounded">Received</span>
+            <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Received</span>
           </div>
           <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
           <p className="text-xs text-black/50">{offerer?.name ?? offerer?.email ?? 'Buyer'}</p>
@@ -280,6 +292,9 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
   const [expanded, setExpanded] = useState(false);
   const isCancelable = offer.status === 'pending';
 
+  // Safety check: If listing is just an ID string, we handle it gracefully
+  const listing = typeof offer.listing === 'string' ? null : offer.listing;
+
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
       <button
@@ -292,9 +307,9 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
             <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
               {offer.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] font-mono uppercase bg-gray-100 text-black/50 px-2 py-0.5 rounded">Sent</span>
+            <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Sent</span>
           </div>
-          <p className="text-sm font-medium text-black/80 truncate">{typeof offer.listing === 'string' ? `Listing ${offer.listing}` : offer.listing?.title ?? `Listing ${offer.listingId}`}</p>
+          <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
           <p className="text-xs text-black/50">{new Date(offer.createdAt).toLocaleDateString()}</p>
         </div>
         <div className="flex items-center gap-2">
