@@ -1,10 +1,10 @@
-import * as React from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Bath, Bed, MapPin, Maximize2, Star } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { cn, formatCurrency } from '@/lib/utils';
-import type { PropertySummary } from './types';
+import * as React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Bath, Bed, MapPin, Maximize2, Star } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { cn, formatCurrency } from "@/lib/utils";
+import type { PropertySummary } from "./types";
 
 /**
  * ListingCard — property card used in grid and featured listings.
@@ -16,7 +16,8 @@ import type { PropertySummary } from './types';
 
 interface ListingCardProps {
   listing: PropertySummary;
-  variant?: 'grid' | 'compact';
+  variant?: "grid" | "compact";
+  href?: string;
   /** Slot for FavoriteButton — rendered top-right over the image */
   favoriteSlot?: React.ReactNode;
   className?: string;
@@ -25,23 +26,24 @@ interface ListingCardProps {
 
 export function ListingCard({
   listing,
-  variant = 'grid',
+  variant = "grid",
+  href,
   favoriteSlot,
   className,
   priority = false,
 }: ListingCardProps) {
-  const href = `/listings/${listing.id}`;
+  const listingHref = href ?? `/listings/${listing.id}`;
 
-  const price = formatCurrency(listing.price, listing.currency ?? 'USD');
-  const priceLabel = listing.listingType === 'rent' ? `${price}/mo` : price;
+  const price = formatCurrency(listing.price, listing.currency ?? "USD");
+  const priceLabel = listing.listingType === "rent" ? `${price}/mo` : price;
 
-  if (variant === 'compact') {
+  if (variant === "compact") {
     return (
       <Link
-        href={href}
+        href={listingHref}
         className={cn(
-          'group flex gap-3 rounded-xl border border-gray-200 bg-white p-3 transition-shadow hover:shadow-md',
-          className
+          "group flex gap-3 rounded-xl border border-gray-200 bg-white p-3 transition duration-300 ease-out transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-300",
+          className,
         )}
       >
         {/* Thumbnail */}
@@ -62,7 +64,9 @@ export function ListingCard({
         </div>
         {/* Info */}
         <div className="flex min-w-0 flex-col justify-between py-0.5">
-          <p className="truncate text-sm font-medium text-gray-900">{listing.title}</p>
+          <p className="truncate text-sm font-medium text-gray-900">
+            {listing.title}
+          </p>
           <div className="flex items-center gap-1 text-xs text-gray-500">
             <MapPin size={11} />
             <span className="truncate">{listing.city}</span>
@@ -76,10 +80,10 @@ export function ListingCard({
   // ── Grid variant ───────────────────────────────────────────────────────────
   return (
     <Link
-      href={href}
+      href={listingHref}
       className={cn(
-        'group relative flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden card-hover',
-        className
+        "group relative flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden transition duration-300 ease-out transform hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl hover:border-emerald-300",
+        className,
       )}
       aria-label={`View ${listing.title}`}
     >
@@ -91,7 +95,7 @@ export function ListingCard({
             alt={listing.title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
             priority={priority}
           />
         ) : (
@@ -103,17 +107,17 @@ export function ListingCard({
         {/* Badges overlay — top left */}
         <div className="absolute left-3 top-3 flex gap-1.5">
           <Badge
-            status={listing.listingType === 'sale' ? 'active' : 'rented'}
-            label={listing.listingType === 'sale' ? 'For Sale' : 'For Rent'}
+            status={listing.listingType === "sale" ? "active" : "rented"}
+            label={listing.listingType === "sale" ? "For Sale" : "For Rent"}
             hideDot
           />
-          {listing.tier === 'featured' && (
+          {listing.tier === "featured" && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">
               <Star size={10} className="fill-white" aria-hidden="true" />
               Featured
             </span>
           )}
-          {listing.tier === 'premium' && (
+          {listing.tier === "premium" && (
             <span className="inline-flex items-center rounded-full bg-violet-600 px-2 py-0.5 text-xs font-medium text-white">
               Premium
             </span>
@@ -147,13 +151,13 @@ export function ListingCard({
             {listing.beds !== undefined && (
               <span className="flex items-center gap-1">
                 <Bed size={13} aria-hidden="true" />
-                {listing.beds} {listing.beds === 1 ? 'bed' : 'beds'}
+                {listing.beds} {listing.beds === 1 ? "bed" : "beds"}
               </span>
             )}
             {listing.baths !== undefined && (
               <span className="flex items-center gap-1">
                 <Bath size={13} aria-hidden="true" />
-                {listing.baths} {listing.baths === 1 ? 'bath' : 'baths'}
+                {listing.baths} {listing.baths === 1 ? "bath" : "baths"}
               </span>
             )}
             {listing.sqft !== undefined && (
