@@ -344,7 +344,7 @@ function TenantView() {
                           onMouseDown={(e) => {
                             e.preventDefault();
                             setShowRecentSearches(false);
-                            router.push(`/listings/${listing.id}`);
+                            router.push(`/properties/${listing.id}`);
                           }}
                           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
                         >
@@ -664,6 +664,7 @@ function TenantView() {
               <ListingCard
                 key={listing.id}
                 listing={listingToSummary(listing)}
+                href={`/properties/${listing.id}`}
                 favoriteSlot={<FavoriteButton listingId={listing.id} />}
               />
             ))}
