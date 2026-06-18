@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
 import { 
   useRentalApplication, 
@@ -62,7 +63,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               {app.status.replace('_', ' ')}
             </span>
           </div>
-          <p className="text-sm text-black/50 mt-1">For Listing ID: <span className="font-mono text-xs">{app.listingId}</span></p>
+          <p className="text-sm text-gray-700 mt-1">For Listing ID: <span className="font-mono text-xs text-gray-900">{app.listingId}</span></p>
         </div>
         
         {isTenant && isActive && normalizedStatus !== 'APPROVED' && (
@@ -88,25 +89,25 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <p className="text-[10px] font-mono text-black/40 mb-1 flex items-center gap-1"><Calendar size={12}/> Dates</p>
-                <p className="text-sm">{app.desiredStartDate} to {app.desiredEndDate}</p>
+                <p className="text-sm text-gray-900">{app.desiredStartDate} to {app.desiredEndDate}</p>
               </div>
               <div>
                 <p className="text-[10px] font-mono text-black/40 mb-1 flex items-center gap-1"><Users size={12}/> Occupants</p>
-                <p className="text-sm">{app.occupants} Person(s)</p>
+                <p className="text-sm text-gray-900">{app.occupants} Person(s)</p>
               </div>
               <div>
                 <p className="text-[10px] font-mono text-black/40 mb-1 flex items-center gap-1"><DollarSign size={12}/> Income</p>
-                <p className="text-sm font-medium">${app.monthlyIncome.toLocaleString()} / mo</p>
+                <p className="text-sm font-medium text-gray-900">${app.monthlyIncome.toLocaleString()} / mo</p>
               </div>
               <div>
                 <p className="text-[10px] font-mono text-black/40 mb-1 flex items-center gap-1"><Briefcase size={12}/> Employer</p>
-                <p className="text-sm">{app.employer || 'N/A'}</p>
+                <p className="text-sm text-gray-900">{app.employer || 'N/A'}</p>
               </div>
             </div>
             {app.message && (
               <div className="mt-6 pt-6 border-t border-gray-100">
                 <p className="text-[10px] font-mono text-black/40 mb-2">Message to Owner</p>
-                <p className="text-sm text-black/70 italic bg-gray-50 p-4 rounded-xl">"{app.message}"</p>
+                <p className="text-sm text-gray-900 italic bg-gray-50 p-4 rounded-xl">"{app.message}"</p>
               </div>
             )}
           </div>
@@ -118,11 +119,11 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                <div className="grid grid-cols-2 gap-4">
                  <div>
                    <p className="text-[10px] font-mono text-black/40 mb-1">Provider</p>
-                   <p className="text-sm">{app.screeningProvider}</p>
+                   <p className="text-sm text-gray-900">{app.screeningProvider}</p>
                  </div>
                  <div>
                    <p className="text-[10px] font-mono text-black/40 mb-1">Score</p>
-                   <p className="text-sm">{app.screeningScore || 'N/A'}</p>
+                   <p className="text-sm text-gray-900">{app.screeningScore || 'N/A'}</p>
                  </div>
                </div>
             </div>
@@ -229,7 +230,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
                   value={leaseForm.monthlyRent}
                   onChange={e => setLeaseForm(f => ({ ...f, monthlyRent: e.target.value }))}
                   placeholder="e.g. 1500"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div>
@@ -239,7 +240,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
                   value={leaseForm.depositAmount}
                   onChange={e => setLeaseForm(f => ({ ...f, depositAmount: e.target.value }))}
                   placeholder="e.g. 3000"
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div>
@@ -248,7 +249,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
                   type="date"
                   value={leaseForm.startDate}
                   onChange={e => setLeaseForm(f => ({ ...f, startDate: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div>
@@ -257,7 +258,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
                   type="date"
                   value={leaseForm.endDate}
                   onChange={e => setLeaseForm(f => ({ ...f, endDate: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
               <div className="col-span-2">
@@ -265,7 +266,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
                 <select
                   value={leaseForm.currency}
                   onChange={e => setLeaseForm(f => ({ ...f, currency: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 bg-white"
+                  className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 bg-white"
                 >
                   <option value="USD">USD</option>
                   <option value="USDC">USDC</option>
@@ -280,7 +281,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
                 value={leaseForm.terms}
                 onChange={e => setLeaseForm(f => ({ ...f, terms: e.target.value }))}
                 rows={4}
-                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none"
+                className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none"
               />
             </div>
             
@@ -332,7 +333,8 @@ function OwnerActionsPanel({ app }: { app: any }) {
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Optional note to tenant..."
-            className="w-full p-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none h-20"
+            style={{ color: '#111827' }}
+            className="w-full p-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none h-20 bg-white"
           />
           <div className="grid grid-cols-2 gap-2">
             <button 
