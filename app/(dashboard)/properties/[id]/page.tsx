@@ -70,28 +70,6 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [showInquiryForm, setShowInquiryForm]   = useState(false);
   const [inquiryMsg, setInquiryMsg]             = useState('');
   const [inquiryType, setInquiryType]           = useState<'rent' | 'buy' | 'general'>('general');
-  const [docReviewTarget, setDocReviewTarget]   = useState<string | null>(null);
-  const [docReviewDecision, setDocReviewDecision] = useState<'approve' | 'reject'>('approve');
-  const [docReviewNote, setDocReviewNote]       = useState('');
-  const [reviewingDoc, setReviewingDoc]         = useState(false);
-  const [docUploadType, setDocUploadType]       = useState('title_deed');
-
-  // Handle document review (admin only)
-  const handleDocReview = async (docId: string, decision: 'approve' | 'reject', note?: string) => {
-    setReviewingDoc(true);
-    try {
-      await apiClient.post(ENDPOINTS.ADMIN.DOC_REVIEW(id, docId), { decision, note });
-      toast.success(decision === 'approve' ? 'Document approved.' : 'Document rejected.');
-      refetch();
-      // Re-fetch docs
-    } catch {
-      toast.error('Review failed.');
-    } finally {
-      setReviewingDoc(false);
-      setDocReviewTarget(null);
-      setDocReviewNote('');
-    }
-  };
   const [showOfferModal, setShowOfferModal]     = useState(false);
   const [offerAmount, setOfferAmount]           = useState<number>(0);
   const [offerMessage, setOfferMessage]         = useState('');
@@ -173,7 +151,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     setUploadingDocs(true);
     try {
       const form = new FormData();
-      form.append('type', docUploadType);
+      form.append('type', 'title_deed');
       files.forEach((f) => form.append('documents', f));
       await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(id), form, { 
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -468,12 +446,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           {/* Verification status banner */}
           {listing.verificationStatus === 'unverified' && isOwner && (
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
-              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Upload a title deed to start verification. Required before submitting for review.
-            </div>
-          )}
-          {listing.verificationStatus === 'pending' && (
-            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 mb-3">
-              <Clock size={13} /> Documents submitted. Admin review in progress.
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Upload a title deed to start verification before submitting for review.
             </div>
           )}
           {listing.verificationStatus === 'requires_more_info' && (
@@ -501,48 +474,20 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           {docs.length > 0 ? (
             <div className="space-y-2">
               {docs.map((doc) => (
-                <div key={doc.id} className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-sm text-black/70 font-mono capitalize font-medium">{doc.type.replace(/_/g,' ')}</span>
-                      <p className="text-[10px] text-black/35 font-mono mt-0.5">SHA-256: {doc.hash?.slice(0,16)}…</p>
-                      {doc.reviewNote && <p className="text-[10px] text-amber-600 mt-0.5">Note: {doc.reviewNote}</p>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded',
-                        doc.status === 'approved' ? 'bg-emerald-50 text-emerald-600' :
-                        doc.status === 'rejected'  ? 'bg-red-50 text-red-500' :
-                        'bg-amber-50 text-amber-600')}>
-                        {doc.status}
-                      </span>
-                      <button type="button"
-                        onClick={() => getDocUrl({ listingId: id, docId: doc.id }, { onSuccess: (url) => { if (url) window.open(url, '_blank'); } })}
-                        className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition-colors">
-                        View
-                      </button>
-                    </div>
+                <div key={doc.id} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+                  <div>
+                    <span className="text-sm text-black/70 font-mono capitalize">{doc.type.replace('_',' ')}</span>
+                    {doc.reviewNote && <p className="text-[10px] text-amber-600 mt-0.5">{doc.reviewNote}</p>}
                   </div>
-
-                  {/* Admin review buttons */}
-                  {isAdmin && doc.status === 'pending' && (
-                    <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
-                      <button type="button"
-                        onClick={() => handleDocReview(doc.id, 'approve')}
-                        className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition-colors">
-                        <CheckCircle2 size={11} /> Approve
-                      </button>
-                      <button type="button"
-                        onClick={() => { setDocReviewTarget(doc.id); setDocReviewDecision('reject'); }}
-                        className="flex items-center gap-1.5 text-[10px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition-colors">
-                        <XCircle size={11} /> Reject
-                      </button>                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', doc.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : doc.status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600')}>{doc.status}</span>
+                    <button type="button" onClick={() => getDocUrl({ listingId: id, docId: doc.id }, { onSuccess: (url) => { if (url) window.open(url, '_blank'); } })}
+                      className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50">View</button>
+                  </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-xs text-black/35 font-light">No documents uploaded yet.</p>
-          )}
+          ) : <p className="text-xs text-black/35 font-light">No documents uploaded yet.</p>}
         </div>
       )}
 
@@ -669,27 +614,6 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 }}
                 className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 capitalize">
                 {titleAction}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Document reject modal */}
-      {docReviewTarget && docReviewDecision === 'reject' && (
-        <>
-          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setDocReviewTarget(null)} />
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
-            <h3 className="text-sm font-semibold text-black mb-4">Reject Document</h3>
-            <textarea value={docReviewNote} onChange={(e) => setDocReviewNote(e.target.value)}
-              rows={3} placeholder="Reason for rejection (shown to owner)…"
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-red-400 resize-none mb-3" />
-            <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setDocReviewTarget(null)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
-              <button type="button" disabled={reviewingDoc}
-                onClick={() => handleDocReview(docReviewTarget, 'reject', docReviewNote || undefined)}
-                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
-                Reject Document
               </button>
             </div>
           </div>

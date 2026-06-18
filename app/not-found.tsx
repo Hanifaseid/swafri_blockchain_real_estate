@@ -14,10 +14,10 @@ export default function NotFound() {
           The page you're looking for doesn't exist or has been moved.
         </p>
         <Link
-          href="/"
+          href="/properties"
           className="inline-flex items-center gap-2 bg-white text-black text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
         >
-          Back to Home
+          Browse Properties
         </Link>
       </div>
     </div>
