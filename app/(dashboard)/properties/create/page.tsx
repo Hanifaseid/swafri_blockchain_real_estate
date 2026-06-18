@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -35,8 +35,8 @@ const createSchema = z.object({
   region:          z.string().optional(),
   country:         z.string().min(1, 'Country is required'),
   postalCode:      z.string().optional(),
-  longitude:       z.number({ invalid_type_error: 'Enter a valid longitude' }),
-  latitude:        z.number({ invalid_type_error: 'Enter a valid latitude' }),
+  longitude:       z.number({ message: 'Enter a valid longitude' }).or(z.number()),
+  latitude:        z.number({ message: 'Enter a valid latitude' }).or(z.number()),
   amenities:       z.string().optional(), // comma-separated
 }).refine((d) => {
   if (d.listingType === 'sale') return !!d.price;
@@ -54,17 +54,40 @@ export default function CreateListingPage() {
   const [listingType, setListingType] = useState<'sale' | 'rent'>('rent');
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(createSchema),
+    resolver: zodResolver(createSchema) as any,
     defaultValues: {
+      title: '',
       listingType: 'rent',
-      category:    'residential',
-      currency:    'USD',
-      areaUnit:    'sqm',
-    },
+      category: 'residential',
+      propertyType: '',
+      currency: 'USD',
+      areaUnit: 'sqm',
+      street: '',
+      city: '',
+      country: '',
+    } as any,
   });
+
+  useEffect(() => {
+    if (currentUser && currentUser.role === 'PROPERTY_OWNER' && currentUser.kycStatus !== 'verified') {
+      toast.error('Please complete KYC verification to create listings.');
+      router.push('/kyc');
+    }
+  }, [currentUser, router]);
 
   if (!currentUser || (currentUser.role !== 'PROPERTY_OWNER' && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
     return <div className="p-8 text-sm text-black/50">You don't have permission to create listings.</div>;
+  }
+
+  if (currentUser && currentUser.role === 'PROPERTY_OWNER' && currentUser.kycStatus !== 'verified') {
+    return (
+      <div className="p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-4 text-black/50 text-sm">
+          <Loader2 className="animate-spin" />
+          <p>Redirecting to KYC verification...</p>
+        </div>
+      </div>
+    );
   }
 
   const onSubmit = (data: FormValues) => {

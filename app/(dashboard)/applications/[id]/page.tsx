@@ -131,17 +131,38 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
 
         {/* Right Column: Owner Actions */}
         <div className="space-y-6">
+          {/* View Lease Banner — visible to ALL roles when a lease exists */}
+          {(app.leaseId || (app as any).lease?.id) && (
+            <div className="bg-slate-900 text-white p-5 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="w-5 h-5 text-emerald-400" />
+                <h3 className="text-sm font-semibold text-emerald-50">Lease Agreement Created</h3>
+              </div>
+              <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                A formal lease agreement has been generated from this application.
+              </p>
+              <Link
+                href={`/leases/${app.leaseId || (app as any).lease?.id}`}
+                className="w-full block text-center py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold transition-colors"
+              >
+                Open Lease →
+              </Link>
+              <p className="text-[10px] text-slate-500 font-mono text-center mt-2">
+                ID: {app.leaseId || (app as any).lease?.id}
+              </p>
+            </div>
+          )}
+
           {canReview && (
              <OwnerActionsPanel app={app} />
           )}
           
-          {isTenant && normalizedStatus === 'APPROVED' && (
+          {isTenant && normalizedStatus === 'APPROVED' && !(app.leaseId || (app as any).lease?.id) && (
             <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-2xl shadow-sm text-center">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
               <h3 className="text-lg font-bold text-emerald-900 mb-2">Application Approved!</h3>
               <p className="text-sm text-emerald-700 leading-relaxed">
-                Congratulations, the property owner has approved your rental application. 
-                They are currently drafting the formal lease agreement. You will be notified once it is ready for your signature and funding.
+                Congratulations! The property owner has approved your application and is drafting the lease agreement.
               </p>
             </div>
           )}

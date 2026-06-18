@@ -1,5 +1,11 @@
-import { apiClient, ApiSingleResponse } from '@/lib/api/axios-client';
+import { apiClient } from '@/lib/api/axios-client';
 import { Lease, CreateLeasePayload, ResolveDisputePayload, EscrowVerification } from '../types/lease.types';
+
+export interface ApiSingleResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
 
 const ENDPOINTS = {
   BASE: '/leases',
@@ -33,7 +39,20 @@ export async function getMyLeases(): Promise<Lease[]> {
   const { data } = await apiClient.get<any>(ENDPOINTS.MINE);
   if (!data.success) throw new Error(data.message || 'Failed to fetch leases');
   if (Array.isArray(data.data)) return data.data;
-  return data.data?.items || [];
+  return data.data?.items || data.data?.leases || [];
+}
+
+// For ADMIN / SUPER_ADMIN — tries the base /leases endpoint which may return all leases
+export async function getAllLeases(): Promise<Lease[]> {
+  try {
+    const { data } = await apiClient.get<any>(ENDPOINTS.BASE);
+    if (!data.success) throw new Error(data.message || 'Failed to fetch leases');
+    if (Array.isArray(data.data)) return data.data;
+    return data.data?.items || data.data?.leases || [];
+  } catch {
+    // Fallback to /leases/mine if /leases is not available for this admin
+    return getMyLeases();
+  }
 }
 
 export async function getLease(id: string): Promise<Lease> {

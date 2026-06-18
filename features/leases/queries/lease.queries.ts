@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import {
   createLease,
   getMyLeases,
+  getAllLeases,
   getLease,
   proposeLease,
   fundLease,
@@ -39,6 +40,13 @@ export function useMyLeases() {
   return useQuery({
     queryKey: leaseKeys.mine(),
     queryFn: getMyLeases,
+  });
+}
+
+export function useAllLeases() {
+  return useQuery({
+    queryKey: [...leaseKeys.all, 'all'],
+    queryFn: getAllLeases,
   });
 }
 

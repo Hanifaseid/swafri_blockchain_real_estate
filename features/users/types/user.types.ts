@@ -19,20 +19,16 @@ export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
 // KYC lets the user perform trusted actions (escrow, property verification, etc.)
 
 export type KycStatus =
-  | 'NOT_STARTED'
-  | 'PENDING'
-  | 'UNDER_REVIEW'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'EXPIRED';
+  | 'not_started'
+  | 'pending'
+  | 'verified'
+  | 'rejected';
 
 export const KYC_STATUS_LABELS: Record<KycStatus, string> = {
-  NOT_STARTED: 'Not Started',
-  PENDING: 'Pending',
-  UNDER_REVIEW: 'Under Review',
-  APPROVED: 'Approved',
-  REJECTED: 'Rejected',
-  EXPIRED: 'Expired',
+  not_started: 'Not Started',
+  pending: 'Pending',
+  verified: 'Verified',
+  rejected: 'Rejected',
 };
 
 // ─── Wallet Status ────────────────────────────────────────────────────────────

@@ -179,7 +179,7 @@ function OwnerView() {
   const { data: listings = [], isLoading } = useMyListings();
   const { mutate: deleteListing, isPending: deleting } = useDeleteListing();
 
-  const canSubmit = currentUser?.status === 'ACTIVE' && currentUser?.kycStatus === 'APPROVED';
+  const canSubmit = currentUser?.status === 'ACTIVE' && currentUser?.kycStatus === 'verified';
 
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto">

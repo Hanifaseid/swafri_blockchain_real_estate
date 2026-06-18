@@ -151,7 +151,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap gap-2">
             {ownerActions.map(({ action, label, style }) => (
               <button key={action} type="button" disabled={transitioning}
-                onClick={() => { if (action === 'submit' && currentUser.kycStatus !== 'APPROVED') { toast.error('KYC must be approved to submit.'); return; } transition({ action }); }}
+                onClick={() => { if (action === 'submit' && currentUser.kycStatus !== 'verified') { toast.error('KYC must be verified to submit.'); return; } transition({ action }); }}
                 className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}>
                 {label}
               </button>

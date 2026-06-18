@@ -33,12 +33,13 @@ const STATUS_MAP: Record<string, AccountStatus> = {
 
 // KYC status mapping
 const KYC_MAP: Record<string, KycStatus> = {
-  not_started:  'NOT_STARTED',
-  pending:      'PENDING',
-  under_review: 'UNDER_REVIEW',
-  approved:     'APPROVED',
-  rejected:     'REJECTED',
-  expired:      'EXPIRED',
+  not_started:  'not_started',
+  pending:      'pending',
+  under_review: 'pending',
+  approved:     'verified',
+  verified:     'verified',
+  rejected:     'rejected',
+  expired:      'not_started',
 };
 
 // Wallet status mapping
@@ -101,7 +102,7 @@ export function adaptUser(apiUser: ApiUser): UserAccount {
     phone:               apiUser.phone,
     role:                ROLE_MAP[apiUser.role]     ?? 'TENANT',
     status:              STATUS_MAP[apiUser.accountStatus] ?? 'ACTIVE',
-    kycStatus:           KYC_MAP[apiUser.kycStatus] ?? 'NOT_STARTED',
+    kycStatus:           KYC_MAP[apiUser.kycStatus] ?? 'not_started',
     walletStatus:        WALLET_MAP[apiUser.walletStatus] ?? 'NOT_LINKED',
     createdAt:           apiUser.createdAt ?? new Date().toISOString(),
     updatedAt:           apiUser.updatedAt,

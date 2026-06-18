@@ -233,12 +233,10 @@ function QuickCard({
 
 function getKycColor(status: string): string {
   const map: Record<string, string> = {
-    NOT_STARTED: "#475569",
-    PENDING: "#f59e0b",
-    UNDER_REVIEW: "#3b82f6",
-    APPROVED: "#10b981",
-    REJECTED: "#ef4444",
-    EXPIRED: "#6b7280",
+    not_started: "#475569",
+    pending: "#f59e0b",
+    verified: "#10b981",
+    rejected: "#ef4444",
   };
   return map[status] ?? "#475569";
 }

@@ -27,6 +27,7 @@ export interface RentalApplication {
   appointmentLocationNote?: string;
 
   adminNote?: string;
+  leaseId?: string;        // populated by the backend once a lease is created
   createdAt: string;
   updatedAt: string;
 }

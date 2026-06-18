@@ -17,9 +17,8 @@ import { ENDPOINTS } from '@/lib/api/endpoints';
 
 const KYC_STEPS = [
   { key: 'not_started',  label: 'Not Started',  Icon: AlertCircle,  color: 'text-black/30',   bg: 'bg-gray-100' },
-  { key: 'pending',      label: 'Submitted',     Icon: Clock,        color: 'text-amber-500',  bg: 'bg-amber-50' },
-  { key: 'under_review', label: 'Under Review',  Icon: Clock,        color: 'text-blue-500',   bg: 'bg-blue-50' },
-  { key: 'approved',     label: 'Approved',      Icon: CheckCircle2, color: 'text-emerald-500',bg: 'bg-emerald-50' },
+  { key: 'pending',      label: 'Pending',      Icon: Clock,        color: 'text-amber-500',  bg: 'bg-amber-50' },
+  { key: 'verified',     label: 'Verified',     Icon: CheckCircle2, color: 'text-emerald-500',bg: 'bg-emerald-50' },
   { key: 'rejected',     label: 'Rejected',      Icon: XCircle,      color: 'text-red-500',    bg: 'bg-red-50' },
 ] as const;
 
@@ -44,11 +43,10 @@ export default function KycPage() {
   const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
 
   let kycStatus = (kycData?.kycStatus ?? currentUser.kycStatus).toLowerCase();
-  if (kycStatus === 'verified') kycStatus = 'approved';
 
   const currentStepIdx = KYC_STEPS.findIndex((s) => s.key === kycStatus);
   const canSubmitKyc   = kycStatus === 'not_started' || kycStatus === 'rejected';
-  const isKycApproved  = kycStatus === 'approved';
+  const isKycApproved  = kycStatus === 'verified';
   const walletIsLinked = currentUser.walletStatus !== 'NOT_LINKED';
 
   // ── Wallet handlers ──
@@ -158,7 +156,7 @@ export default function KycPage() {
               )}
 
               {/* Status message */}
-              {kycStatus === 'approved' && (
+              {kycStatus === 'verified' && (
                 <div className="flex items-center gap-2 text-emerald-600 text-sm bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-4">
                   <CheckCircle2 size={14} /> Identity verified. You can perform trusted platform actions.
                 </div>
@@ -168,7 +166,7 @@ export default function KycPage() {
                   <XCircle size={14} /> KYC rejected. Please start verification again.
                 </div>
               )}
-              {(kycStatus === 'pending' || kycStatus === 'under_review') && (
+              {kycStatus === 'pending' && (
                 <div className="flex items-center gap-2 text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
                   <Clock size={14} /> Documents under admin review. You will be notified once approved.
                 </div>
@@ -296,7 +294,7 @@ export default function KycPage() {
 // ─── Admin KYC Queue ──────────────────────────────────────────────────────────
 
 function AdminKycQueue() {
-  const { data: users = [], isLoading } = useUsers({ kycStatus: 'PENDING' });
+  const { data: users = [], isLoading } = useUsers({ kycStatus: 'pending' as any });
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
   if (isLoading) return <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>;

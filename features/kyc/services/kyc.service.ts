@@ -1,5 +1,7 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
+import { updateSessionUser } from '@/lib/auth/session';
+import { useAuthStore } from '@/stores/auth.store';
 
 // ─── KYC Status shape from API ────────────────────────────────────────────────
 
@@ -33,12 +35,25 @@ export async function getKycStatus(): Promise<KycStatusData | null> {
     if (!data.success) return null;
 
     const raw = data.data as any;
-    return {
-      kycStatus: raw?.kycStatus || raw?.status || 'NOT_STARTED',
+    
+    let fetchedStatus = (raw?.kycStatus || raw?.status || 'not_started').toLowerCase();
+    if (fetchedStatus === 'approved') fetchedStatus = 'verified';
+    if (fetchedStatus === 'under_review') fetchedStatus = 'pending';
+
+    const statusResult = {
+      kycStatus: fetchedStatus,
       accountStatus: raw?.accountStatus || 'ACTIVE',
       reviewNote: raw?.reviewNote,
       documents: raw?.documents || []
     };
+
+    // Synchronize the global user session whenever KYC status is successfully fetched
+    if (typeof window !== 'undefined') {
+      updateSessionUser({ kycStatus: statusResult.kycStatus as any });
+      useAuthStore.getState().updateUser({ kycStatus: statusResult.kycStatus as any });
+    }
+
+    return statusResult;
   } catch {
     return null;
   }
@@ -50,7 +65,7 @@ export async function getKycStatus(): Promise<KycStatusData | null> {
 export async function submitKycDocuments(files: File[], documentType: string): Promise<boolean> {
   try {
     const formData = new FormData();
-    formData.append('documentType', documentType);
+    formData.append('type', documentType);
     files.forEach((file) => formData.append('documents', file));
 
     const { data } = await apiClient.post<{ success: boolean; message: string }>(
