@@ -6,6 +6,8 @@ import type {
   ListingFilters,
   PaginatedListings,
   TransitionInput,
+  CreateSavedSearchInput,
+  SavedSearch,
 } from '@/features/listings/types/listing.types';
 
 // ─── Response helpers ─────────────────────────────────────────────────────────
@@ -71,6 +73,43 @@ export async function getListings(filters?: ListingFilters): Promise<PaginatedLi
   } catch {
     return { items: [], total: 0, page: 1, limit: 20 };
   }
+}
+
+export async function createSavedSearch(input: CreateSavedSearchInput): Promise<SavedSearch> {
+  const payload = {
+    name: input.name,
+    alertEnabled: input.alertEnabled ?? false,
+    query: {
+      ...(input.query.listingType  && { listingType:  input.query.listingType }),
+      ...(input.query.category     && { category:     input.query.category }),
+      ...(input.query.minPrice  != null && { minPrice:  input.query.minPrice }),
+      ...(input.query.maxPrice  != null && { maxPrice:  input.query.maxPrice }),
+      ...(input.query.minBedrooms  != null && { minBedrooms:  input.query.minBedrooms }),
+      ...(input.query.minBathrooms != null && { minBathrooms: input.query.minBathrooms }),
+    },
+  };
+  const { data } = await apiClient.post<ApiResp<SavedSearch>>(ENDPOINTS.SAVED_SEARCHES.CREATE, payload);
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function getSavedSearches(): Promise<SavedSearch[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<SavedSearch[]>>(ENDPOINTS.SAVED_SEARCHES.LIST);
+    return data.success ? (Array.isArray(data.data) ? data.data : []) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function updateSavedSearch(id: string, input: Partial<CreateSavedSearchInput>): Promise<SavedSearch> {
+  const { data } = await apiClient.patch<ApiResp<SavedSearch>>(ENDPOINTS.SAVED_SEARCHES.UPDATE(id), input);
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function deleteSavedSearch(id: string): Promise<void> {
+  await apiClient.delete(ENDPOINTS.SAVED_SEARCHES.DELETE(id));
 }
 
 // ─── getMyListings ────────────────────────────────────────────────────────────
