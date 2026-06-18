@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { CreditCard, Loader2, ArrowRightLeft, Slash, Send, XCircle } from 'lucide-react';
+import { ROLE_LABELS } from '@/features/roles/types/role.types';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMyOffers, useReceivedOffers, useRespondOffer, useCancelOffer } from '@/features/offers/queries/offer.queries';
 import type { Offer } from '@/features/offers/types/offer.types';
@@ -24,11 +25,24 @@ const RESPONSE_ACTIONS = [
 
 type OfferResponseAction = 'accepted' | 'rejected' | 'countered';
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency || 'USD',
-  }).format(amount);
+// --- FIX APPLIED HERE ---
+function formatCurrency(amount: number | string | null | undefined, currency: string) {
+  // 1. Explicitly handle null, undefined, and empty strings to prevent the minus sign
+  if (amount == null || amount === '') return '—';
+
+  // 2. Convert to number (strips out currency symbols or commas safely)
+  const num = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]+/g, '')) : amount;
+  
+  // 3. Check if it's a valid finite number
+  if (!isNaN(num) && isFinite(num)) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+    }).format(num);
+  }
+  
+  // 4. Final fallback if parsing failed
+  return '—';
 }
 
 function LoadingState() {
@@ -41,11 +55,11 @@ function LoadingState() {
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+    <div className="rounded-2xl p-12 text-center" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
       <CreditCard className="w-10 h-10 text-black/15 mx-auto mb-4" />
-      <p className="text-sm text-black/40 font-light mb-2">{title}</p>
-      <p className="text-xs text-black/30">{description}</p>
-      <Link href="/properties" className="inline-block mt-4 text-xs text-emerald-500 hover:text-emerald-600 font-medium">
+      <p className="text-sm text-black/60 font-light mb-2">{title}</p>
+      <p className="text-xs text-black/50">{description}</p>
+      <Link href="/properties" className="inline-block mt-4 text-xs text-emerald-600 hover:text-emerald-700 font-medium">
         Browse properties →
       </Link>
     </div>
@@ -63,7 +77,7 @@ export default function OffersPage() {
       <div className="flex items-center gap-3 mb-6">
         <CreditCard className="w-6 h-6 text-emerald-500 shrink-0" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Offers</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">{ROLE_LABELS[currentUser.role]}</p>
           <h1 className="text-2xl font-light text-dash-sidebar tracking-tight">{isOwner ? 'Offers Dashboard' : 'My Offers'}</h1>
         </div>
       </div>
@@ -153,13 +167,14 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
   const [counterPrice, setCounterPrice] = useState<number>(offer.counterOfferPrice ?? offer.offerPrice);
   const { mutate: respond, isPending } = useRespondOffer();
 
+  // Safety check: If listing or offerer is just an ID string, we handle it gracefully
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
   const offerer = typeof offer.offerer === 'string' ? null : offer.offerer;
 
   const canSubmit = responseAction !== 'countered' || counterPrice > 0;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
@@ -170,13 +185,13 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
               {offer.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] font-mono uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Received</span>
+            <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Received</span>
           </div>
           <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
           <p className="text-xs text-black/50">{offerer?.name ?? offerer?.email ?? 'Buyer'}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-black/80">{formatCurrency(offer.offerPrice, offer.currency)}</span>
+          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
           {expanded ? <XCircle className="w-4 h-4 text-black/30" /> : <ArrowRightLeft className="w-4 h-4 text-black/30" />}
         </div>
       </button>
@@ -202,7 +217,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
           {offer.responseMessage && (
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Previous response</p>
-              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-emerald-50 p-3">{offer.responseMessage}</p>
+              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseMessage}</p>
             </div>
           )}
 
@@ -277,8 +292,11 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
   const [expanded, setExpanded] = useState(false);
   const isCancelable = offer.status === 'pending';
 
+  // Safety check: If listing is just an ID string, we handle it gracefully
+  const listing = typeof offer.listing === 'string' ? null : offer.listing;
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
@@ -289,13 +307,13 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
             <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
               {offer.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] font-mono uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded">Sent</span>
+            <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Sent</span>
           </div>
-          <p className="text-sm font-medium text-black/80 truncate">{typeof offer.listing === 'string' ? `Listing ${offer.listing}` : offer.listing?.title ?? `Listing ${offer.listingId}`}</p>
+          <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
           <p className="text-xs text-black/50">{new Date(offer.createdAt).toLocaleDateString()}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-black/80">{formatCurrency(offer.offerPrice, offer.currency)}</span>
+          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
           {expanded ? <XCircle className="w-4 h-4 text-black/30" /> : <ArrowRightLeft className="w-4 h-4 text-black/30" />}
         </div>
       </button>
@@ -310,7 +328,7 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
           {offer.responseMessage && (
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Owner response</p>
-              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-emerald-50 p-3">{offer.responseMessage}</p>
+              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseMessage}</p>
             </div>
           )}
 
