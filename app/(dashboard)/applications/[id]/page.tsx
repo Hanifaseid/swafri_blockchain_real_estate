@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth.store';
+import Link from 'next/link';
 import { 
   useRentalApplication, 
   useWithdrawRentalApplication,
@@ -329,11 +330,12 @@ function OwnerActionsPanel({ app }: { app: any }) {
       {normalizedStatus !== 'APPROVED' && normalizedStatus !== 'SCREENING' && (
         <div className="space-y-3">
           <textarea 
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            placeholder="Optional note to tenant..."
-            className="w-full p-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none h-20"
-          />
+  value={note}
+  onChange={e => setNote(e.target.value)}
+  placeholder="Optional note to tenant..."
+  style={{ color: '#111827' }}
+  className="w-full p-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none h-20"
+/>
           <div className="grid grid-cols-2 gap-2">
             <button 
               disabled={reviewing}
