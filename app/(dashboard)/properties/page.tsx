@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, Plus, Search, SlidersHorizontal, X, Loader2, AlertCircle } from 'lucide-react';
+import { Building2, Plus, Search, SlidersHorizontal, X, Loader2, AlertCircle, Clock, BookmarkPlus, Bell, BellOff, Check } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { useListings, useMyListings, useAdminListings, useDeleteListing, useTransitionListing } from '@/features/listings/queries/listing.queries';
+import { useListings, useMyListings, useAdminListings, useDeleteListing, useTransitionListing, useSavedSearches, useUpdateSavedSearch, useDeleteSavedSearch, useSaveSearch } from '@/features/listings/queries/listing.queries';
 import { listingToSummary } from '@/features/listings/types/listing.types';
-import type { Listing, ListingFilters, TransitionAction } from '@/features/listings/types/listing.types';
+import type { Listing, ListingFilters, PropertyType, TransitionAction } from '@/features/listings/types/listing.types';
 import { ListingCard } from '@/components/listing/ListingCard';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { cn } from '@/lib/utils';
@@ -26,16 +27,151 @@ export default function PropertiesPage() {
 // ─── Tenant: Browse published listings ────────────────────────────────────────
 
 function TenantView() {
-  const [filters, setFilters] = useState<ListingFilters>({ limit: 20, page: 1 });
-  const [search, setSearch] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const { data, isLoading } = useListings(filters);
-  const listings = data?.items ?? [];
+  const [filters, setFilters] = useState<ListingFilters>(() => ({
+    limit: 20,
+    page: 1,
+    sort: 'newest',
+    listingType:  (searchParams.get('listingType')  as ListingFilters['listingType'])  || undefined,
+    category:     (searchParams.get('category')     as ListingFilters['category'])     || undefined,
+    minPrice:     searchParams.get('minPrice')      ? Number(searchParams.get('minPrice'))     : undefined,
+    maxPrice:     searchParams.get('maxPrice')      ? Number(searchParams.get('maxPrice'))     : undefined,
+    minBedrooms:  searchParams.get('minBedrooms')   ? Number(searchParams.get('minBedrooms'))  : undefined,
+    minBathrooms: searchParams.get('minBathrooms')  ? Number(searchParams.get('minBathrooms')) : undefined,
+  }));
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
+  const [showFilters, setShowFilters] = useState(
+    !!(searchParams.get('listingType') || searchParams.get('category') ||
+       searchParams.get('minPrice')    || searchParams.get('maxPrice')  ||
+       searchParams.get('minBedrooms') || searchParams.get('minBathrooms'))
+  );
+  const [showRecentSearches, setShowRecentSearches] = useState(false);
+  const [showSavedSearches, setShowSavedSearches] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('recentSearches');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed : [];
+      }
+    } catch {
+      // Ignore errors
+    }
+    return [];
+  });
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveModalName, setSaveModalName] = useState('');
+  const [saveModalAlert, setSaveModalAlert] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Debounce search → push into filters.q after 800ms to avoid 429 rate limit
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFilters((f) => ({ ...f, q: search.trim().toLowerCase() || undefined, page: 1 }));
+    }, 800);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  const { data: listingsData, isLoading } = useListings(filters);
+  const listings = listingsData?.items ?? [];
+
+  const { data: savedSearchesData } = useSavedSearches();
+  const savedSearches = savedSearchesData ?? [];
+
+  const { mutate: deleteSavedSearch } = useDeleteSavedSearch();
+  const { mutate: saveSearch, isPending: savingSearch } = useSaveSearch();
+
+  // Persist recent searches to localStorage
+  const saveRecentSearch = (query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    
+    const updated = [trimmed, ...recentSearches.filter((s) => s !== trimmed)].slice(0, 8);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem('recentSearches', JSON.stringify(updated));
+    } catch {
+      // Ignore storage errors
+    }
+  };
+
+  const removeRecentSearch = (query: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = recentSearches.filter((s) => s !== query);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem('recentSearches', JSON.stringify(updated));
+    } catch {
+      // Ignore storage errors
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setFilters((f) => ({ ...f, q: search || undefined, page: 1 }));
+    if (search.trim()) {
+      saveRecentSearch(search);
+    }
+    setFilters((f) => ({ ...f, q: search.trim() || undefined, page: 1 }));
+    setShowRecentSearches(false);
+  };
+
+  const applyRecentSearch = (query: string) => {
+    setSearch(query);
+    setFilters((f) => ({ ...f, q: query, page: 1 }));
+    setShowRecentSearches(false);
+    searchInputRef.current?.blur();
+  };
+
+  const applySavedSearch = (savedSearch: any) => {
+    const q = savedSearch.query ?? {};
+    setSearch(savedSearch.name);
+    setFilters((f) => ({
+      ...f,
+      q: undefined,
+      listingType:  q.listingType  || undefined,
+      category:     q.category     || undefined,
+      minPrice:     q.minPrice     ?? undefined,
+      maxPrice:     q.maxPrice     ?? undefined,
+      minBedrooms:  q.minBedrooms  ?? undefined,
+      minBathrooms: q.minBathrooms ?? undefined,
+      page: 1,
+    }));
+    if (q.listingType || q.category || q.minPrice || q.maxPrice || q.minBedrooms || q.minBathrooms) {
+      setShowFilters(true);
+    }
+    setShowRecentSearches(false);
+    searchInputRef.current?.blur();
+  };
+
+  const handleDeleteSavedSearch = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Delete this saved search?')) {
+      deleteSavedSearch(id);
+    }
+  };
+
+  const handleSaveCurrentSearch = () => {
+    setSaveModalName(search.trim() || 'My saved search');
+    setSaveModalAlert(false);
+    setShowSaveModal(true);
+  };
+
+  const confirmSave = () => {
+    if (!saveModalName.trim()) return;
+    saveSearch({
+      name: saveModalName.trim(),
+      alertEnabled: saveModalAlert,
+      query: {
+        listingType:  filters.listingType  ?? undefined,
+        category:     (filters as any).category ?? undefined,
+        minPrice:     filters.minPrice     ?? undefined,
+        maxPrice:     filters.maxPrice     ?? undefined,
+        minBedrooms:  filters.minBedrooms  ?? undefined,
+        minBathrooms: filters.minBathrooms ?? undefined,
+      },
+    }, { onSuccess: () => setShowSaveModal(false) });
   };
 
   return (
@@ -49,25 +185,129 @@ function TenantView() {
       </div>
 
       {/* Search + filter bar */}
-      <form onSubmit={handleSearch} className="flex gap-2 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <form onSubmit={handleSearch} className="grid gap-2 mb-4 sm:grid-cols-[1fr_auto_auto] items-center">
+        <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 pointer-events-none" />
           <input
+            ref={searchInputRef}
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search properties…"
-            className="w-full h-9 rounded-lg border border-gray-200 pl-9 pr-3 text-sm text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400 bg-white"
+            onFocus={() => setShowRecentSearches(true)}
+            onBlur={() => setTimeout(() => setShowRecentSearches(false), 150)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setShowRecentSearches(false);
+            }}
+            placeholder="Search by ID, location, or keyword…"
+            className="w-full h-11 rounded-2xl border border-gray-200 pl-10 pr-3 text-sm text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400 bg-white"
           />
+          {/* Search dropdown with real-time results, recent, and saved searches */}
+          {showRecentSearches && (search.trim() || recentSearches.length > 0 || savedSearches.length > 0) && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden">
+              <div className="max-h-96 overflow-y-auto">
+                {/* Live API results preview */}
+                {search.trim() && listings.length > 0 && (
+                  <>
+                    <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-black/40 bg-gray-50 border-b border-gray-100">
+                      Results ({listings.length})
+                    </div>
+                    {listings.slice(0, 5).map((listing) => (
+                      <button
+                        key={listing.id}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setShowRecentSearches(false);
+                          router.push(`/listings/${listing.id}`);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
+                      >
+                        <Search size={12} className="text-black/30 shrink-0" />
+                        <span className="flex-1 truncate">{listing.title || listing.id}</span>
+                        <span className="text-xs text-black/30 shrink-0">{listing.propertyType}</span>
+                      </button>
+                    ))}
+                    {listings.length > 5 && (
+                      <div className="px-3 py-2 text-xs text-emerald-600 text-center font-medium border-b border-gray-100">
+                        +{listings.length - 5} more — press Enter to see all
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Recent searches */}
+                {!search.trim() && recentSearches.length > 0 && (
+                  <>
+                    <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-black/40 bg-gray-50 border-b border-gray-100">
+                      Recent
+                    </div>
+                    {recentSearches.map((query) => (
+                      <button
+                          key={query}
+                          type="button"
+                          onMouseDown={(e) => { e.preventDefault(); applyRecentSearch(query); }}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <Clock size={14} className="text-black/30 shrink-0" />
+                          <span className="flex-1 text-left truncate">{query}</span>
+                          <span
+                            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); removeRecentSearch(query, e as any); }}
+                            className="p-1 text-black/20 hover:text-red-500 transition-colors shrink-0 hover:bg-red-50 rounded"
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Remove search"
+                          >
+                            <X size={14} />
+                          </span>
+                        </button>
+                    ))}
+                  </>
+                )}
+
+                {/* Saved searches */}
+                {!search.trim() && savedSearches.length > 0 && (
+                  <>
+                    <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-black/40 bg-gray-50 border-b border-gray-100">
+                      Saved Searches
+                    </div>
+                    {savedSearches.map((savedSearch: any) => (
+                      <button
+                        key={savedSearch.id}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); applySavedSearch(savedSearch); }}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
+                      >
+                        <Search size={14} className="text-emerald-500 shrink-0" />
+                        <span className="flex-1 truncate">{savedSearch.name}</span>
+                        <span
+                          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteSavedSearch(savedSearch.id, e as any); }}
+                          className="p-1 text-black/20 hover:text-red-500 transition-colors shrink-0 hover:bg-red-50 rounded"
+                          role="button"
+                          tabIndex={0}
+                          aria-label="Delete search"
+                        >
+                          <X size={14} />
+                        </span>
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-        <button type="submit" className="h-9 px-4 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors">
-          Search
+        <button type="button"
+          onClick={handleSaveCurrentSearch}
+          disabled={savingSearch}
+          className="inline-flex items-center gap-1.5 h-11 px-4 rounded-2xl text-xs font-medium transition-colors border border-gray-200 bg-white text-black/60 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <BookmarkPlus size={14} />
+          {savingSearch ? 'Saving…' : 'Save search'}
         </button>
-        <button
-          type="button"
+        <button type="button"
           onClick={() => setShowFilters((v) => !v)}
-          className={cn('h-9 px-3 rounded-lg border text-xs font-medium transition-colors flex items-center gap-1.5',
-            showFilters ? 'bg-emerald-50 border-emerald-300 text-emerald-600' : 'border-gray-200 text-black/60 hover:border-gray-300 bg-white')}
+          className={cn('inline-flex items-center gap-1.5 h-11 px-4 rounded-2xl text-xs font-medium transition-colors',
+            showFilters ? 'bg-emerald-50 border border-emerald-300 text-emerald-600' : 'border border-gray-200 bg-white text-black/60 hover:border-gray-300')}
         >
           <SlidersHorizontal size={13} /> Filters
         </button>
@@ -75,42 +315,52 @@ function TenantView() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5 grid sm:grid-cols-3 gap-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Type</label>
-            <select value={filters.listingType ?? ''} onChange={(e) => setFilters((f) => ({ ...f, listingType: (e.target.value as 'sale' | 'rent') || undefined, page: 1 }))}
-              className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
-              <option value="">All</option>
+            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Rent or Sale</label>
+            <select value={filters.listingType ?? ''} onChange={(e) => setFilters((f) => ({ ...f, listingType: (e.target.value as ListingFilters['listingType']) || undefined, page: 1 }))}
+              className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
+              <option value="">Any</option>
               <option value="sale">For Sale</option>
               <option value="rent">For Rent</option>
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Category</label>
-            <select value={filters.category ?? ''} onChange={(e) => setFilters((f) => ({ ...f, category: (e.target.value as 'residential' | 'commercial') || undefined, page: 1 }))}
-              className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
-              <option value="">All</option>
-              <option value="residential">Residential</option>
-              <option value="commercial">Commercial</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Min Bedrooms</label>
-            <select value={filters.minBedrooms ?? ''} onChange={(e) => setFilters((f) => ({ ...f, minBedrooms: e.target.value ? Number(e.target.value) : undefined, page: 1 }))}
-              className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
+            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Property type</label>
+            <select value={filters.propertyType ?? ''} onChange={(e) => setFilters((f) => ({ ...f, propertyType: (e.target.value as PropertyType) || undefined, page: 1 }))}
+              className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
               <option value="">Any</option>
-              {[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}+</option>)}
+              {['apartment','house','villa','condominium','land','office','warehouse','shop','mixed_use'].map((type) => (
+                <option key={type} value={type}>{type.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>
+              ))}
             </select>
           </div>
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Max Price</label>
+            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Max price</label>
             <input type="number" value={filters.maxPrice ?? ''} onChange={(e) => setFilters((f) => ({ ...f, maxPrice: e.target.value ? Number(e.target.value) : undefined, page: 1 }))}
-              placeholder="Any" className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400" />
+              placeholder="Any" className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400" />
+          </div>
+          <div>
+            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Min price</label>
+            <input type="number" value={filters.minPrice ?? ''} onChange={(e) => setFilters((f) => ({ ...f, minPrice: e.target.value ? Number(e.target.value) : undefined, page: 1 }))}
+              placeholder="Any" className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400" />
+          </div>
+          <div>
+            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Verified only</label>
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                checked={filters.verifiedOnly ?? false}
+                onChange={(e) => setFilters((f) => ({ ...f, verifiedOnly: e.target.checked || undefined, page: 1 }))}
+                className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <span className="text-sm text-black/70">Show verified listings only</span>
+            </div>
           </div>
           <div>
             <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Sort</label>
             <select value={filters.sort ?? 'newest'} onChange={(e) => setFilters((f) => ({ ...f, sort: e.target.value as ListingFilters['sort'], page: 1 }))}
-              className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
+              className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>
               <option value="price_asc">Price ↑</option>
@@ -118,7 +368,7 @@ function TenantView() {
             </select>
           </div>
           <div className="flex items-end">
-            <button type="button" onClick={() => { setFilters({ limit: 20, page: 1 }); setSearch(''); }}
+            <button type="button" onClick={() => { setFilters({ limit: 20, page: 1, sort: 'newest' }); setSearch(''); }}
               className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-600 transition-colors">
               <X size={12} /> Clear filters
             </button>
@@ -134,11 +384,24 @@ function TenantView() {
       ) : listings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <Building2 className="w-10 h-10 text-black/15" />
-          <p className="text-black/40 text-sm font-light">No properties found matching your filters.</p>
+          <p className="text-black/40 text-sm font-light">No properties found matching your search.</p>
+          <button
+            type="button"
+            onClick={() => {
+              setSearch('');
+              setFilters({ limit: 20, page: 1, sort: 'newest' });
+              setShowFilters(false);
+            }}
+            className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold underline underline-offset-2"
+          >
+            Clear search and show all properties
+          </button>
         </div>
       ) : (
         <>
-          <p className="text-xs text-black/35 font-mono mb-4">{data?.total ?? listings.length} properties found</p>
+          <p className="text-xs text-black/35 font-mono mb-4">
+            {listingsData?.total ?? listings.length} properties found
+          </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {listings.map((listing) => (
               <ListingCard
@@ -149,7 +412,7 @@ function TenantView() {
             ))}
           </div>
           {/* Pagination */}
-          {data && data.total > data.limit && (
+          {listingsData && listingsData.total > listingsData.limit && !search.trim() && (
             <div className="flex items-center justify-center gap-3 mt-8">
               <button onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 1) - 1 }))}
                 disabled={(filters.page ?? 1) <= 1}
@@ -157,16 +420,99 @@ function TenantView() {
                 Previous
               </button>
               <span className="text-xs text-black/40 font-mono">
-                Page {filters.page ?? 1} of {Math.ceil(data.total / data.limit)}
+                Page {filters.page ?? 1} of {Math.ceil(listingsData.total / listingsData.limit)}
               </span>
               <button onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 1) + 1 }))}
-                disabled={(filters.page ?? 1) >= Math.ceil(data.total / data.limit)}
+                disabled={(filters.page ?? 1) >= Math.ceil(listingsData.total / listingsData.limit)}
                 className="text-xs font-medium px-4 py-2 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors">
                 Next
               </button>
             </div>
           )}
         </>
+      )}
+      {/* Save search modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-fade-in">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+                  <BookmarkPlus className="w-4 h-4 text-emerald-600" />
+                </div>
+                <p className="text-sm font-semibold text-gray-900">Save this search</p>
+              </div>
+              <button type="button" onClick={() => setShowSaveModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Active filters summary */}
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {([
+                filters.listingType && (filters.listingType === 'sale' ? 'For Sale' : 'For Rent'),
+                filters.category    && (filters.category === 'residential' ? 'Residential' : 'Commercial'),
+                filters.minBedrooms != null && `${filters.minBedrooms}+ beds`,
+                filters.minPrice    != null && `From $${filters.minPrice.toLocaleString()}`,
+                filters.maxPrice    != null && `Up to $${filters.maxPrice.toLocaleString()}`,
+                search.trim()       && `"${search.trim()}"`,
+              ].filter(Boolean) as string[]).map((pill) => (
+                <span key={pill} className="text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full">{pill}</span>
+              ))}
+              {!filters.listingType && !filters.category && !filters.minBedrooms && !filters.minPrice && !filters.maxPrice && !search.trim() && (
+                <span className="text-[10px] text-gray-400 font-mono">No filters — matches all listings</span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-1 block">Search name</label>
+                <input
+                  type="text"
+                  value={saveModalName}
+                  onChange={(e) => setSaveModalName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && confirmSave()}
+                  placeholder="e.g. 2-bed in Geneva"
+                  autoFocus
+                  className="w-full h-10 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-emerald-400 bg-gray-50 transition-colors"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSaveModalAlert((v) => !v)}
+                className={cn(
+                  'flex items-center gap-2 w-full px-4 py-2.5 rounded-xl border text-xs font-medium transition-colors',
+                  saveModalAlert
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500',
+                )}
+              >
+                {saveModalAlert ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+                {saveModalAlert ? 'Email alerts ON — notify me of new matches' : 'Email alerts OFF'}
+              </button>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={confirmSave}
+                  disabled={savingSearch || !saveModalName.trim()}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold py-2.5 rounded-xl transition-colors"
+                >
+                  {savingSearch ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  Save search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSaveModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -213,7 +559,7 @@ function OwnerView() {
       ) : listings.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
           <Building2 className="w-10 h-10 text-black/15 mx-auto mb-3" />
-          <p className="text-sm text-black/40 font-light mb-4">You haven't created any listings yet.</p>
+          <p className="text-sm text-black/40 font-light mb-4">You have not created any listings yet.</p>
           <Link href="/properties/create" className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors">
             <Plus size={14} /> Create First Listing
           </Link>
@@ -348,7 +694,7 @@ function AdminView() {
         </div>
       ) : listings.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
-          <p className="text-sm text-black/40 font-light">No listings with status "{statusFilter}".</p>
+          <p className="text-sm text-black/40 font-light">No listings with status {statusFilter}.</p>
         </div>
       ) : (
         <AdminListingsTable listings={listings} />
