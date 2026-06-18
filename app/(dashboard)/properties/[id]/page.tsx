@@ -70,15 +70,16 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [showOfferModal, setShowOfferModal]     = useState(false);
   const [offerAmount, setOfferAmount]           = useState<number>(0);
   const [offerMessage, setOfferMessage]         = useState('');
+  const [previewPhotos, setPreviewPhotos]       = useState<{url: string, file: File}[]>([]);
+
+  useEffect(() => {
+    if (listing?.price) setOfferAmount(listing.price);
+  }, [listing?.price]);
 
   if (!currentUser) return null;
   const role    = currentUser.role;
   const isOwner = role === 'PROPERTY_OWNER' || listing?.createdBy === currentUser.id;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
-
-  useEffect(() => {
-    if (listing?.price) setOfferAmount(listing.price);
-  }, [listing?.price]);
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
   if (!listing)  return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
@@ -298,11 +299,24 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               </button>
             )}
             <input ref={photoInputRef} type="file" multiple accept="image/*" className="hidden"
-              onChange={(e) => { const f = Array.from(e.target.files ?? []); if (f.length) doUploadPhotos(f); if (photoInputRef.current) photoInputRef.current.value = ''; }} />
+              onChange={(e) => { 
+                const f = Array.from(e.target.files ?? []); 
+                if (f.length) {
+                  const previews = f.map(file => ({ url: URL.createObjectURL(file), file }));
+                  setPreviewPhotos(previews);
+                  doUploadPhotos(f, {
+                    onSettled: () => {
+                      previews.forEach(p => URL.revokeObjectURL(p.url));
+                      setPreviewPhotos([]);
+                    }
+                  });
+                }
+                if (photoInputRef.current) photoInputRef.current.value = ''; 
+              }} />
           </div>
-          {listing.photos?.length > 0 ? (
+          {(listing.photos?.length > 0) || previewPhotos.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {listing.photos.map((photo) => (
+              {(listing.photos || []).map((photo) => (
                 <div key={photo.publicId} className="relative group rounded-lg overflow-hidden aspect-square">
                   <img src={photo.url} alt="" className="w-full h-full object-cover" />
                   {photo.isCover && <span className="absolute top-1 left-1 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
@@ -312,6 +326,15 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                       <button type="button" onClick={() => doDeletePhoto(photo.publicId)} className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded"><Trash2 size={10} /></button>
                     </div>
                   )}
+                </div>
+              ))}
+              {previewPhotos.map((preview, i) => (
+                <div key={`preview-${i}`} className="relative rounded-lg overflow-hidden aspect-square border border-gray-200">
+                  <img src={preview.url} alt="uploading" className="w-full h-full object-cover opacity-40 blur-[2px]" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                    <Loader2 size={24} className="animate-spin text-emerald-600" />
+                    <span className="text-[10px] font-bold text-white bg-black/60 px-2 py-1 rounded tracking-widest shadow-sm">UPLOADING...</span>
+                  </div>
                 </div>
               ))}
             </div>
