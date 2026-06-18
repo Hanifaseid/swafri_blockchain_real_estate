@@ -26,11 +26,12 @@ const RESPONSE_ACTIONS = [
 type OfferResponseAction = 'accepted' | 'rejected' | 'countered';
 
 function formatCurrency(amount: number, currency: string) {
-  if (typeof amount !== 'number' || !isFinite(amount)) return '—';
+  const num = Number(amount);
+  if (!isFinite(num)) return '—';
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency || 'USD',
-  }).format(amount);
+  }).format(num);
 }
 
 function LoadingState() {
