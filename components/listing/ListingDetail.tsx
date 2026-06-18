@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { PhotoGallery } from "./PhotoGallery";
 import { PropertyMetadata } from "./PropertyMetadata";
-import { Heart, MapPin, FileCheck2, MessageSquare } from "lucide-react";
+import { Heart, MapPin, FileCheck2, MessageSquare, ArrowLeft } from "lucide-react";
 import { SESSION_KEYS, getCurrentUser } from "@/lib/auth/session";
 import { apiClient } from "@/lib/api/axios-client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
@@ -98,6 +98,18 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4">
+
+      <div className="mb-4">
+        <Link
+          href="/properties"
+          aria-label="Browse properties"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 shadow-sm transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Browse properties</span>
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <div className="lg:col-span-2 space-y-4">
