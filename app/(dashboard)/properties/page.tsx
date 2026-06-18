@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -50,6 +50,16 @@ export default function PropertiesPage() {
   if (currentUser.role === "TENANT") return <TenantView />;
   if (currentUser.role === "PROPERTY_OWNER") return <OwnerView />;
   return <AdminView />;
+}
+
+function fuzzySearchMatch(value: string, query: string) {
+  let searchIndex = 0;
+  for (let i = 0; i < value.length && searchIndex < query.length; i += 1) {
+    if (value[i] === query[searchIndex]) {
+      searchIndex += 1;
+    }
+  }
+  return searchIndex === query.length;
 }
 
 // ─── Tenant: Browse published listings ────────────────────────────────────────
@@ -123,7 +133,39 @@ function TenantView() {
   }, [search]);
 
   const { data: listingsData, isLoading } = useListings(filters);
-  const listings = listingsData?.items ?? [];
+  const listings = useMemo(() => listingsData?.items ?? [], [listingsData?.items]);
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const filteredListings = useMemo(() => {
+    return listings.filter((listing) => {
+      const priceValue = listing.price ?? listing.monthlyRent ?? 0;
+      if (filters.minPrice != null && priceValue < filters.minPrice) return false;
+      if (filters.maxPrice != null && priceValue > filters.maxPrice) return false;
+
+      if (!normalizedSearch) return true;
+      const normalizedTitle = listing.title?.toLowerCase() ?? "";
+      const normalizedType = listing.propertyType?.toLowerCase() ?? "";
+      const normalizedCategory = listing.category?.toLowerCase() ?? "";
+      const normalizedCity = listing.address?.city?.toLowerCase() ?? "";
+      const normalizedStreet = listing.address?.street?.toLowerCase() ?? "";
+      const normalizedId = listing.id?.toLowerCase() ?? "";
+
+      return (
+        normalizedTitle.includes(normalizedSearch) ||
+        fuzzySearchMatch(normalizedTitle, normalizedSearch) ||
+        normalizedType.includes(normalizedSearch) ||
+        fuzzySearchMatch(normalizedType, normalizedSearch) ||
+        normalizedCategory.includes(normalizedSearch) ||
+        fuzzySearchMatch(normalizedCategory, normalizedSearch) ||
+        normalizedCity.includes(normalizedSearch) ||
+        fuzzySearchMatch(normalizedCity, normalizedSearch) ||
+        normalizedStreet.includes(normalizedSearch) ||
+        fuzzySearchMatch(normalizedStreet, normalizedSearch) ||
+        normalizedId.includes(normalizedSearch) ||
+        fuzzySearchMatch(normalizedId, normalizedSearch)
+      );
+    });
+  }, [normalizedSearch, listings, filters.minPrice, filters.maxPrice]);
 
   const { data: savedSearchesData } = useSavedSearches();
   const savedSearches = savedSearchesData ?? [];
@@ -164,13 +206,21 @@ function TenantView() {
     if (search.trim()) {
       saveRecentSearch(search);
     }
-    setFilters((f) => ({ ...f, q: search.trim() || undefined, page: 1 }));
+    setFilters((f) => ({
+      ...f,
+      q: search.trim().toLowerCase() || undefined,
+      page: 1,
+    }));
     setShowRecentSearches(false);
   };
 
   const applyRecentSearch = (query: string) => {
     setSearch(query);
-    setFilters((f) => ({ ...f, q: query, page: 1 }));
+    setFilters((f) => ({
+      ...f,
+      q: query.toLowerCase(),
+      page: 1,
+    }));
     setShowRecentSearches(false);
     searchInputRef.current?.blur();
   };
@@ -277,12 +327,12 @@ function TenantView() {
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden">
                 <div className="max-h-96 overflow-y-auto">
                   {/* Live API results preview */}
-                  {search.trim() && listings.length > 0 && (
+                  {search.trim() && filteredListings.length > 0 && (
                     <>
                       <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-black/40 bg-gray-50 border-b border-gray-100">
-                        Results ({listings.length})
+                        Results ({filteredListings.length})
                       </div>
-                      {listings.slice(0, 5).map((listing) => (
+                      {filteredListings.slice(0, 5).map((listing) => (
                         <button
                           key={listing.id}
                           type="button"
@@ -305,9 +355,9 @@ function TenantView() {
                           </span>
                         </button>
                       ))}
-                      {listings.length > 5 && (
+                      {filteredListings.length > 5 && (
                         <div className="px-3 py-2 text-xs text-emerald-600 text-center font-medium border-b border-gray-100">
-                          +{listings.length - 5} more — press Enter to see all
+                          +{filteredListings.length - 5} more — press Enter to see all
                         </div>
                       )}
                     </>
@@ -577,7 +627,7 @@ function TenantView() {
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
         </div>
-      ) : listings.length === 0 ? (
+      ) : filteredListings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <Building2 className="w-10 h-10 text-black/15" />
           <p className="text-black/40 text-sm font-light">
@@ -598,10 +648,10 @@ function TenantView() {
       ) : (
         <>
           <p className="text-xs text-black/35 font-mono mb-4">
-            {listingsData?.total ?? listings.length} properties found
+            {normalizedSearch ? filteredListings.length : listingsData?.total ?? listings.length} properties found
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {listings.map((listing) => (
+            {filteredListings.map((listing) => (
               <ListingCard
                 key={listing.id}
                 listing={listingToSummary(listing)}
@@ -612,7 +662,7 @@ function TenantView() {
           {/* Pagination */}
           {listingsData &&
             listingsData.total > listingsData.limit &&
-            !search.trim() && (
+            !normalizedSearch && (
               <div className="flex items-center justify-center gap-3 mt-8">
                 <button
                   onClick={() =>
