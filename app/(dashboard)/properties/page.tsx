@@ -133,14 +133,19 @@ function TenantView() {
   }, [search]);
 
   const { data: listingsData, isLoading } = useListings(filters);
-  const listings = useMemo(() => listingsData?.items ?? [], [listingsData?.items]);
+  const listings = useMemo(
+    () => listingsData?.items ?? [],
+    [listingsData?.items],
+  );
   const normalizedSearch = search.trim().toLowerCase();
 
   const filteredListings = useMemo(() => {
     return listings.filter((listing) => {
       const priceValue = listing.price ?? listing.monthlyRent ?? 0;
-      if (filters.minPrice != null && priceValue < filters.minPrice) return false;
-      if (filters.maxPrice != null && priceValue > filters.maxPrice) return false;
+      if (filters.minPrice != null && priceValue < filters.minPrice)
+        return false;
+      if (filters.maxPrice != null && priceValue > filters.maxPrice)
+        return false;
 
       if (!normalizedSearch) return true;
       const normalizedTitle = listing.title?.toLowerCase() ?? "";
@@ -357,7 +362,8 @@ function TenantView() {
                       ))}
                       {filteredListings.length > 5 && (
                         <div className="px-3 py-2 text-xs text-emerald-600 text-center font-medium border-b border-gray-100">
-                          +{filteredListings.length - 5} more — press Enter to see all
+                          +{filteredListings.length - 5} more — press Enter to
+                          see all
                         </div>
                       )}
                     </>
@@ -648,7 +654,10 @@ function TenantView() {
       ) : (
         <>
           <p className="text-xs text-black/35 font-mono mb-4">
-            {normalizedSearch ? filteredListings.length : listingsData?.total ?? listings.length} properties found
+            {normalizedSearch
+              ? filteredListings.length
+              : (listingsData?.total ?? listings.length)}{" "}
+            properties found
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredListings.map((listing) => (
