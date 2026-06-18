@@ -84,11 +84,22 @@ export async function getListings(
   filters?: ListingFilters,
 ): Promise<PaginatedListings> {
   try {
-    const params: Record<string, string | number | boolean> = {};
+    const params: Record<string, string | number | boolean | string[]> = {};
     if (filters) {
       Object.entries(filters).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && v !== "")
-          params[k] = v as string | number | boolean;
+        if (v !== undefined && v !== null && v !== '') {
+          // Special handling for polygon: JSON-stringify the array
+          if (k === 'polygon' && Array.isArray(v)) {
+            params[k] = JSON.stringify(v);
+          }
+          // Special handling for amenities: can be string or string[]
+          else if (k === 'amenities') {
+            params[k] = v;
+          }
+          else {
+            params[k] = v as string | number | boolean;
+          }
+        }
       });
     }
     const { data } = await apiClient.get<ApiPaginatedResp<Listing>>(

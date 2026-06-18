@@ -403,16 +403,47 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       {/* Documents */}
       {(isOwner || isAdmin) && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 flex items-center gap-1.5"><FileText size={10} /> Ownership Documents</p>
-            {isOwner && (
-              <button type="button" onClick={() => docInputRef.current?.click()} disabled={uploadingDocs}
-                className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 disabled:opacity-50">
-                {uploadingDocs ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />} Upload Title Deed
-              </button>
-            )}
-            <input ref={docInputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleDocUpload} />
-          </div>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-4 flex items-center gap-1.5">
+            <FileText size={10} /> Ownership Documents
+          </p>
+
+          {/* Owner upload section */}
+          {isOwner && (
+            <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
+              <p className="text-xs font-medium text-black/60">Upload a document</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Document Type</label>
+                  <select value={docUploadType} onChange={(e) => setDocUploadType(e.target.value)}
+                    className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
+                    <option value="title_deed">Title Deed</option>
+                    <option value="tax_record">Tax Record</option>
+                    <option value="utility_bill">Utility Bill</option>
+                    <option value="ownership_certificate">Ownership Certificate</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button type="button" onClick={() => docInputRef.current?.click()} disabled={uploadingDocs}
+                    className="flex items-center gap-2 h-9 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold rounded-xl transition-colors w-full justify-center">
+                    {uploadingDocs ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                    {uploadingDocs ? 'Uploading…' : 'Choose File'}
+                  </button>
+                </div>
+              </div>
+              <p className="text-[10px] text-black/35">PDF, JPG, PNG — max 5 MB. Images and PDFs accepted.</p>
+              <input ref={docInputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleDocUpload} />
+            </div>
+          )}
+
+          {/* Listing status banner */}
+          {listing.status === 'draft' && isOwner && (
+            <div className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> This listing is in draft mode. Upload photos and documents, then submit for review when ready.
+            </div>
+          )}
+
+          {/* Verification status banner */}
           {listing.verificationStatus === 'unverified' && isOwner && (
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
               <AlertCircle size={13} className="shrink-0 mt-0.5" /> Upload a title deed to start verification before submitting for review.
@@ -428,6 +459,18 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               <CheckCircle2 size={13} /> Ownership verified. Listing can be published.
             </div>
           )}
+          {listing.verificationStatus === 'rejected' && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Verification rejected. Please review the rejection reason and address the issues before resubmitting.
+            </div>
+          )}
+          {listing.verificationStatus === 'suspended' && (
+            <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Verification suspended. Contact support for more information.
+            </div>
+          )}
+
+          {/* Document list */}
           {docs.length > 0 ? (
             <div className="space-y-2">
               {docs.map((doc) => (

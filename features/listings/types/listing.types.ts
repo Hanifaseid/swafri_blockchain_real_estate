@@ -123,7 +123,6 @@ export interface Listing {
 
   // Blockchain
   tokenId?: string;
-  ownershipDocumentHash?: string;
 
   // Meta
   createdBy: string;
@@ -178,19 +177,21 @@ export interface ListingFilters {
   maxArea?: number;
   verifiedOnly?: boolean;
   availabilityStatus?: AvailabilityStatus;
-  amenities?: string;
+  amenities?: string | string[];
   sort?: "newest" | "oldest" | "price_asc" | "price_desc";
   page?: number;
   limit?: number;
-  // Viewport
+  // Viewport (bounding box) - all 4 required together
   swLng?: number;
   swLat?: number;
   neLng?: number;
   neLat?: number;
-  // Radius
+  // Radius (point + distance) - all 3 required together
   lng?: number;
   lat?: number;
   radius?: number;
+  // Custom polygon - JSON-stringified array of [lng,lat] coordinate pairs
+  polygon?: [number, number][];
 }
 
 export interface SavedSearch {
