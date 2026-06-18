@@ -44,9 +44,9 @@ function LoadingState() {
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
     <div className="rounded-2xl p-12 text-center" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
-      <CreditCard className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
-      <p className="text-sm text-emerald-700 font-light mb-2">{title}</p>
-      <p className="text-xs text-emerald-600">{description}</p>
+      <CreditCard className="w-10 h-10 text-black/15 mx-auto mb-4" />
+      <p className="text-sm text-black/60 font-light mb-2">{title}</p>
+      <p className="text-xs text-black/50">{description}</p>
       <Link href="/properties" className="inline-block mt-4 text-xs text-emerald-600 hover:text-emerald-700 font-medium">
         Browse properties →
       </Link>
@@ -65,8 +65,8 @@ export default function OffersPage() {
       <div className="flex items-center gap-3 mb-6">
         <CreditCard className="w-6 h-6 text-emerald-500 shrink-0" />
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-600">{ROLE_LABELS[currentUser.role]}</p>
-          <h1 className="text-2xl font-light text-emerald-700 tracking-tight">{isOwner ? 'Offers Dashboard' : 'My Offers'}</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">{ROLE_LABELS[currentUser.role]}</p>
+          <h1 className="text-2xl font-light text-dash-sidebar tracking-tight">{isOwner ? 'Offers Dashboard' : 'My Offers'}</h1>
         </div>
       </div>
       {isOwner ? <OwnerOffersView /> : <TenantOffersView />}
@@ -91,7 +91,7 @@ function TenantOffersView() {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-emerald-600 font-mono">{offers.length} offer{offers.length === 1 ? '' : 's'} submitted</p>
+      <p className="text-xs text-black/35 font-mono">{offers.length} offer{offers.length === 1 ? '' : 's'} submitted</p>
       <div className="space-y-4">
         {offers.map((offer) => (
           <SentOfferCard key={offer.id} offer={offer} cancelOfferMutation={cancelOfferMutation} />
@@ -112,7 +112,7 @@ function OwnerOffersView() {
 
   return (
     <div>
-      <div className="flex gap-1 mb-5 bg-emerald-50 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit">
         {(['received', 'sent'] as const).map((tab) => (
           <button
             key={tab}
@@ -120,7 +120,7 @@ function OwnerOffersView() {
             onClick={() => setActiveTab(tab)}
             className={cn(
               'text-xs font-medium px-4 py-2 rounded-lg capitalize transition-all',
-              activeTab === tab ? 'bg-emerald-50 text-emerald-700 shadow-sm' : 'text-black/50 hover:text-black/70'
+              activeTab === tab ? 'bg-white text-black shadow-sm' : 'text-black/50 hover:text-black/70'
             )}
           >
             {tab === 'received' ? 'Received' : 'Sent'}
@@ -172,10 +172,10 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
               {offer.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Received</span>
+            <span className="text-[10px] font-mono uppercase bg-gray-100 text-black/50 px-2 py-0.5 rounded">Received</span>
           </div>
-          <p className="text-sm font-medium text-emerald-800 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
-          <p className="text-xs text-emerald-600">{offerer?.name ?? offerer?.email ?? 'Buyer'}</p>
+          <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
+          <p className="text-xs text-black/50">{offerer?.name ?? offerer?.email ?? 'Buyer'}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
@@ -186,31 +186,31 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
       {expanded && (
         <div className="border-t border-gray-100 p-4 space-y-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl bg-emerald-50 p-3">
+            <div className="rounded-2xl bg-gray-50 p-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Offer amount</p>
               <p className="text-sm font-semibold text-black/80">{formatCurrency(offer.offerPrice, offer.currency)}</p>
             </div>
-            <div className="rounded-2xl bg-emerald-50 p-3">
+            <div className="rounded-2xl bg-gray-50 p-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Submitted</p>
-              <p className="text-sm text-emerald-600">{new Date(offer.createdAt).toLocaleDateString()}</p>
+              <p className="text-sm text-black/60">{new Date(offer.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
 
           <div>
             <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Message</p>
-            <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-emerald-50 p-3">{offer.message || 'No message provided.'}</p>
+            <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.message || 'No message provided.'}</p>
           </div>
 
           {offer.responseMessage && (
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Previous response</p>
-              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-emerald-50 p-3">{offer.responseMessage}</p>
+              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseMessage}</p>
             </div>
           )}
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-[10px] font-mono uppercase tracking-widest text-emerald-600 mb-1 block">Response</label>
+              <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1 block">Response</label>
               <select
                 value={responseAction}
                 onChange={(event) => setResponseAction(event.target.value as OfferResponseAction)}
@@ -239,7 +239,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
           </div>
 
           <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-emerald-600 mb-1 block">Message</label>
+            <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1 block">Message</label>
             <textarea
               value={responseMessage}
               onChange={(event) => setResponseMessage(event.target.value)}
@@ -250,7 +250,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-xs text-emerald-600">
+            <div className="text-xs text-black/50">
               Choose a response and save it to notify the buyer.
             </div>
             <button
@@ -291,10 +291,10 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
             <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
               {offer.status.replace('_', ' ')}
             </span>
-            <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Sent</span>
+            <span className="text-[10px] font-mono uppercase bg-gray-100 text-black/50 px-2 py-0.5 rounded">Sent</span>
           </div>
-          <p className="text-sm font-medium text-emerald-800 truncate">{typeof offer.listing === 'string' ? `Listing ${offer.listing}` : offer.listing?.title ?? `Listing ${offer.listingId}`}</p>
-          <p className="text-xs text-emerald-600">{new Date(offer.createdAt).toLocaleDateString()}</p>
+          <p className="text-sm font-medium text-black/80 truncate">{typeof offer.listing === 'string' ? `Listing ${offer.listing}` : offer.listing?.title ?? `Listing ${offer.listingId}`}</p>
+          <p className="text-xs text-black/50">{new Date(offer.createdAt).toLocaleDateString()}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
@@ -305,14 +305,14 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
       {expanded && (
         <div className="border-t border-gray-100 p-4 space-y-4">
           <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-600 mb-1">Message</p>
-            <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-emerald-50 p-3">{offer.message || 'No message provided.'}</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Message</p>
+            <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.message || 'No message provided.'}</p>
           </div>
 
           {offer.responseMessage && (
             <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest text-emerald-600 mb-1">Owner response</p>
-              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-emerald-50 p-3">{offer.responseMessage}</p>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Owner response</p>
+              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseMessage}</p>
             </div>
           )}
 
@@ -321,7 +321,7 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
               type="button"
               disabled={cancelOfferMutation.isPending}
               onClick={() => cancelOfferMutation.mutate(offer.id)}
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-black/70 hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               {cancelOfferMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Slash size={12} />}
               Cancel offer
