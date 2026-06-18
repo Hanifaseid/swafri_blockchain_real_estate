@@ -15,7 +15,7 @@ import {
   useResolveDispute,
   useEscrowVerification,
 } from '@/features/leases/queries/lease.queries';
-import { FileSignature, Loader2, ArrowLeft, ShieldCheck, AlertTriangle, CheckCircle2, Wallet, Calendar, DollarSign, FileText, Home, User } from 'lucide-react';
+import { FileSignature, Loader2, ArrowLeft, ShieldCheck, AlertTriangle, CheckCircle2, Wallet, Calendar, DollarSign, FileText, Home, User,  XCircle} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function LeaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
