@@ -71,7 +71,10 @@ export async function submitKycDocuments(files: File[], documentType: string): P
     const { data } = await apiClient.post<{ success: boolean; message: string }>(
       ENDPOINTS.KYC.SUBMIT,
       formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      { 
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 0 
+      }
     );
     return data.success;
   } catch {

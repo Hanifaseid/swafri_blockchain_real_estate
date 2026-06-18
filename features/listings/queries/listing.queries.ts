@@ -143,7 +143,10 @@ export function useUploadPhotos(id: string) {
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
       toast.success('Photos uploaded.');
     },
-    onError: () => toast.error('Photo upload failed. Max 5 MB per file.'),
+    onError: (error: any) => {
+      const msg = error?.message || 'Photo upload failed.';
+      toast.error(msg);
+    },
   });
 }
 

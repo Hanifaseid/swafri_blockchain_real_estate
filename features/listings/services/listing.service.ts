@@ -191,8 +191,12 @@ export async function getListingDocuments(id: string): Promise<ListingDocument[]
 
 export async function getDocumentSignedUrl(listingId: string, docId: string): Promise<string | null> {
   try {
-    const { data } = await apiClient.get<ApiResp<{ url: string }>>(ENDPOINTS.LISTINGS.DOC_URL(listingId, docId));
-    return data.success ? data.data.url : null;
+    const { data } = await apiClient.get<any>(ENDPOINTS.LISTINGS.DOC_URL(listingId, docId));
+    if (typeof data === 'string' && data.startsWith('http')) return data;
+    if (data?.url) return data.url;
+    if (data?.data?.url) return data.data.url;
+    if (typeof data?.data === 'string' && data.data.startsWith('http')) return data.data;
+    return null;
   } catch {
     return null;
   }
@@ -203,9 +207,21 @@ export async function getDocumentSignedUrl(listingId: string, docId: string): Pr
 export async function uploadPhotos(listingId: string, files: File[]): Promise<void> {
   const form = new FormData();
   files.forEach((f) => form.append('photos', f));
-  await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_PHOTOS(listingId), form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  try {
+    await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_PHOTOS(listingId), form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 0,
+    });
+  } catch (error: any) {
+    const errData = error.response?.data;
+    if (errData) {
+      if (errData.stack && errData.stack.includes('MulterError')) {
+        throw new Error(errData.stack.split('\n')[0]);
+      }
+      throw new Error(errData.message || 'Upload failed');
+    }
+    throw error;
+  }
 }
 
 export async function deletePhoto(listingId: string, publicId: string): Promise<void> {

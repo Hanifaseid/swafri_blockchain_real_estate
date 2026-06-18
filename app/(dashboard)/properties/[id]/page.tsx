@@ -118,7 +118,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       const form = new FormData();
       form.append('type', 'title_deed');
       files.forEach((f) => form.append('documents', f));
-      await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(id), form, { headers: { 'Content-Type': 'multipart/form-data' } });
+      await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(id), form, { 
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 0 
+      });
       toast.success('Documents uploaded.');
       refetch();
     } catch { toast.error('Upload failed.'); }
