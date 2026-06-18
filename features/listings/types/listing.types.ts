@@ -195,14 +195,19 @@ export interface SavedSearch {
   id: string;
   name: string;
   query: {
-    listingType?:  ListingType;
-    category?:     ListingCategory;
-    minPrice?:     number;
-    maxPrice?:     number;
-    minBedrooms?:  number;
+    listingType?: ListingType;
+    category?: ListingCategory;
+    minPrice?: number;
+    maxPrice?: number;
+    minBedrooms?: number;
     minBathrooms?: number;
-    swLng?: number; swLat?: number; neLng?: number; neLat?: number;
-    lng?: number; lat?: number; radius?: number;
+    swLng?: number;
+    swLat?: number;
+    neLng?: number;
+    neLat?: number;
+    lng?: number;
+    lat?: number;
+    radius?: number;
   };
   alertEnabled: boolean;
   createdAt: string;
@@ -211,7 +216,7 @@ export interface SavedSearch {
 
 export interface CreateSavedSearchInput {
   name: string;
-  query: SavedSearch['query'];
+  query: SavedSearch["query"];
   alertEnabled?: boolean;
 }
 
