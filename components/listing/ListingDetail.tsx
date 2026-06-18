@@ -140,8 +140,8 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
           <div className="bg-white p-6 rounded-2xl border shadow-sm">
 
-            <h3 className="text-sm font-bold mb-2 flex items-center gap-2">
-              <MapPin /> Location
+            <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-gray-500" /> Location
             </h3>
 
             <iframe
@@ -162,101 +162,54 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
         <aside className="space-y-4">
 
-          <div className="bg-white p-4 rounded-2xl border shadow-sm flex items-center justify-between">
-
-            <div>
-              <p className="text-xs text-gray-500">
-                Owner
-              </p>
-
-              <p className="font-semibold">
-                {listing.ownerName ?? "Platform"}
-              </p>
-            </div>
-
-
-            <div className="flex flex-col items-end gap-2">
-
+          {/* ── Owner card ─────────────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Listed by</p>
+            <p className="text-sm font-semibold text-gray-900 mb-3">{listing.ownerName ?? "Platform"}</p>
+            <div className="flex items-center justify-between mb-3">
               <VerificationBadge
                 blockchainHash={listing.blockchainHash}
                 certificateId={listing.certificateId}
               />
-
-              <FavoriteButton listingId={listing.id}/>
-
             </div>
-
+            <FavoriteButton listingId={listing.id} />
           </div>
 
+          {/* ── Inquiry card ───────────────────────────────────────────── */}
+          <InquiryCard listingId={listing.id} title={listing.title} />
 
-          <InquiryCard
-            listingId={listing.id}
-            title={listing.title}
-          />
-
-
+          {/* ── Make an offer ──────────────────────────────────────────── */}
           {listing.listingType === 'sale' && (
-            <div className="bg-white p-4 rounded-2xl border shadow-sm">
-
-              <div className="flex items-center justify-between mb-3">
-
-                <div>
-                  <p className="text-xs text-gray-500">
-                    Make an offer
-                  </p>
-
-                  <p className="font-semibold">
-                    Instant offer request
-                  </p>
-                </div>
-
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!currentUser) {
-                      toast.error('Please sign in to submit an offer.');
-                      return;
-                    }
-                    setShowOfferModal(true);
-                  }}
-                  className="bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm"
-                >
-                  Offer Now
-                </button>
-
-
-              </div>
-
-
-              <p className="text-sm text-gray-600">
-                Submit an offer to the owner directly from this page.
-              </p>
-
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Ready to buy?</p>
+              <p className="text-sm font-semibold text-gray-900 mb-1">Make an offer</p>
+              <p className="text-xs text-gray-500 mb-3">Submit a direct offer to the owner from this page.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!currentUser) { toast.error('Please sign in to submit an offer.'); return; }
+                  setShowOfferModal(true);
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
+              >
+                Offer Now
+              </button>
             </div>
           )}
 
-
-          <div className="bg-white p-4 rounded-2xl border shadow-sm text-sm text-gray-600">
-
-            <h4 className="font-bold mb-2 flex items-center gap-2">
-              <FileCheck2 /> Blockchain Proof
+          {/* ── Blockchain proof ───────────────────────────────────────── */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <h4 className="text-xs font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <FileCheck2 className="w-4 h-4 text-emerald-600" />
+              Blockchain Proof
             </h4>
-
-
-            <p className="text-xs wrap-break-word">
-              {listing.blockchainHash ??
-                "No on-chain proof available for this listing."}
+            <p className="text-xs text-gray-500 break-all leading-relaxed">
+              {listing.blockchainHash ?? "No on-chain proof available for this listing."}
             </p>
-
             {listing.certificateId && (
-              <p className="mt-2 text-xs text-emerald-600">
-                Certificate: {listing.certificateId}
-              </p>
+              <p className="mt-2 text-xs font-medium text-emerald-600">Certificate: {listing.certificateId}</p>
             )}
-
           </div>
-
 
         </aside>
 
@@ -309,13 +262,13 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
             min={1}
             value={offerAmount}
             onChange={(e) => setOfferAmount(Number(e.target.value))}
-            className="w-full border rounded-xl p-3"
+            className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
           />
 
           <textarea
             value={offerMessage}
             onChange={(e) => setOfferMessage(e.target.value)}
-            className="w-full border rounded-xl p-3"
+            className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
             placeholder="Add a message to the owner (optional)"
           />
 
@@ -355,151 +308,130 @@ function VerificationBadge({
 
 
 
-function FavoriteButton({
- listingId
-}:{
- listingId:string
-}){
+function FavoriteButton({ listingId }: { listingId: string }) {
+  const [fav, setFav] = React.useState(() => {
+    try {
+      const user = getCurrentUser();
+      const key = user ? SESSION_KEYS.FAVORITES(user.id) : 'vex_favorites_guest';
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(key) : null;
+      return raw ? (JSON.parse(raw) as string[]).includes(listingId) : false;
+    } catch { return false; }
+  });
 
- const [fav,setFav]=React.useState(false);
+  const toggle = async () => {
+    const user = getCurrentUser();
+    if (!user) { window.location.href = '/login'; return; }
+    const key = SESSION_KEYS.FAVORITES(user.id);
+    const arr: string[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+    const next = fav ? arr.filter(id => id !== listingId) : [...arr, listingId];
+    localStorage.setItem(key, JSON.stringify(next));
+    setFav(!fav);
+    try {
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        fav
+          ? await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId))
+          : await apiClient.post(ENDPOINTS.FAVORITES.SAVE, { listingId });
+      }
+    } catch (err) { console.error(err); }
+  };
 
-
- return (
-
-  <button
-   onClick={()=>setFav(!fav)}
-   className="px-3 py-2 rounded-full border"
-  >
-
-   <Heart
-    className={fav?"text-rose-500":"text-gray-400"}
-   />
-
-  </button>
-
- );
-
+  return (
+    <button
+      onClick={toggle}
+      aria-pressed={fav}
+      className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
+        fav
+          ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100'
+          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+      }`}
+    >
+      <Heart className={`w-4 h-4 ${fav ? 'fill-rose-500 text-rose-500' : 'text-gray-400'}`} />
+      {fav ? 'Saved' : 'Save listing'}
+    </button>
+  );
 }
 
 
 
 
-function InquiryCard({
- listingId,
- title
-}:{
- listingId:string;
- title?:string;
-}){
+function InquiryCard({ listingId, title }: { listingId: string; title?: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [msg, setMsg] = React.useState('');
 
- const [open,setOpen]=React.useState(false);
- const [msg,setMsg]=React.useState("");
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const user = getCurrentUser();
+    if (!user) { window.location.href = '/login'; return; }
+    if (!msg.trim()) { alert('Please write a message'); return; }
+    try {
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        await apiClient.post(ENDPOINTS.INQUIRIES.SEND, {
+          propertyId: listingId, message: msg,
+          tenantName: user.name, tenantEmail: user.email,
+        });
+      } else {
+        const arr = JSON.parse(localStorage.getItem('vex_inquiries') ?? '[]');
+        arr.push({ id: Math.random().toString(36).slice(2), propertyId: listingId, message: msg, createdAt: new Date().toISOString() });
+        localStorage.setItem('vex_inquiries', JSON.stringify(arr));
+      }
+      setMsg(''); setOpen(false);
+      alert('Inquiry submitted!');
+    } catch { alert('Failed to submit inquiry'); }
+  };
 
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">Interested?</p>
+          <p className="text-sm font-semibold text-gray-900">Contact the lister</p>
+        </div>
+        {!open && (
+          <button
+            onClick={() => setOpen(true)}
+            className="shrink-0 inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-2 rounded-xl transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> Enquire
+          </button>
+        )}
+      </div>
 
- return (
-
-<div className="bg-white p-4 rounded-2xl border shadow-sm">
-
-
-<div className="flex items-center justify-between">
-
-<div>
-
-<p className="text-xs text-gray-500">
-Interested?
-</p>
-
-
-<p className="font-semibold">
-Contact the lister
-</p>
-
-</div>
-
-
-<button
-onClick={()=>setOpen(true)}
-className="bg-blue-600 text-white px-3 py-2 rounded-xl text-sm flex items-center gap-2"
->
-
-<MessageSquare className="w-4 h-4"/>
-
-Enquire
-
-</button>
-
-
-</div>
-
-
-
-{open && (
-
-<div className="mt-3">
-
-
-{!getCurrentUser() ? (
-
-<div className="space-y-3">
-
-<p className="text-sm">
-Please sign in to contact the lister.
-</p>
-
-
-<div className="flex gap-2">
-
-<Link
-href="/portal/login"
-className="px-3 py-2 rounded-xl border"
->
-Sign in
-</Link>
-
-
-<WalletConnectButton/>
-
-
-</div>
-
-
-</div>
-
-):(
-
-
-<form className="space-y-2">
-
-
-<textarea
-value={msg}
-onChange={(e)=>setMsg(e.target.value)}
-rows={4}
-className="w-full border rounded-md p-2"
-/>
-
-
-<button
-className="bg-slate-900 text-white px-3 py-2 rounded-xl"
->
-Send Inquiry
-</button>
-
-
-</form>
-
-
-)}
-
-
-</div>
-
-)}
-
-
-</div>
-
- );
-
-
+      {open && (
+        <div className="mt-4">
+          {!getCurrentUser() ? (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Please sign in to contact the lister.</p>
+              <div className="flex gap-2 flex-wrap">
+                <Link href="/login" className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                  Sign in
+                </Link>
+                <WalletConnectButton />
+                <button onClick={() => setOpen(false)} className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={submit} className="space-y-3">
+              <textarea
+                value={msg}
+                onChange={e => setMsg(e.target.value)}
+                rows={4}
+                placeholder={`Message about ${title ?? 'this property'}…`}
+                className="w-full p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+              />
+              <div className="flex gap-2">
+                <button type="submit" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors">
+                  Send Inquiry
+                </button>
+                <button type="button" onClick={() => setOpen(false)} className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
