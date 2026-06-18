@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link from 'next/link';  // ← Only import once
 import { useAuthStore } from '@/stores/auth.store';
 import { 
   useRentalApplication, 
@@ -130,7 +130,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                   <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Message to Owner</p>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-4 rounded-xl border border-emerald-100">
-                  <p className="text-sm text-gray-700 italic">"{app.message}"</p>
+                  <p className="text-sm text-gray-700 italic">{app.message}</p>
                 </div>
               </div>
             )}
@@ -372,8 +372,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Optional note to tenant..."
-            style={{ color: '#111827' }}
-            className="w-full p-3 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none h-20 bg-gray-50 transition-all"
+            className="w-full p-3 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none h-20"
           />
           <div className="grid grid-cols-2 gap-2">
             <button 
