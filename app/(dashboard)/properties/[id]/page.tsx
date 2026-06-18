@@ -835,6 +835,8 @@ export default function ListingDetailPage({
               published.
             </div>
           )}
+
+          {/* Document list */}
           {docs.length > 0 ? (
             <div className="space-y-2">
               {docs.map((doc) => (
@@ -882,6 +884,21 @@ export default function ListingDetailPage({
                       View
                     </button>
                   </div>
+
+                  {/* Admin review buttons */}
+                  {isAdmin && doc.status === 'pending' && (
+                    <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
+                      <button type="button"
+                        onClick={() => handleDocReview(doc.id, 'approve')}
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition-colors">
+                        <CheckCircle2 size={11} /> Approve
+                      </button>
+                      <button type="button"
+                        onClick={() => { setDocReviewTarget(doc.id); setDocReviewDecision('reject'); }}
+                        className="flex items-center gap-1.5 text-[10px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition-colors">
+                        <XCircle size={11} /> Reject
+                      </button>                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1112,6 +1129,27 @@ export default function ListingDetailPage({
                 className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 capitalize"
               >
                 {titleAction}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Document reject modal */}
+      {docReviewTarget && docReviewDecision === 'reject' && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setDocReviewTarget(null)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
+            <h3 className="text-sm font-semibold text-black mb-4">Reject Document</h3>
+            <textarea value={docReviewNote} onChange={(e) => setDocReviewNote(e.target.value)}
+              rows={3} placeholder="Reason for rejection (shown to owner)…"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-red-400 resize-none mb-3" />
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setDocReviewTarget(null)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+              <button type="button" disabled={reviewingDoc}
+                onClick={() => handleDocReview(docReviewTarget, 'reject', docReviewNote || undefined)}
+                className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
+                Reject Document
               </button>
             </div>
           </div>
