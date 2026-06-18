@@ -140,7 +140,7 @@ function InquiryCard({ inquiry, mode }: { inquiry: Inquiry; mode: 'sent' | 'rece
         <div className="px-4 pb-4 border-t border-gray-100 pt-4 space-y-4">
           {/* Listing link */}
           {listingId && (
-            <Link href={`/properties/${listingId}`} className="text-xs text-emerald-500 hover:text-emerald-600 font-mono">
+            <Link href={`/listings/${listingId}`} className="text-xs text-emerald-500 hover:text-emerald-600 font-mono">
               View Listing: {listingTitle} →
             </Link>
           )}
