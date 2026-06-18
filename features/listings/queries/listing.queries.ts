@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import type { CreateListingInput, ListingFilters, TransitionInput } from '@/features/listings/types/listing.types';
+import type { CreateListingInput, ListingFilters, TransitionInput, CreateSavedSearchInput } from '@/features/listings/types/listing.types';
 import {
   getListings, getMyListings, getListing,
   createListing, updateListing, deleteListing,
@@ -9,14 +9,16 @@ import {
   getListingDocuments, getDocumentSignedUrl,
   uploadPhotos, deletePhoto, setCoverPhoto, reorderPhotos,
   getListingTitle, mintTitle, disputeTitle, clearTitleDispute, revokeTitle,
+  createSavedSearch, getSavedSearches, updateSavedSearch, deleteSavedSearch,
 } from '@/features/listings/services/listing.service';
 
 const KEYS = {
-  all:       ['listings']       as const,
-  discover:  (f: object) => ['listings', 'discover', f] as const,
-  mine:      () => ['listings', 'mine'] as const,
-  detail:    (id: string) => ['listings', 'detail', id] as const,
-  adminList: (p: object) => ['listings', 'admin', p] as const,
+  all:           ['listings']              as const,
+  discover:      (f: object) => ['listings', 'discover', f] as const,
+  mine:          () => ['listings', 'mine'] as const,
+  detail:        (id: string) => ['listings', 'detail', id] as const,
+  adminList:     (p: object) => ['listings', 'admin', p] as const,
+  savedSearches: () => ['saved-searches'] as const,
 };
 
 export function useListings(filters?: ListingFilters) {
@@ -45,6 +47,49 @@ export function useAdminListings(params?: Record<string, string | number>) {
   return useQuery({
     queryKey: KEYS.adminList(params ?? {}),
     queryFn:  () => getAdminListings(params),
+  });
+}
+
+export function useSaveSearch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateSavedSearchInput) => createSavedSearch(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
+      toast.success('Search saved successfully.');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useSavedSearches() {
+  return useQuery({
+    queryKey: KEYS.savedSearches(),
+    queryFn: getSavedSearches,
+  });
+}
+
+export function useUpdateSavedSearch(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<CreateSavedSearchInput>) => updateSavedSearch(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
+      toast.success('Search updated.');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteSavedSearch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSavedSearch(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
+      toast.success('Search deleted.');
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
