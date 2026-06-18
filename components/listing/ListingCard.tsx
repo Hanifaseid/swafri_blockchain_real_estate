@@ -17,6 +17,7 @@ import type { PropertySummary } from './types';
 interface ListingCardProps {
   listing: PropertySummary;
   variant?: 'grid' | 'compact';
+  href?: string;
   /** Slot for FavoriteButton — rendered top-right over the image */
   favoriteSlot?: React.ReactNode;
   className?: string;
@@ -26,11 +27,12 @@ interface ListingCardProps {
 export function ListingCard({
   listing,
   variant = 'grid',
+  href,
   favoriteSlot,
   className,
   priority = false,
 }: ListingCardProps) {
-  const href = `/listings/${listing.id}`;
+  const listingHref = href ?? `/listings/${listing.id}`;
 
   const price = formatCurrency(listing.price, listing.currency ?? 'USD');
   const priceLabel = listing.listingType === 'rent' ? `${price}/mo` : price;
@@ -38,9 +40,9 @@ export function ListingCard({
   if (variant === 'compact') {
     return (
       <Link
-        href={href}
+        href={listingHref}
         className={cn(
-          'group flex gap-3 rounded-xl border border-gray-200 bg-white p-3 transition-shadow hover:shadow-md',
+          'group flex gap-3 rounded-xl border border-gray-200 bg-white p-3 transition duration-300 ease-out transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-300',
           className
         )}
       >
@@ -76,9 +78,9 @@ export function ListingCard({
   // ── Grid variant ───────────────────────────────────────────────────────────
   return (
     <Link
-      href={href}
+      href={listingHref}
       className={cn(
-        'group relative flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden card-hover',
+        'group relative flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden transition duration-300 ease-out transform hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl hover:border-emerald-300',
         className
       )}
       aria-label={`View ${listing.title}`}
@@ -91,7 +93,7 @@ export function ListingCard({
             alt={listing.title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-300 group-hover:scale-110"
             priority={priority}
           />
         ) : (
