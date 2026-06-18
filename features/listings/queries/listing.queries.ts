@@ -7,7 +7,7 @@ import {
   transitionListing, getAdminListings,
   getListingAnalytics, getListingDashboard,
   getListingDocuments, getDocumentSignedUrl,
-  uploadPhotos, deletePhoto, setCoverPhoto,
+  uploadPhotos, deletePhoto, setCoverPhoto, reorderPhotos,
   getListingTitle, mintTitle, disputeTitle, clearTitleDispute, revokeTitle,
 } from '@/features/listings/services/listing.service';
 
@@ -169,6 +169,18 @@ export function useSetCoverPhoto(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
       toast.success('Cover photo updated.');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useReorderPhotos(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (order: string[]) => reorderPhotos(id, order),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      toast.success('Photos reordered.');
     },
     onError: (e: Error) => toast.error(e.message),
   });

@@ -232,6 +232,10 @@ export async function setCoverPhoto(listingId: string, publicId: string): Promis
   await apiClient.patch(ENDPOINTS.LISTINGS.SET_COVER(listingId), { publicId });
 }
 
+export async function reorderPhotos(listingId: string, order: string[]): Promise<void> {
+  await apiClient.patch(ENDPOINTS.LISTINGS.REORDER_PHOTOS(listingId), { order });
+}
+
 // ─── On-chain title ───────────────────────────────────────────────────────────
 
 export interface TitleInfo {

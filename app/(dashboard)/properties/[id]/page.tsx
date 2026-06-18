@@ -1,18 +1,18 @@
 'use client';
 
-import { use, useRef, useState, useEffect } from 'react';
+import { use, useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Upload, CheckCircle2, XCircle, Clock, AlertCircle,
   Loader2, Building2, MapPin, Bed, Bath, Maximize2, Calendar,
-  Image as ImageIcon, FileText, BarChart2, ShieldCheck, Trash2, Star, Send,
+  Image as ImageIcon, FileText, BarChart2, ShieldCheck, Trash2, Star, Send, GripVertical,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { Modal } from '@/components/ui/Modal';
 import {
   useListing, useTransitionListing,
   useListingDocuments, useDocumentSignedUrl,
-  useUploadPhotos, useDeletePhoto, useSetCoverPhoto,
+  useUploadPhotos, useDeletePhoto, useSetCoverPhoto, useReorderPhotos,
   useListingAnalytics, useListingTitle,
   useMintTitle, useDisputeTitle, useClearTitleDispute, useRevokeTitle,
 } from '@/features/listings/queries/listing.queries';
@@ -49,6 +49,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const { mutate: doUploadPhotos, isPending: uploadingPhotos } = useUploadPhotos(id);
   const { mutate: doDeletePhoto } = useDeletePhoto(id);
   const { mutate: doSetCover } = useSetCoverPhoto(id);
+  const { mutate: doReorderPhotos } = useReorderPhotos(id);
   const { mutate: doMintTitle, isPending: minting } = useMintTitle(id);
   const { mutate: doDisputeTitle, isPending: disputing } = useDisputeTitle(id);
   const { mutate: doClearDispute } = useClearTitleDispute(id);
@@ -71,6 +72,33 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [offerAmount, setOfferAmount]           = useState<number>(0);
   const [offerMessage, setOfferMessage]         = useState('');
   const [previewPhotos, setPreviewPhotos]       = useState<{url: string, file: File}[]>([]);
+  const [dragIdx, setDragIdx]                   = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx]           = useState<number | null>(null);
+
+  const handleDragStart = useCallback((idx: number) => {
+    setDragIdx(idx);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    setDragOverIdx(idx);
+  }, []);
+
+  const handleDrop = useCallback((idx: number) => {
+    if (dragIdx === null || dragIdx === idx || !listing?.photos) return;
+    const photos = [...listing.photos];
+    const [moved] = photos.splice(dragIdx, 1);
+    photos.splice(idx, 0, moved);
+    const order = photos.map(p => p.publicId);
+    doReorderPhotos(order);
+    setDragIdx(null);
+    setDragOverIdx(null);
+  }, [dragIdx, listing?.photos, doReorderPhotos]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null);
+    setDragOverIdx(null);
+  }, []);
 
   useEffect(() => {
     if (listing?.price) setOfferAmount(listing.price);
@@ -314,17 +342,37 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 if (photoInputRef.current) photoInputRef.current.value = ''; 
               }} />
           </div>
+          {isOwner && listing.photos && listing.photos.length > 1 && (
+            <p className="text-[9px] text-black/30 font-mono mb-2">Drag photos to reorder</p>
+          )}
           {(listing.photos?.length > 0) || previewPhotos.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {(listing.photos || []).map((photo) => (
-                <div key={photo.publicId} className="relative group rounded-lg overflow-hidden aspect-square">
+              {(listing.photos || []).map((photo, idx) => (
+                <div
+                  key={photo.publicId}
+                  draggable={isOwner}
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDrop={() => handleDrop(idx)}
+                  onDragEnd={handleDragEnd}
+                  className={cn(
+                    'relative group rounded-lg overflow-hidden aspect-square transition-all cursor-grab active:cursor-grabbing',
+                    dragIdx === idx && 'opacity-40 scale-95',
+                    dragOverIdx === idx && dragIdx !== idx && 'ring-2 ring-emerald-400 ring-offset-2 scale-[1.02]',
+                  )}
+                >
                   <img src={photo.url} alt="" className="w-full h-full object-cover" />
                   {photo.isCover && <span className="absolute top-1 left-1 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
                   {isOwner && (
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      {!photo.isCover && <button type="button" onClick={() => doSetCover(photo.publicId)} className="bg-white/90 text-black text-[9px] font-bold px-2 py-1 rounded"><Star size={10} /></button>}
-                      <button type="button" onClick={() => doDeletePhoto(photo.publicId)} className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded"><Trash2 size={10} /></button>
-                    </div>
+                    <>
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <GripVertical size={14} className="text-white drop-shadow-md" />
+                      </div>
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        {!photo.isCover && <button type="button" onClick={(e) => { e.stopPropagation(); doSetCover(photo.publicId); }} className="bg-white/90 text-black text-[9px] font-bold px-2 py-1 rounded"><Star size={10} /></button>}
+                        <button type="button" onClick={(e) => { e.stopPropagation(); doDeletePhoto(photo.publicId); }} className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded"><Trash2 size={10} /></button>
+                      </div>
+                    </>
                   )}
                 </div>
               ))}
