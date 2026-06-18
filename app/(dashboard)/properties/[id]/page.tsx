@@ -442,8 +442,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     <option value="tax_record">Tax Record</option>
                     <option value="utility_bill">Utility Bill</option>
                     <option value="ownership_certificate">Ownership Certificate</option>
-                    <option value="lease_authority">Lease Authority</option>
-                    <option value="government_doc">Government Document</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 <div className="flex items-end">
@@ -456,6 +455,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <p className="text-[10px] text-black/35">PDF, JPG, PNG — max 5 MB. Images and PDFs accepted.</p>
               <input ref={docInputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleDocUpload} />
+            </div>
+          )}
+
+          {/* Listing status banner */}
+          {listing.status === 'draft' && isOwner && (
+            <div className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> This listing is in draft mode. Upload photos and documents, then submit for review when ready.
             </div>
           )}
 
@@ -478,6 +484,16 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           {listing.verificationStatus === 'verified' && (
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-700 mb-3">
               <CheckCircle2 size={13} /> Ownership verified. Listing can be published.
+            </div>
+          )}
+          {listing.verificationStatus === 'rejected' && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Verification rejected. Please review the rejection reason and address the issues before resubmitting.
+            </div>
+          )}
+          {listing.verificationStatus === 'suspended' && (
+            <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Verification suspended. Contact support for more information.
             </div>
           )}
 
