@@ -34,6 +34,7 @@ export type VerificationStatus =
   | "pending"
   | "verified"
   | "rejected"
+  | "requires_more_info"
   | "suspended";
 
 export type AvailabilityStatus =
@@ -122,6 +123,7 @@ export interface Listing {
 
   // Blockchain
   tokenId?: string;
+  ownershipDocumentHash?: string;
 
   // Meta
   createdBy: string;
