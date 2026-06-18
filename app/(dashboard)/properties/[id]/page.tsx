@@ -34,7 +34,7 @@ const STATUS_STYLE: Record<string, string> = {
 const VERIFY_STYLE: Record<string, string> = {
   unverified: 'bg-gray-100 text-gray-500', pending: 'bg-amber-50 text-amber-600',
   verified: 'bg-emerald-50 text-emerald-700', rejected: 'bg-red-50 text-red-600',
-  suspended: 'bg-orange-50 text-orange-600',
+  requires_more_info: 'bg-blue-50 text-blue-600', suspended: 'bg-orange-50 text-orange-600',
 };
 
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -62,6 +62,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [showRejectModal, setShowRejectModal]   = useState(false);
   const [rejectReason, setRejectReason]         = useState<RejectionReason>('missing_document');
   const [rejectNote, setRejectNote]             = useState('');
+  const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
+  const [requestInfoNote, setRequestInfoNote]   = useState('');
   const [titleAction, setTitleAction]           = useState<'dispute' | 'clear' | 'revoke' | null>(null);
   const [titleReason, setTitleReason]           = useState('');
   const [uploadingDocs, setUploadingDocs]       = useState(false);
@@ -129,10 +131,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
   const adminActions: { action: TransitionAction; label: string; style: string }[] = [];
   if (isAdmin) {
-    if (listing.status === 'submitted')    adminActions.push({ action: 'start_review', label: 'Start Review', style: 'bg-blue-600 hover:bg-blue-700 text-white' });
+    if (listing.status === 'submitted') {
+      adminActions.push({ action: 'start_review', label: 'Start Review', style: 'bg-blue-600 hover:bg-blue-700 text-white' });
+      adminActions.push({ action: 'request_info', label: 'Request Info', style: 'bg-amber-600 hover:bg-amber-700 text-white' });
+    }
     if (listing.status === 'under_review') {
       adminActions.push({ action: 'approve', label: 'Approve', style: 'bg-emerald-600 hover:bg-emerald-700 text-white' });
       adminActions.push({ action: 'reject',  label: 'Reject',  style: 'bg-red-600 hover:bg-red-700 text-white' });
+      adminActions.push({ action: 'request_info', label: 'Request Info', style: 'bg-amber-600 hover:bg-amber-700 text-white' });
     }
     if (listing.status === 'approved')  adminActions.push({ action: 'publish',   label: 'Publish',   style: 'bg-emerald-700 hover:bg-emerald-800 text-white' });
     if (listing.status === 'published') adminActions.push({ action: 'suspend',   label: 'Suspend',   style: 'bg-orange-600 hover:bg-orange-700 text-white' });
@@ -190,7 +196,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             ))}
             {adminActions.map(({ action, label, style }) => (
               <button key={action} type="button" disabled={transitioning}
-                onClick={() => { if (action === 'reject') { setShowRejectModal(true); return; } transition({ action }); }}
+                onClick={() => {
+                  if (action === 'reject') { setShowRejectModal(true); return; }
+                  if (action === 'request_info') { setShowRequestInfoModal(true); return; }
+                  transition({ action });
+                }}
                 className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}>
                 {label}
               </button>
@@ -408,6 +418,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               <AlertCircle size={13} className="shrink-0 mt-0.5" /> Upload a title deed to start verification before submitting for review.
             </div>
           )}
+          {listing.verificationStatus === 'requires_more_info' && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Additional information requested. Please review admin notes and provide requested documents.
+            </div>
+          )}
           {listing.verificationStatus === 'verified' && (
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-700 mb-3">
               <CheckCircle2 size={13} /> Ownership verified. Listing can be published.
@@ -508,6 +523,28 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   onClick={() => { transition({ action: 'reject', reason: rejectReason, note: rejectNote || undefined }); setShowRejectModal(false); }}
                   className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
                   Reject
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Request Info modal */}
+      {showRequestInfoModal && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowRequestInfoModal(false)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
+            <h3 className="text-sm font-semibold text-black mb-4">Request Additional Information</h3>
+            <div className="space-y-3">
+              <textarea value={requestInfoNote} onChange={(e) => setRequestInfoNote(e.target.value)} rows={4} placeholder="Describe what additional information is needed from the owner…"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-amber-400 resize-none" />
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowRequestInfoModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" disabled={transitioning || !requestInfoNote.trim()}
+                  onClick={() => { transition({ action: 'request_info', note: requestInfoNote.trim() }); setShowRequestInfoModal(false); setRequestInfoNote(''); }}
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
+                  Request Info
                 </button>
               </div>
             </div>
