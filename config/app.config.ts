@@ -1,4 +1,4 @@
-import { SESSION_KEYS } from '@/lib/auth/session';
+import { SESSION_KEYS } from "@/lib/auth/session";
 
 // ─── App Config ───────────────────────────────────────────────────────────────
 // Central config for app-wide constants.
@@ -6,9 +6,9 @@ import { SESSION_KEYS } from '@/lib/auth/session';
 
 export const appConfig = {
   name: "VEX Real Estate Blockchain Portal",
-  shortName: 'VEX',
-  version: '0.1.0',
-  locale: 'en',
+  shortName: "VEX",
+  version: "0.1.0",
+  locale: "en",
 
   // ── Storage Keys ────────────────────────────────────────────────────────
   // Re-exported from session.ts for convenience — single source of truth.
@@ -17,13 +17,13 @@ export const appConfig = {
   // ── Auth Redirects ───────────────────────────────────────────────────────
   auth: {
     // Where to send users after login (role-specific redirect is done in middleware)
-    loginRedirect: '/dashboard',
+    loginRedirect: "/dashboard",
     // Where to send users after logout
-    logoutRedirect: '/',
+    logoutRedirect: "/",
     // Public routes that do NOT require authentication
-    publicRoutes: ['/', '/about', '/contact'],
+    publicRoutes: ["/", "/about", "/contact"],
     // Auth routes — redirect away if already logged in
-    authRoutes: ['/login', '/register'],
+    authRoutes: ["/login", "/register"],
   },
 
   // ── Pagination Defaults ──────────────────────────────────────────────────
@@ -35,10 +35,14 @@ export const appConfig = {
   // ── Feature Flags ────────────────────────────────────────────────────────
   // These mirror the env vars but provide safe defaults for mock mode.
   features: {
-    walletLinking: process.env.NEXT_PUBLIC_ENABLE_WALLET === 'true',
-    kycRestrictions: process.env.NEXT_PUBLIC_ENABLE_KYC === 'true',
+    walletLinking: process.env.NEXT_PUBLIC_ENABLE_WALLET === "true",
+    kycRestrictions: process.env.NEXT_PUBLIC_ENABLE_KYC === "true",
   },
-
+  // ── Upload limits used by image/document upload components.
+  upload: {
+    maxFileSizeBytes: 10 * 1024 * 1024,
+    maxPhotos: 20,
+  },
   // ── Mock Mode ────────────────────────────────────────────────────────────
   // true = use localStorage mock services (no backend needed)
   // false = use real API via axios-client
