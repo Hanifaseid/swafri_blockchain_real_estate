@@ -222,10 +222,16 @@ function OwnerActionsPanel({ app }: { app: any }) {
   const router = useRouter();
   const { mutate: review, isPending: reviewing } = useReviewRentalApplication();
   const { mutate: updateScreening, isPending: screening } = useUpdateScreening();
+  const { mutate: updateAppointment, isPending: updatingAppointment } = useUpdateAppointment();
   const { mutate: createLease, isPending: leasing } = useCreateLeaseFromApplication();
-  
+
   const [note, setNote] = React.useState('');
   const [showLeaseForm, setShowLeaseForm] = React.useState(false);
+  const [showAppointmentForm, setShowAppointmentForm] = React.useState(false);
+  const [appointmentForm, setAppointmentForm] = React.useState({
+    scheduledFor: '',
+    locationNote: '',
+  });
   const [leaseForm, setLeaseForm] = React.useState({
     monthlyRent: '',
     depositAmount: '',
@@ -408,7 +414,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
             </div>
             Awaiting background screening results.
           </div>
-          <button 
+          <button
             disabled={screening}
             onClick={() => updateScreening({ id: app.id, payload: { status: 'passed', provider: 'TransUnion', score: 750, reference: 'REF-' + Date.now(), notes: 'Background check cleared successfully' }})}
             className="w-full py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-all hover:shadow-lg"
@@ -416,18 +422,103 @@ function OwnerActionsPanel({ app }: { app: any }) {
             {screening ? <Loader2 size={14} className="animate-spin inline mr-2" /> : null}
             {screening ? 'Updating...' : 'Update Screening (Passed)'}
           </button>
-          
+
+          {/* Viewing Appointment Section */}
+          <div className="pt-4 border-t border-gray-100 mt-2 space-y-2">
+            <p className="text-[10px] uppercase font-semibold tracking-wider text-gray-400 mb-2">Viewing Appointment</p>
+            {app.appointmentStatus === 'scheduled' ? (
+              <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar size={14} className="text-emerald-600" />
+                  <p className="text-xs font-semibold text-emerald-800">Appointment Scheduled</p>
+                </div>
+                <p className="text-xs text-emerald-700 mb-1">{new Date(app.scheduledFor).toLocaleString()}</p>
+                {app.locationNote && <p className="text-xs text-emerald-600">📍 {app.locationNote}</p>}
+              </div>
+            ) : app.appointmentStatus === 'requested' ? (
+              <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock size={14} className="text-amber-600" />
+                  <p className="text-xs font-semibold text-amber-800">Tenant Requested Viewing</p>
+                </div>
+                {!showAppointmentForm ? (
+                  <button
+                    onClick={() => setShowAppointmentForm(true)}
+                    className="w-full py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-xl text-xs font-semibold transition-all"
+                  >
+                    Schedule Appointment
+                  </button>
+                ) : (
+                  <div className="space-y-2 mt-2">
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Date & Time</label>
+                      <input
+                        type="datetime-local"
+                        value={appointmentForm.scheduledFor}
+                        onChange={e => setAppointmentForm(f => ({ ...f, scheduledFor: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 mb-1 block">Location Note</label>
+                      <input
+                        type="text"
+                        value={appointmentForm.locationNote}
+                        onChange={e => setAppointmentForm(f => ({ ...f, locationNote: e.target.value }))}
+                        placeholder="e.g., Meet at lobby"
+                        className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowAppointmentForm(false)}
+                        className="flex-1 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-semibold transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          updateAppointment({
+                            id: app.id,
+                            payload: {
+                              status: 'scheduled',
+                              scheduledFor: appointmentForm.scheduledFor,
+                              locationNote: appointmentForm.locationNote,
+                            }
+                          }, {
+                            onSuccess: () => setShowAppointmentForm(false)
+                          });
+                        }}
+                        disabled={updatingAppointment || !appointmentForm.scheduledFor}
+                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-all"
+                      >
+                        {updatingAppointment ? 'Scheduling...' : 'Confirm'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAppointmentForm(true)}
+                className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-semibold transition-all"
+              >
+                Schedule Viewing
+              </button>
+            )}
+          </div>
+
           <div className="pt-4 border-t border-gray-100 mt-2 space-y-2">
             <p className="text-[10px] uppercase font-semibold tracking-wider text-gray-400 mb-2">Final Decision</p>
             <div className="grid grid-cols-2 gap-2">
-              <button 
+              <button
                 disabled={reviewing}
                 onClick={() => review({ id: app.id, payload: { status: 'approved', note: 'Screening passed, application approved.' }})}
                 className="py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-semibold transition-all"
               >
                 Approve Application
               </button>
-              <button 
+              <button
                 disabled={reviewing}
                 onClick={() => review({ id: app.id, payload: { status: 'rejected', note: 'Screening failed.' }})}
                 className="py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-semibold transition-all"

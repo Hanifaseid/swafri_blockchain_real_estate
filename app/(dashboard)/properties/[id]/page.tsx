@@ -215,21 +215,25 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 {label}
               </button>
             ))}
-            {listing.status === 'published' && (
+            {listing.status === 'published' && !isOwner && (
               <>
-                <button type="button" onClick={() => {
-                  const rentalAppSection = document.querySelector('[data-rental-app-section]');
-                  if (rentalAppSection) {
-                    rentalAppSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }
-                }}
-                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors">
-                  Apply to Rent
-                </button>
-                <button type="button" onClick={() => setShowOfferModal(true)}
-                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-                  Make Offer
-                </button>
+                {listing.listingType === 'rent' && role === 'TENANT' && (
+                  <button type="button" onClick={() => {
+                    const rentalAppSection = document.querySelector('[data-rental-app-section]');
+                    if (rentalAppSection) {
+                      rentalAppSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                    className="text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors">
+                    Apply to Rent
+                  </button>
+                )}
+                {listing.listingType === 'sale' && (
+                  <button type="button" onClick={() => setShowOfferModal(true)}
+                    className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+                    Make Offer
+                  </button>
+                )}
               </>
             )}
             {isOwner && (listing.status === 'draft' || listing.status === 'rejected') && (
@@ -313,7 +317,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       </Modal>
 
       {/* Rental Application Section */}
-      {listing.status === 'published' && listing.listingType === 'rent' && (
+      {listing.status === 'published' && listing.listingType === 'rent' && role === 'TENANT' && !isOwner && (
         <div data-rental-app-section>
           <RentalApplicationCard
             listingId={id}
