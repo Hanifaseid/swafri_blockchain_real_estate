@@ -81,7 +81,6 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [inquiryMsg, setInquiryMsg]             = useState('');
   const [inquiryType, setInquiryType]           = useState<'rent' | 'buy' | 'general'>('general');
   const [showOfferModal, setShowOfferModal]     = useState(false);
-  const [showRentalAppModal, setShowRentalAppModal] = useState(false);
   const [offerAmount, setOfferAmount]           = useState<number>(0);
   const [offerMessage, setOfferMessage]         = useState('');
   const [previewPhotos, setPreviewPhotos]       = useState<{url: string, file: File}[]>([]);
@@ -126,6 +125,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
   const coverPhoto = listing.photos?.find((p) => p.isCover) ?? listing.photos?.[0];
   const price = listing.listingType === 'rent' ? `$${listing.monthlyRent?.toLocaleString()}/mo` : `$${listing.price?.toLocaleString()}`;
+  const approvedTitleDeed = docs.find((doc) => doc.type === 'title_deed' && doc.status === 'approved');
+  const publishReadinessChecks = [
+    { label: 'Listing verification is verified', met: listing.verificationStatus === 'verified' },
+    { label: 'Approved title deed is on file', met: Boolean(approvedTitleDeed) },
+    { label: 'Ownership hash captured on approval', met: Boolean(approvedTitleDeed?.hash) },
+  ];
+  const canLikelyPublish = publishReadinessChecks.every((check) => check.met);
 
   const ownerActions: { action: TransitionAction; label: string; style: string }[] = [];
   if (isOwner) {
@@ -344,12 +350,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Inquiry form for all users */}
-      {listing.status === 'published' && (
+      {/* Inquiry form */}
+      {listing.status === 'published' && !isOwner && (
         <div data-inquiry-section className="bg-white rounded-2xl border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Send an Inquiry</p>
-            <button type="button" onClick={() => { console.log('Toggle inquiry form'); setShowInquiryForm((v) => !v); }}
+            <button type="button" onClick={() => setShowInquiryForm((v) => !v)}
               className="text-xs text-emerald-500 hover:text-emerald-600 font-medium">
               {showInquiryForm ? 'Cancel' : '+ Ask a question'}
             </button>
@@ -516,7 +522,31 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           )}
           {listing.verificationStatus === 'verified' && (
             <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-700 mb-3">
-              <CheckCircle2 size={13} /> Ownership verified. Listing can be published.
+              <CheckCircle2 size={13} /> Ownership verified. Listing is eligible for publishing once title-deed approval requirements are met.
+            </div>
+          )}
+          {isAdmin && listing.status === 'approved' && (
+            <div className={cn(
+              'rounded-xl border p-3 text-xs mb-3',
+              canLikelyPublish ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700',
+            )}>
+              <div className="flex items-center gap-2 font-medium mb-2">
+                {canLikelyPublish ? <CheckCircle2 size={13} /> : <AlertCircle size={13} className="shrink-0" />}
+                Publish readiness
+              </div>
+              <ul className="space-y-1.5">
+                {publishReadinessChecks.map((check) => (
+                  <li key={check.label} className="flex items-center gap-2">
+                    {check.met ? <CheckCircle2 size={12} className="shrink-0" /> : <XCircle size={12} className="shrink-0" />}
+                    <span>{check.label}</span>
+                  </li>
+                ))}
+              </ul>
+              {!canLikelyPublish && (
+                <p className="mt-2 text-[11px] text-current/80">
+                  The backend will still enforce publish preconditions and return 409 until every requirement is met.
+                </p>
+              )}
             </div>
           )}
           {listing.verificationStatus === 'rejected' && (
@@ -578,11 +608,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       {analytics && (isOwner || isAdmin) && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-4 flex items-center gap-1.5"><BarChart2 size={10} /> Analytics</p>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             {[
               { label: 'Views', value: analytics.counts.view },
               { label: 'Favorites', value: analytics.counts.favorite },
               { label: 'Inquiries', value: analytics.counts.inquiry },
+              { label: 'Offers', value: analytics.counts.offer },
+              { label: 'Applications', value: analytics.counts.rental_application },
               { label: 'Leads', value: analytics.leadCount },
               { label: 'Conv.', value: `${(analytics.conversionRate * 100).toFixed(1)}%` },
             ].map(({ label, value }) => (
@@ -591,6 +623,20 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-[9px] font-mono uppercase text-black/35 mt-0.5">{label}</p>
               </div>
             ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-[9px] font-mono uppercase text-black/35 mb-1">Unique viewers</p>
+              <p className="text-sm font-semibold text-black/80">{analytics.uniqueViewers}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-[9px] font-mono uppercase text-black/35 mb-1">Last event</p>
+              <p className="text-sm font-semibold text-black/80">{analytics.lastEventAt ? new Date(analytics.lastEventAt).toLocaleString() : '—'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-[9px] font-mono uppercase text-black/35 mb-1">Token minted</p>
+              <p className="text-sm font-semibold text-black/80">{listing.tokenId ? `#${listing.tokenId}` : 'Not minted'}</p>
+            </div>
           </div>
         </div>
       )}
@@ -605,7 +651,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 {titleInfo.verified ? <CheckCircle2 size={13} /> : <Clock size={13} />}
                 Token #{titleInfo.tokenId} — {titleInfo.verified ? 'Verified on-chain ✓' : 'Not verified'}
               </div>
-              <p className="text-[10px] font-mono text-black/40 break-all">Contract: {titleInfo.contractAddress}</p>
+              <div className="space-y-1 text-[10px] font-mono text-black/40 break-all">
+                <p>Contract: {titleInfo.contractAddress}</p>
+                <p>Owner: {titleInfo.owner}</p>
+                {titleInfo.status ? <p>Status: {titleInfo.status}</p> : null}
+                <p>On-chain hash: {titleInfo.onChainHash}</p>
+                <p>Off-chain hash: {titleInfo.offChainHash}</p>
+              </div>
               {isAdmin && (
                 <div className="flex flex-wrap gap-2 pt-1">
                   <button type="button" onClick={() => setTitleAction('dispute')} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100">Dispute</button>

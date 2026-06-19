@@ -426,6 +426,7 @@ export interface TitleInfo {
   tokenId: string;
   contractAddress: string;
   owner: string;
+  status?: string;
   onChainHash: string;
   offChainHash: string;
   verified: boolean;
