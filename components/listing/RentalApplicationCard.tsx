@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { FileText, Loader2, Calendar } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useSubmitRentalApplication, useMyRentalApplications } from '@/features/rental-applications/queries/rental-application.queries';
 import { WalletConnectButton } from '@/components/ui/WalletConnectButton';
@@ -19,17 +19,17 @@ export function RentalApplicationCard({
   currency?: string;
 }) {
   const { currentUser } = useAuthStore();
-  const { data: myApps = [] } = useMyRentalApplications();
+  const { data: myApps = [] } = useMyRentalApplications(!!currentUser);
   const { mutate: submitApplication, isPending } = useSubmitRentalApplication();
-  
-  const existingApp = currentUser ? myApps.find(a => {
-    const appListingId = a.listingId || (a as any).propertyId || (a as any).listing?.id || (a as any).property?.id;
-    const idMatches = appListingId === listingId;
-    const status = (a.status || '').toUpperCase();
-    const isActive = status !== 'WITHDRAWN' && status !== 'REJECTED';
-    return idMatches && isActive;
-  }) : null;
-  
+
+  const existingApp = currentUser
+    ? myApps.find((app) => {
+        const appListingId = app.listingId || (typeof app.listing === 'string' ? app.listing : app.listing?.id);
+        const isActive = app.status !== 'withdrawn' && app.status !== 'rejected';
+        return appListingId === listingId && isActive;
+      })
+    : null;
+
   const [open, setOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
     desiredStartDate: '',
@@ -40,7 +40,6 @@ export function RentalApplicationCard({
     message: ''
   });
 
-  // Only show this card if the listing is for rent
   if (!monthlyRent) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,13 +61,12 @@ export function RentalApplicationCard({
         desiredEndDate: formData.desiredEndDate,
         occupants: Number(formData.occupants),
         monthlyIncome: Number(formData.monthlyIncome),
-        employer: formData.employer.trim(),
-        message: formData.message.trim(),
+        employer: formData.employer.trim() || undefined,
+        message: formData.message.trim() || undefined,
       },
       {
         onSuccess: () => {
           setOpen(false);
-          // reset form
           setFormData({
             desiredStartDate: '',
             desiredEndDate: '',
@@ -84,7 +82,7 @@ export function RentalApplicationCard({
 
   return (
     <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs text-emerald-700 font-semibold">Available for Rent</p>
           <p className="font-bold text-lg text-gray-900">{monthlyRent.toLocaleString()} {currency} <span className="text-xs text-gray-600 font-normal">/ mo</span></p>
@@ -160,7 +158,7 @@ export function RentalApplicationCard({
                     min="1"
                     required
                     value={formData.occupants}
-                    onChange={e => setFormData(f => ({ ...f, occupants: parseInt(e.target.value) || 1 }))}
+                    onChange={e => setFormData(f => ({ ...f, occupants: parseInt(e.target.value, 10) || 1 }))}
                     className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
