@@ -101,6 +101,12 @@ export const ENDPOINTS = {
     DELETE: (id: string) => `/saved-searches/${id}`,
   },
 
+  // ── Geo ───────────────────────────────────────────────────────────────────
+  GEO: {
+    GEOCODE: '/geo/geocode',
+    REVERSE: '/geo/reverse',
+  },
+
   // ── Leases ────────────────────────────────────────────────────────────────
   LEASES: {
     CREATE:          '/leases',
