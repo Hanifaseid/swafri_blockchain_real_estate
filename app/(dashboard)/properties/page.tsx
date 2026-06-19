@@ -26,11 +26,19 @@ import {
   useAdminListingsStats,
   useDeleteListing,
   useTransitionListing,
-  useSavedSearches,
-  useUpdateSavedSearch,
-  useDeleteSavedSearch,
-  useSaveSearch,
 } from "@/features/listings/queries/listing.queries";
+import {
+  useSavedSearches,
+  useDeleteSavedSearch,
+  useCreateSavedSearch as useSaveSearch,
+} from '@/features/saved-searches/queries/saved-search.queries';
+import type { SavedSearch } from '@/features/saved-searches/types/saved-search.types';
+import {
+  buildSavedSearchPills,
+  buildSavedSearchQuery,
+  hasSavedSearchFilters,
+  hasSpatialFilters,
+} from '@/features/saved-searches/utils/saved-search.utils';
 import { listingToSummary } from "@/features/listings/types/listing.types";
 import type {
   Listing,
@@ -80,6 +88,8 @@ function TenantView() {
       undefined,
     category:
       (searchParams.get("category") as ListingFilters["category"]) || undefined,
+    propertyType:
+      (searchParams.get("propertyType") as PropertyType) || undefined,
     minPrice: searchParams.get("minPrice")
       ? Number(searchParams.get("minPrice"))
       : undefined,
@@ -92,23 +102,55 @@ function TenantView() {
     minBathrooms: searchParams.get("minBathrooms")
       ? Number(searchParams.get("minBathrooms"))
       : undefined,
+    verifiedOnly: searchParams.get("verifiedOnly") === 'true' ? true : undefined,
+    swLng: searchParams.get('swLng') ? Number(searchParams.get('swLng')) : undefined,
+    swLat: searchParams.get('swLat') ? Number(searchParams.get('swLat')) : undefined,
+    neLng: searchParams.get('neLng') ? Number(searchParams.get('neLng')) : undefined,
+    neLat: searchParams.get('neLat') ? Number(searchParams.get('neLat')) : undefined,
+    lng: searchParams.get('lng') ? Number(searchParams.get('lng')) : undefined,
+    lat: searchParams.get('lat') ? Number(searchParams.get('lat')) : undefined,
+    radius: searchParams.get('radius') ? Number(searchParams.get('radius')) : undefined,
+    polygon: searchParams.get('polygon')
+      ? (JSON.parse(searchParams.get('polygon') as string) as [number, number][])
+      : undefined,
   }));
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [showFilters, setShowFilters] = useState(
     !!(
       searchParams.get("listingType") ||
       searchParams.get("category") ||
+      searchParams.get("propertyType") ||
       searchParams.get("minPrice") ||
       searchParams.get("maxPrice") ||
       searchParams.get("minBedrooms") ||
-      searchParams.get("minBathrooms")
+      searchParams.get("minBathrooms") ||
+      searchParams.get('verifiedOnly')
     )
   );
-  const [showMap, setShowMap] = useState(false);
-  const [mapMode, setMapMode] = useState<MapSearchMode>("viewport");
-  const [mapCenter, setMapCenter] = useState<[number, number]>([40.4897, 9.1450]); // Ethiopia center
-  const [mapRadius, setMapRadius] = useState(5000); // 5km
-  const [mapPolygon, setMapPolygon] = useState<[number, number][]>([]);
+  const [showMap, setShowMap] = useState(
+    !!(
+      searchParams.get('swLng') ||
+      searchParams.get('lng') ||
+      searchParams.get('polygon')
+    )
+  );
+  const [mapMode, setMapMode] = useState<MapSearchMode>(
+    searchParams.get('polygon')
+      ? 'polygon'
+      : searchParams.get('lng') && searchParams.get('radius')
+        ? 'radius'
+        : 'viewport'
+  );
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    searchParams.get('lng') ? Number(searchParams.get('lng')) : 40.4897,
+    searchParams.get('lat') ? Number(searchParams.get('lat')) : 9.1450,
+  ]);
+  const [mapRadius, setMapRadius] = useState(searchParams.get('radius') ? Number(searchParams.get('radius')) : 5000);
+  const [mapPolygon, setMapPolygon] = useState<[number, number][]>(
+    searchParams.get('polygon')
+      ? (JSON.parse(searchParams.get('polygon') as string) as [number, number][])
+      : []
+  );
   const [showRecentSearches, setShowRecentSearches] = useState(false);
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -212,6 +254,12 @@ function TenantView() {
 
   const { data: savedSearchesData } = useSavedSearches();
   const savedSearches = savedSearchesData ?? [];
+  const currentSavedSearchQuery = useMemo(() => buildSavedSearchQuery(filters), [filters]);
+  const currentSavedSearchPills = useMemo(
+    () => buildSavedSearchPills(currentSavedSearchQuery),
+    [currentSavedSearchQuery],
+  );
+  const canSaveCurrentSearch = hasSavedSearchFilters(currentSavedSearchQuery);
 
   const { mutate: deleteSavedSearch } = useDeleteSavedSearch();
   const { mutate: saveSearch, isPending: savingSearch } = useSaveSearch();
@@ -317,30 +365,60 @@ function TenantView() {
     searchInputRef.current?.blur();
   };
 
-  const applySavedSearch = (savedSearch: any) => {
+  const applySavedSearch = (savedSearch: SavedSearch) => {
     const q = savedSearch.query ?? {};
-    setSearch(savedSearch.name);
-    setFilters((f) => ({
-      ...f,
+    const hasViewport = q.swLng != null && q.swLat != null && q.neLng != null && q.neLat != null;
+    const hasRadius = q.lng != null && q.lat != null && q.radius != null;
+    const hasPolygon = Boolean(q.polygon?.length);
+
+    setSearch("");
+    setFilters({
+      limit: 20,
+      page: 1,
+      sort: "newest",
       q: undefined,
-      listingType: q.listingType || undefined,
-      category: q.category || undefined,
+      listingType: q.listingType ?? undefined,
+      category: q.category ?? undefined,
+      propertyType: q.propertyType ?? undefined,
       minPrice: q.minPrice ?? undefined,
       maxPrice: q.maxPrice ?? undefined,
       minBedrooms: q.minBedrooms ?? undefined,
       minBathrooms: q.minBathrooms ?? undefined,
-      page: 1,
-    }));
-    if (
-      q.listingType ||
-      q.category ||
-      q.minPrice ||
-      q.maxPrice ||
-      q.minBedrooms ||
-      q.minBathrooms
-    ) {
-      setShowFilters(true);
+      swLng: q.swLng ?? undefined,
+      swLat: q.swLat ?? undefined,
+      neLng: q.neLng ?? undefined,
+      neLat: q.neLat ?? undefined,
+      lng: q.lng ?? undefined,
+      lat: q.lat ?? undefined,
+      radius: q.radius ?? undefined,
+      polygon: q.polygon?.length ? q.polygon : undefined,
+    });
+
+    if (hasRadius) {
+      setMapMode('radius');
+      setMapCenter([q.lng as number, q.lat as number]);
+      setMapRadius(q.radius as number);
+      setMapPolygon([]);
+    } else if (hasPolygon) {
+      setMapMode('polygon');
+      setMapPolygon(q.polygon as [number, number][]);
+    } else {
+      setMapMode('viewport');
+      setMapPolygon([]);
     }
+
+    setShowFilters(
+      Boolean(
+        q.listingType ||
+        q.category ||
+        q.propertyType ||
+        q.minPrice != null ||
+        q.maxPrice != null ||
+        q.minBedrooms != null ||
+        q.minBathrooms != null
+      )
+    );
+    setShowMap(hasSpatialFilters(q));
     setShowRecentSearches(false);
     searchInputRef.current?.blur();
   };
@@ -353,25 +431,19 @@ function TenantView() {
   };
 
   const handleSaveCurrentSearch = () => {
+    if (!canSaveCurrentSearch) return;
     setSaveModalName(search.trim() || "My saved search");
     setSaveModalAlert(false);
     setShowSaveModal(true);
   };
 
   const confirmSave = () => {
-    if (!saveModalName.trim()) return;
+    if (!saveModalName.trim() || !canSaveCurrentSearch) return;
     saveSearch(
       {
         name: saveModalName.trim(),
         alertEnabled: saveModalAlert,
-        query: {
-          listingType: filters.listingType ?? undefined,
-          category: (filters as any).category ?? undefined,
-          minPrice: filters.minPrice ?? undefined,
-          maxPrice: filters.maxPrice ?? undefined,
-          minBedrooms: filters.minBedrooms ?? undefined,
-          minBathrooms: filters.minBathrooms ?? undefined,
-        },
+        query: currentSavedSearchQuery,
       },
       { onSuccess: () => setShowSaveModal(false) },
     );
@@ -500,7 +572,7 @@ function TenantView() {
                       <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-black/40 bg-gray-50 border-b border-gray-100">
                         Saved Searches
                       </div>
-                      {savedSearches.map((savedSearch: any) => (
+                      {savedSearches.map((savedSearch: SavedSearch) => (
                         <button
                           key={savedSearch.id}
                           type="button"
@@ -541,11 +613,11 @@ function TenantView() {
         <button
           type="button"
           onClick={handleSaveCurrentSearch}
-          disabled={savingSearch}
+          disabled={savingSearch || !canSaveCurrentSearch}
           className="inline-flex items-center gap-1.5 h-11 px-4 rounded-2xl text-xs font-medium transition-colors border border-gray-200 bg-white text-black/60 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <BookmarkPlus size={14} />
-          {savingSearch ? "Saving…" : "Save search"}
+          {savingSearch ? "Saving…" : canSaveCurrentSearch ? "Save search" : "Add filters to save"}
         </button>
         <button
           type="button"
@@ -893,22 +965,7 @@ function TenantView() {
 
             {/* Active filters summary */}
             <div className="mb-4 flex flex-wrap gap-1.5">
-              {(
-                [
-                  filters.listingType &&
-                    (filters.listingType === "sale" ? "For Sale" : "For Rent"),
-                  filters.category &&
-                    (filters.category === "residential"
-                      ? "Residential"
-                      : "Commercial"),
-                  filters.minBedrooms != null && `${filters.minBedrooms}+ beds`,
-                  filters.minPrice != null &&
-                    `From $${filters.minPrice.toLocaleString()}`,
-                  filters.maxPrice != null &&
-                    `Up to $${filters.maxPrice.toLocaleString()}`,
-                  search.trim() && `"${search.trim()}"`,
-                ].filter(Boolean) as string[]
-              ).map((pill) => (
+              {currentSavedSearchPills.map((pill) => (
                 <span
                   key={pill}
                   className="text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full"
@@ -916,16 +973,11 @@ function TenantView() {
                   {pill}
                 </span>
               ))}
-              {!filters.listingType &&
-                !filters.category &&
-                !filters.minBedrooms &&
-                !filters.minPrice &&
-                !filters.maxPrice &&
-                !search.trim() && (
-                  <span className="text-[10px] text-gray-400 font-mono">
-                    No filters — matches all listings
-                  </span>
-                )}
+              {!canSaveCurrentSearch && (
+                <span className="text-[10px] text-gray-400 font-mono">
+                  Add at least one filter or map area to save this search
+                </span>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -968,7 +1020,7 @@ function TenantView() {
                 <button
                   type="button"
                   onClick={confirmSave}
-                  disabled={savingSearch || !saveModalName.trim()}
+                  disabled={savingSearch || !saveModalName.trim() || !canSaveCurrentSearch}
                   className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold py-2.5 rounded-xl transition-colors"
                 >
                   {savingSearch ? (

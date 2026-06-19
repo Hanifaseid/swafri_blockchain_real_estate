@@ -22,6 +22,12 @@ import type {
   SavedSearchQuery,
   CreateSavedSearchInput,
 } from '@/features/saved-searches/types/saved-search.types';
+import {
+  buildSavedSearchPills,
+  buildSavedSearchParams,
+  hasSavedSearchFilters,
+  hasSpatialFilters,
+} from '@/features/saved-searches/utils/saved-search.utils';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -215,27 +221,8 @@ function SearchCard({
 }) {
   const { mutate: update, isPending: toggling } = useUpdateSavedSearch(search.id);
   const q = search.query;
-
-  const pills = [
-    q.listingType && (q.listingType === 'sale' ? 'For Sale' : 'For Rent'),
-    q.category    && (q.category === 'residential' ? 'Residential' : 'Commercial'),
-    q.minBedrooms != null && `${q.minBedrooms}+ beds`,
-    q.minBathrooms != null && `${q.minBathrooms}+ baths`,
-    q.minPrice != null && q.maxPrice != null && `$${q.minPrice.toLocaleString()} – $${q.maxPrice.toLocaleString()}`,
-    q.minPrice != null && q.maxPrice == null && `From $${q.minPrice.toLocaleString()}`,
-    q.maxPrice != null && q.minPrice == null && `Up to $${q.maxPrice.toLocaleString()}`,
-    q.radius    != null && q.lat != null && `${q.radius}km radius`,
-  ].filter(Boolean) as string[];
-
-  // Build a /properties URL from the query so the user can re-run it
-  const params = new URLSearchParams();
-  if (q.listingType)  params.set('listingType',  q.listingType);
-  if (q.category)     params.set('category',     q.category);
-  if (q.minPrice)     params.set('minPrice',     String(q.minPrice));
-  if (q.maxPrice)     params.set('maxPrice',     String(q.maxPrice));
-  if (q.minBedrooms)  params.set('minBedrooms',  String(q.minBedrooms));
-  if (q.minBathrooms) params.set('minBathrooms', String(q.minBathrooms));
-  const browseHref = `/properties?${params.toString()}`;
+  const pills = buildSavedSearchPills(q);
+  const browseHref = `/properties?${buildSavedSearchParams(q).toString()}`;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
@@ -257,7 +244,7 @@ function SearchCard({
           )}
 
           <p className="text-[10px] text-gray-400 font-mono">
-            Saved {new Date(search.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            Updated {new Date(search.updatedAt ?? search.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
           </p>
         </div>
 
@@ -329,6 +316,7 @@ function SearchForm({
   const [name,         setName]         = useState(existing?.name ?? '');
   const [listingType,  setListingType]  = useState<string>(existing?.query.listingType ?? '');
   const [category,     setCategory]     = useState<string>(existing?.query.category    ?? '');
+  const [propertyType, setPropertyType] = useState<string>(existing?.query.propertyType ?? '');
   const [minPrice,     setMinPrice]     = useState<string>(existing?.query.minPrice    != null ? String(existing.query.minPrice)    : '');
   const [maxPrice,     setMaxPrice]     = useState<string>(existing?.query.maxPrice    != null ? String(existing.query.maxPrice)    : '');
   const [minBedrooms,  setMinBedrooms]  = useState<string>(existing?.query.minBedrooms != null ? String(existing.query.minBedrooms)  : '');
@@ -337,21 +325,36 @@ function SearchForm({
 
   const isPending = creating || updating;
 
-  const buildQuery = (): SavedSearchQuery => ({
-    ...(listingType  && { listingType:  listingType  as 'sale' | 'rent' }),
-    ...(category     && { category:     category     as 'residential' | 'commercial' }),
-    ...(minPrice     && { minPrice:     Number(minPrice) }),
-    ...(maxPrice     && { maxPrice:     Number(maxPrice) }),
-    ...(minBedrooms  && { minBedrooms:  Number(minBedrooms) }),
-    ...(minBathrooms && { minBathrooms: Number(minBathrooms) }),
-  });
+  const buildQuery = (): SavedSearchQuery => {
+    const preserved = { ...(existing?.query ?? {}) };
+    delete preserved.listingType;
+    delete preserved.category;
+    delete preserved.propertyType;
+    delete preserved.minPrice;
+    delete preserved.maxPrice;
+    delete preserved.minBedrooms;
+    delete preserved.minBathrooms;
+
+    return {
+      ...preserved,
+      ...(listingType  && { listingType:  listingType  as 'sale' | 'rent' }),
+      ...(category     && { category:     category     as 'residential' | 'commercial' }),
+      ...(propertyType && { propertyType: propertyType as NonNullable<SavedSearchQuery['propertyType']> }),
+      ...(minPrice     && { minPrice:     Number(minPrice) }),
+      ...(maxPrice     && { maxPrice:     Number(maxPrice) }),
+      ...(minBedrooms  && { minBedrooms:  Number(minBedrooms) }),
+      ...(minBathrooms && { minBathrooms: Number(minBathrooms) }),
+    };
+  };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    const query = buildQuery();
+    if (!hasSavedSearchFilters(query)) return;
     const payload: CreateSavedSearchInput = {
       name:         name.trim(),
-      query:        buildQuery(),
+      query,
       alertEnabled,
     };
     if (existing) {
@@ -409,6 +412,24 @@ function SearchForm({
           </div>
         </div>
 
+        <div>
+          <label className={labelCls}>Property type</label>
+          <select value={propertyType} onChange={e => setPropertyType(e.target.value)} className={inputCls}>
+            <option value="">Any</option>
+            {['apartment','house','villa','condominium','land','commercial_space','office','warehouse','shop','mixed_use'].map((type) => (
+              <option key={type} value={type}>
+                {type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {existing && hasSpatialFilters(existing.query) && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+            Spatial filters are preserved for this saved search and can be re-run from the card below.
+          </div>
+        )}
+
         {/* Price row */}
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -458,7 +479,7 @@ function SearchForm({
         <div className="flex gap-2 pt-1">
           <button
             type="submit"
-            disabled={isPending || !name.trim()}
+            disabled={isPending || !name.trim() || !hasSavedSearchFilters(buildQuery())}
             className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold py-2.5 rounded-xl transition-colors"
           >
             {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
