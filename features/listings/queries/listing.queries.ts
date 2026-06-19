@@ -4,7 +4,6 @@ import type {
   CreateListingInput,
   ListingFilters,
   TransitionInput,
-  CreateSavedSearchInput,
 } from "@/features/listings/types/listing.types";
 import {
   getListings,
@@ -19,6 +18,7 @@ import {
   getListingAnalytics,
   getListingDashboard,
   getListingDocuments,
+  uploadListingDocuments,
   getDocumentSignedUrl,
   reviewDocument,
   getListingDuplicates,
@@ -31,10 +31,6 @@ import {
   disputeTitle,
   clearTitleDispute,
   revokeTitle,
-  createSavedSearch,
-  getSavedSearches,
-  updateSavedSearch,
-  deleteSavedSearch,
 } from "@/features/listings/services/listing.service";
 
 const KEYS = {
@@ -43,7 +39,6 @@ const KEYS = {
   mine: () => ["listings", "mine"] as const,
   detail: (id: string) => ["listings", "detail", id] as const,
   adminList: (p: object) => ["listings", "admin", p] as const,
-  savedSearches: () => ["saved-searches"] as const,
 };
 
 export function useListings(filters?: ListingFilters) {
@@ -82,49 +77,7 @@ export function useAdminListingsStats() {
   });
 }
 
-export function useSaveSearch() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateSavedSearchInput) => createSavedSearch(input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
-      toast.success("Search saved successfully.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
 
-export function useSavedSearches() {
-  return useQuery({
-    queryKey: KEYS.savedSearches(),
-    queryFn: getSavedSearches,
-  });
-}
-
-export function useUpdateSavedSearch(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: Partial<CreateSavedSearchInput>) =>
-      updateSavedSearch(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
-      toast.success("Search updated.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
-
-export function useDeleteSavedSearch() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => deleteSavedSearch(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
-      toast.success("Search deleted.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
 
 export function useCreateListing() {
   const qc = useQueryClient();
@@ -201,6 +154,20 @@ export function useListingDocuments(id: string) {
     queryKey: ["listings", "documents", id],
     queryFn: () => getListingDocuments(id),
     enabled: !!id,
+  });
+}
+
+export function useUploadListingDocuments(listingId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ type, files }: { type: Parameters<typeof uploadListingDocuments>[1]; files: File[] }) =>
+      uploadListingDocuments(listingId, type, files),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["listings", "documents", listingId] });
+      qc.invalidateQueries({ queryKey: KEYS.detail(listingId) });
+      toast.success("Documents uploaded.");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 

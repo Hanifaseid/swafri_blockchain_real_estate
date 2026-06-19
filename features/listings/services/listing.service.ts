@@ -6,8 +6,6 @@ import type {
   ListingFilters,
   PaginatedListings,
   TransitionInput,
-  CreateSavedSearchInput,
-  SavedSearch,
 } from "@/features/listings/types/listing.types";
 
 // ─── Response helpers ─────────────────────────────────────────────────────────
@@ -112,59 +110,7 @@ export async function getListings(
   }
 }
 
-export async function createSavedSearch(
-  input: CreateSavedSearchInput,
-): Promise<SavedSearch> {
-  const payload = {
-    name: input.name,
-    alertEnabled: input.alertEnabled ?? false,
-    query: {
-      ...(input.query.listingType && { listingType: input.query.listingType }),
-      ...(input.query.category && { category: input.query.category }),
-      ...(input.query.minPrice != null && { minPrice: input.query.minPrice }),
-      ...(input.query.maxPrice != null && { maxPrice: input.query.maxPrice }),
-      ...(input.query.minBedrooms != null && {
-        minBedrooms: input.query.minBedrooms,
-      }),
-      ...(input.query.minBathrooms != null && {
-        minBathrooms: input.query.minBathrooms,
-      }),
-    },
-  };
-  const { data } = await apiClient.post<ApiResp<SavedSearch>>(
-    ENDPOINTS.SAVED_SEARCHES.CREATE,
-    payload,
-  );
-  if (!data.success) throw new Error(data.message);
-  return data.data;
-}
 
-export async function getSavedSearches(): Promise<SavedSearch[]> {
-  try {
-    const { data } = await apiClient.get<ApiResp<SavedSearch[]>>(
-      ENDPOINTS.SAVED_SEARCHES.LIST,
-    );
-    return data.success ? (Array.isArray(data.data) ? data.data : []) : [];
-  } catch {
-    return [];
-  }
-}
-
-export async function updateSavedSearch(
-  id: string,
-  input: Partial<CreateSavedSearchInput>,
-): Promise<SavedSearch> {
-  const { data } = await apiClient.patch<ApiResp<SavedSearch>>(
-    ENDPOINTS.SAVED_SEARCHES.UPDATE(id),
-    input,
-  );
-  if (!data.success) throw new Error(data.message);
-  return data.data;
-}
-
-export async function deleteSavedSearch(id: string): Promise<void> {
-  await apiClient.delete(ENDPOINTS.SAVED_SEARCHES.DELETE(id));
-}
 
 // ─── getMyListings ────────────────────────────────────────────────────────────
 // GET /listings/mine — owner's own listings
@@ -339,6 +285,16 @@ export async function getListingDashboard(): Promise<Record<
 
 // ─── Documents ────────────────────────────────────────────────────────────────
 
+export type ListingDocumentType =
+  | "title_deed"
+  | "tax_record"
+  | "utility_bill"
+  | "ownership_certificate"
+  | "lease_authority"
+  | "government_doc"
+  | "government_document"
+  | "other";
+
 export interface ListingDocument {
   id: string;
   type: string;
@@ -358,6 +314,29 @@ export async function getListingDocuments(
     return data.success ? (Array.isArray(data.data) ? data.data : []) : [];
   } catch {
     return [];
+  }
+}
+
+export async function uploadListingDocuments(
+  listingId: string,
+  type: ListingDocumentType,
+  files: File[],
+): Promise<void> {
+  const form = new FormData();
+  form.append("type", type);
+  files.forEach((file) => form.append("documents", file));
+
+  try {
+    await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(listingId), form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 0,
+    });
+  } catch (error: any) {
+    const errData = error.response?.data;
+    if (errData) {
+      throw new Error(errData.message || "Document upload failed");
+    }
+    throw error;
   }
 }
 
