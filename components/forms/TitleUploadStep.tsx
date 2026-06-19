@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { useFormContext } from 'react-hook-form';
-import { FormField } from '@/components/ui/FormField';
-import { inputClass } from './styles';
-import type { ListingFormValues } from './schemas';
+import * as React from "react";
+import { useFormContext } from "react-hook-form";
+import { FormField } from "@/components/ui/FormField";
+import { inputClass } from "./styles";
+import type { ListingFormValues } from "./schemas";
 
 interface TitleUploadStepProps {
   onUpload: (file: File) => Promise<string>;
@@ -19,19 +19,24 @@ export function TitleUploadStep({ onUpload, uploading }: TitleUploadStepProps) {
     formState: { errors },
   } = useFormContext<ListingFormValues>();
 
-  const titleDocumentUrl = watch('titleDocumentUrl');
+  const titleDocumentUrl = watch("titleDocumentUrl");
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const url = await onUpload(file);
-    setValue('titleDocumentUrl', url, { shouldValidate: true });
+    setValue("titleDocumentUrl", url, { shouldValidate: true });
   };
 
   return (
     <div className="grid gap-6">
-      <FormField label="Title document" error={errors.titleDocumentUrl?.message}>
+      <FormField
+        label="Title document"
+        error={errors.titleDocumentUrl?.message}
+      >
         <input
           type="file"
           accept=".pdf,.doc,.docx"
@@ -47,14 +52,31 @@ export function TitleUploadStep({ onUpload, uploading }: TitleUploadStepProps) {
         </div>
       )}
 
-      <FormField label="Existing token ID" error={errors.existingTokenId?.message}>
-        <input {...register('existingTokenId')} className={inputClass} placeholder="Token ID (optional)" />
+      <FormField
+        label="Existing token ID"
+        error={errors.existingTokenId?.message}
+      >
+        <input
+          {...register("existingTokenId")}
+          className={inputClass}
+          placeholder="Token ID (optional)"
+        />
       </FormField>
 
-      <FormField label="Confirm title accuracy" error={errors.confirmTitleAccuracy?.message} required>
+      <FormField
+        label="Confirm title accuracy"
+        error={errors.confirmTitleAccuracy?.message}
+        required
+      >
         <div className="flex items-center gap-2">
-          <input type="checkbox" {...register('confirmTitleAccuracy')} className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" />
-          <span className="text-sm text-gray-700">I confirm the title document is accurate.</span>
+          <input
+            type="checkbox"
+            {...register("confirmTitleAccuracy")}
+            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+          />
+          <span className="text-sm text-gray-700">
+            I confirm the title document is accurate.
+          </span>
         </div>
       </FormField>
     </div>
