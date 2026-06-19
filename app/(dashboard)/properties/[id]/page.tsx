@@ -11,7 +11,8 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Modal } from '@/components/ui/Modal';
 import {
   useListing, useTransitionListing,
-  useListingDocuments, useDocumentSignedUrl,
+  useListingDocuments, useDocumentSignedUrl, useReviewDocument,
+  useListingDuplicates,
   useUploadPhotos, useDeletePhoto, useSetCoverPhoto, useReorderPhotos,
   useListingAnalytics, useListingTitle,
   useMintTitle, useDisputeTitle, useClearTitleDispute, useRevokeTitle,
@@ -23,6 +24,7 @@ import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { RentalApplicationCard } from '@/components/listing/RentalApplicationCard';
 
 const STATUS_STYLE: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-500', submitted: 'bg-amber-50 text-amber-600',
@@ -45,7 +47,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const { data: docs = [] } = useListingDocuments(id);
   const { data: analytics } = useListingAnalytics(id);
   const { data: titleInfo } = useListingTitle(id);
+  const { data: duplicates = [] } = useListingDuplicates(id);
   const { mutate: getDocUrl } = useDocumentSignedUrl();
+  const { mutate: doReviewDocument } = useReviewDocument(id);
   const { mutate: doUploadPhotos, isPending: uploadingPhotos } = useUploadPhotos(id);
   const { mutate: doDeletePhoto } = useDeletePhoto(id);
   const { mutate: doSetCover } = useSetCoverPhoto(id);
@@ -59,6 +63,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef   = useRef<HTMLInputElement>(null);
+  const [docUploadType, setDocUploadType]     = useState('title_deed');
+  const [showDocReviewModal, setShowDocReviewModal] = useState(false);
+  const [reviewDocId, setReviewDocId]         = useState<string | null>(null);
+  const [reviewDecision, setReviewDecision]   = useState<'approve' | 'reject'>('approve');
+  const [reviewNote, setReviewNote]           = useState('');
   const [showRejectModal, setShowRejectModal]   = useState(false);
   const [rejectReason, setRejectReason]         = useState<RejectionReason>('missing_document');
   const [rejectNote, setRejectNote]             = useState('');
@@ -71,6 +80,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [inquiryMsg, setInquiryMsg]             = useState('');
   const [inquiryType, setInquiryType]           = useState<'rent' | 'buy' | 'general'>('general');
   const [showOfferModal, setShowOfferModal]     = useState(false);
+  const [showRentalAppModal, setShowRentalAppModal] = useState(false);
   const [offerAmount, setOfferAmount]           = useState<number>(0);
   const [offerMessage, setOfferMessage]         = useState('');
   const [previewPhotos, setPreviewPhotos]       = useState<{url: string, file: File}[]>([]);
@@ -205,11 +215,22 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 {label}
               </button>
             ))}
-            {role === 'TENANT' && listing.status === 'published' && (
-              <button type="button" onClick={() => setShowOfferModal(true)}
-                className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-                Make Offer
-              </button>
+            {listing.status === 'published' && (
+              <>
+                <button type="button" onClick={() => {
+                  const rentalAppSection = document.querySelector('[data-rental-app-section]');
+                  if (rentalAppSection) {
+                    rentalAppSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }
+                }}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors">
+                  Apply to Rent
+                </button>
+                <button type="button" onClick={() => setShowOfferModal(true)}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+                  Make Offer
+                </button>
+              </>
             )}
             {isOwner && (listing.status === 'draft' || listing.status === 'rejected') && (
               <Link href={`/properties/${id}/edit`} className="text-xs font-semibold px-3 py-2 rounded-xl border border-gray-300 text-black/60 hover:bg-gray-50">Edit</Link>
@@ -291,12 +312,24 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         </div>
       </Modal>
 
-      {/* Inquiry form for tenants */}
-      {role === 'TENANT' && listing.status === 'published' && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+      {/* Rental Application Section */}
+      {listing.status === 'published' && listing.listingType === 'rent' && (
+        <div data-rental-app-section>
+          <RentalApplicationCard
+            listingId={id}
+            title={listing?.title}
+            monthlyRent={listing?.monthlyRent}
+            currency={listing?.currency}
+          />
+        </div>
+      )}
+
+      {/* Inquiry form for all users */}
+      {listing.status === 'published' && (
+        <div data-inquiry-section className="bg-white rounded-2xl border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Send an Inquiry</p>
-            <button type="button" onClick={() => setShowInquiryForm((v) => !v)}
+            <button type="button" onClick={() => { console.log('Toggle inquiry form'); setShowInquiryForm((v) => !v); }}
               className="text-xs text-emerald-500 hover:text-emerald-600 font-medium">
               {showInquiryForm ? 'Cancel' : '+ Ask a question'}
             </button>
@@ -470,6 +503,25 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             </div>
           )}
 
+          {/* Duplicate detection hints */}
+          {isAdmin && duplicates.length > 0 && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium mb-1">Potential duplicates detected:</p>
+                <ul className="space-y-1">
+                  {duplicates.map((dup) => (
+                    <li key={dup.id} className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono">{dup.title}</span>
+                      <span className="text-[10px] text-black/50">({dup.status})</span>
+                      <span className="text-[10px] text-black/40">— {dup.reasons.join(', ')}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* Document list */}
           {docs.length > 0 ? (
             <div className="space-y-2">
@@ -483,6 +535,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', doc.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : doc.status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600')}>{doc.status}</span>
                     <button type="button" onClick={() => getDocUrl({ listingId: id, docId: doc.id }, { onSuccess: (url) => { if (url) window.open(url, '_blank'); } })}
                       className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50">View</button>
+                    {isAdmin && doc.status === 'pending' && (
+                      <button type="button" onClick={() => { setReviewDocId(doc.id); setShowDocReviewModal(true); }}
+                        className="text-[10px] font-mono text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded hover:bg-emerald-50">Review</button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -615,6 +671,43 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 capitalize">
                 {titleAction}
               </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Document Review modal */}
+      {showDocReviewModal && reviewDocId && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowDocReviewModal(false)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
+            <h3 className="text-sm font-semibold text-black mb-4">Review Document</h3>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setReviewDecision('approve')}
+                  className={cn('flex-1 py-2 rounded-lg text-xs font-medium border transition-colors',
+                    reviewDecision === 'approve' ? 'bg-emerald-50 border-emerald-300 text-emerald-600' : 'border-gray-200 text-black/60 hover:bg-gray-50')}>
+                  Approve
+                </button>
+                <button type="button" onClick={() => setReviewDecision('reject')}
+                  className={cn('flex-1 py-2 rounded-lg text-xs font-medium border transition-colors',
+                    reviewDecision === 'reject' ? 'bg-red-50 border-red-300 text-red-600' : 'border-gray-200 text-black/60 hover:bg-gray-50')}>
+                  Reject
+                </button>
+              </div>
+              <textarea value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} rows={3} placeholder="Review note (optional for approve, required for reject)…"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none resize-none" />
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowDocReviewModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" disabled={reviewDecision === 'reject' && !reviewNote.trim()}
+                  onClick={() => {
+                    doReviewDocument({ docId: reviewDocId, input: { decision: reviewDecision, note: reviewNote.trim() || undefined } });
+                    setShowDocReviewModal(false); setReviewDocId(null); setReviewNote('');
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
+                  {reviewDecision === 'approve' ? 'Approve' : 'Reject'}
+                </button>
+              </div>
             </div>
           </div>
         </>

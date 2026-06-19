@@ -42,7 +42,13 @@ export type PermissionKey =
 
   // Transactions
   | 'transactions:view_own'
+  | 'transactions:view_all'
   | 'transactions:update_status'
+
+  // Compliance
+  | 'compliance:view'
+  | 'compliance:update_case'
+  | 'compliance:review_license'
 
   // Chain transactions
   | 'chain-transactions:view'

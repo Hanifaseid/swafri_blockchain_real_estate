@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   BadgeCheck, Clock, CheckCircle2, XCircle, AlertCircle,
-  Wallet, Link2, Link2Off, Loader2,
+  Wallet, Link2, Link2Off, Loader2, X,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -32,6 +32,9 @@ export default function KycPage() {
   const [signature, setSignature]         = useState('');
   const [challengeMsg, setChallengeMsg]   = useState('');
   const [walletStep, setWalletStep]       = useState<'idle' | 'sign'>('idle');
+  const [documentType, setDocumentType]   = useState<'national_id' | 'passport' | 'drivers_license' | 'other'>('national_id');
+  const [kycFiles, setKycFiles]           = useState<File[]>([]);
+  const kycInputRef = useRef<HTMLInputElement>(null);
 
   const { mutate: getChallenge,  isPending: gettingChallenge } = useWalletChallenge();
   const { mutate: doLinkWallet,  isPending: linkingWallet }    = useLinkWallet();
@@ -178,12 +181,75 @@ export default function KycPage() {
                 </p>
               )}
 
+              {/* Document type selector */}
+              {canSubmitKyc && (
+                <div className="mb-4">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">
+                    Document Type
+                  </label>
+                  <select
+                    value={documentType}
+                    onChange={(e) => setDocumentType(e.target.value as any)}
+                    className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400"
+                  >
+                    <option value="national_id">National ID</option>
+                    <option value="passport">Passport</option>
+                    <option value="drivers_license">Driver's License</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              )}
+
+              {/* File upload */}
+              {canSubmitKyc && (
+                <div className="mb-4">
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">
+                    Upload Documents
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => kycInputRef.current?.click()}
+                    className="w-full h-11 rounded-2xl border border-dashed border-gray-300 px-3 text-sm text-black/50 hover:border-emerald-400 hover:text-emerald-600 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Link2 size={14} />
+                    {kycFiles.length > 0 ? `${kycFiles.length} file(s) selected` : 'Choose files...'}
+                  </button>
+                  <input
+                    ref={kycInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setKycFiles(files);
+                    }}
+                  />
+                  {kycFiles.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {kycFiles.map((file, i) => (
+                        <div key={i} className="text-xs text-black/60 flex items-center gap-2">
+                          <span className="truncate">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setKycFiles(kycFiles.filter((_, idx) => idx !== i))}
+                            className="text-red-500 hover:text-red-600"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* CTA button */}
               {canSubmitKyc && (
                 <button
                   type="button"
-                  onClick={() => submitKyc({ files: [], documentType: 'kyc_verification' })}
-                  disabled={submitting}
+                  onClick={() => submitKyc({ files: kycFiles, documentType })}
+                  disabled={submitting || kycFiles.length === 0}
                   className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors"
                 >
                   {submitting

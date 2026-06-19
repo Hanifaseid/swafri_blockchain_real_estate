@@ -15,10 +15,13 @@ import {
   deleteListing,
   transitionListing,
   getAdminListings,
+  getAdminListingsStats,
   getListingAnalytics,
   getListingDashboard,
   getListingDocuments,
   getDocumentSignedUrl,
+  reviewDocument,
+  getListingDuplicates,
   uploadPhotos,
   deletePhoto,
   setCoverPhoto,
@@ -69,6 +72,13 @@ export function useAdminListings(params?: Record<string, string | number>) {
   return useQuery({
     queryKey: KEYS.adminList(params ?? {}),
     queryFn: () => getAdminListings(params),
+  });
+}
+
+export function useAdminListingsStats() {
+  return useQuery({
+    queryKey: ["listings", "admin", "stats"],
+    queryFn: getAdminListingsStats,
   });
 }
 
@@ -199,6 +209,28 @@ export function useDocumentSignedUrl() {
     mutationFn: ({ listingId, docId }: { listingId: string; docId: string }) =>
       getDocumentSignedUrl(listingId, docId),
     onError: () => toast.error("Failed to get document URL."),
+  });
+}
+
+export function useReviewDocument(listingId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ docId, input }: { docId: string; input: { decision: "approve" | "reject"; note?: string } }) =>
+      reviewDocument(listingId, docId, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["listings", "documents", listingId] });
+      qc.invalidateQueries({ queryKey: KEYS.detail(listingId) });
+      toast.success("Document reviewed.");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useListingDuplicates(id: string) {
+  return useQuery({
+    queryKey: ["listings", "duplicates", id],
+    queryFn: () => getListingDuplicates(id),
+    enabled: !!id,
   });
 }
 

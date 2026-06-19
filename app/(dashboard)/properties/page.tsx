@@ -16,12 +16,14 @@ import {
   Bell,
   BellOff,
   Check,
+  Map,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/auth.store";
 import {
   useListings,
   useMyListings,
   useAdminListings,
+  useAdminListingsStats,
   useDeleteListing,
   useTransitionListing,
   useSavedSearches,
@@ -38,6 +40,7 @@ import type {
 } from "@/features/listings/types/listing.types";
 import { ListingCard } from "@/components/listing/ListingCard";
 import { FavoriteButton } from "@/components/common/FavoriteButton";
+import { PropertyMap, type MapSearchMode } from "@/components/map/PropertyMap";
 import { cn } from "@/lib/utils";
 
 // ─── Properties Page ──────────────────────────────────────────────────────────
@@ -99,8 +102,13 @@ function TenantView() {
       searchParams.get("maxPrice") ||
       searchParams.get("minBedrooms") ||
       searchParams.get("minBathrooms")
-    ),
+    )
   );
+  const [showMap, setShowMap] = useState(false);
+  const [mapMode, setMapMode] = useState<MapSearchMode>("viewport");
+  const [mapCenter, setMapCenter] = useState<[number, number]>([40.4897, 9.1450]); // Ethiopia center
+  const [mapRadius, setMapRadius] = useState(5000); // 5km
+  const [mapPolygon, setMapPolygon] = useState<[number, number][]>([]);
   const [showRecentSearches, setShowRecentSearches] = useState(false);
   const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -133,10 +141,40 @@ function TenantView() {
   }, [search]);
 
   const { data: listingsData, isLoading } = useListings(filters);
-  const listings = useMemo(
-    () => listingsData?.items ?? [],
-    [listingsData?.items],
-  );
+
+  // Client-side filtering for radius search to ensure correct display
+  const listings = useMemo(() => {
+    const allListings = listingsData?.items ?? [];
+
+    // If radius search is active, filter listings by distance
+    if (filters.lng && filters.lat && filters.radius) {
+      const centerLat = filters.lat;
+      const centerLng = filters.lng;
+      const radiusMeters = filters.radius;
+
+      return allListings.filter((listing) => {
+        if (!listing.location?.coordinates) return false;
+        const [listingLng, listingLat] = listing.location.coordinates;
+
+        // Calculate distance using Haversine formula
+        const R = 6371000; // Earth's radius in meters
+        const dLat = ((listingLat - centerLat) * Math.PI) / 180;
+        const dLng = ((listingLng - centerLng) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((centerLat * Math.PI) / 180) *
+            Math.cos((listingLat * Math.PI) / 180) *
+            Math.sin(dLng / 2) *
+            Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        return distance <= radiusMeters;
+      });
+    }
+
+    return allListings;
+  }, [listingsData?.items, filters.lng, filters.lat, filters.radius]);
   const normalizedSearch = search.trim().toLowerCase();
 
   const filteredListings = useMemo(() => {
@@ -177,6 +215,55 @@ function TenantView() {
 
   const { mutate: deleteSavedSearch } = useDeleteSavedSearch();
   const { mutate: saveSearch, isPending: savingSearch } = useSaveSearch();
+
+  // Map event handlers
+  const handleViewportChange = (bounds: { swLng: number; swLat: number; neLng: number; neLat: number }) => {
+    setFilters((f) => ({
+      ...f,
+      swLng: bounds.swLng,
+      swLat: bounds.swLat,
+      neLng: bounds.neLng,
+      neLat: bounds.neLat,
+      lng: undefined,
+      lat: undefined,
+      radius: undefined,
+      polygon: undefined,
+      page: 1,
+    }));
+  };
+
+  const handleRadiusChange = (center: [number, number], radius: number) => {
+    setMapCenter(center);
+    setMapRadius(radius);
+    setFilters((f) => ({
+      ...f,
+      lng: center[0],
+      lat: center[1],
+      radius: radius,
+      swLng: undefined,
+      swLat: undefined,
+      neLng: undefined,
+      neLat: undefined,
+      polygon: undefined,
+      page: 1,
+    }));
+  };
+
+  const handlePolygonChange = (polygon: [number, number][]) => {
+    setMapPolygon(polygon);
+    setFilters((f) => ({
+      ...f,
+      polygon: polygon.length > 0 ? polygon : undefined,
+      swLng: undefined,
+      swLat: undefined,
+      neLng: undefined,
+      neLat: undefined,
+      lng: undefined,
+      lat: undefined,
+      radius: undefined,
+      page: 1,
+    }));
+  };
 
   // Persist recent searches to localStorage
   const saveRecentSearch = (query: string) => {
@@ -307,7 +394,7 @@ function TenantView() {
       {/* Search + filter bar */}
       <form
         onSubmit={handleSearch}
-        className="grid gap-2 mb-4 sm:grid-cols-[1fr_auto_auto] items-center"
+        className="grid gap-2 mb-4 sm:grid-cols-[1fr_auto_auto_auto] items-center"
       >
         <div className="relative min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 pointer-events-none" />
@@ -472,6 +559,18 @@ function TenantView() {
         >
           <SlidersHorizontal size={13} /> Filters
         </button>
+        <button
+          type="button"
+          onClick={() => setShowMap((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 h-11 px-4 rounded-2xl text-xs font-medium transition-colors",
+            showMap
+              ? "bg-emerald-50 border border-emerald-300 text-emerald-600"
+              : "border border-gray-200 bg-white text-black/60 hover:border-gray-300",
+          )}
+        >
+          <Map size={13} /> Map
+        </button>
       </form>
 
       {/* Filter panel */}
@@ -624,6 +723,73 @@ function TenantView() {
             >
               <X size={12} /> Clear filters
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Map panel */}
+      {showMap && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Map Search</p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setMapMode('viewport')}
+                className={cn('text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors',
+                  mapMode === 'viewport' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}
+              >
+                Viewport
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode('radius')}
+                className={cn('text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors',
+                  mapMode === 'radius' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}
+              >
+                Radius
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapMode('polygon')}
+                className={cn('text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors',
+                  mapMode === 'polygon' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}
+              >
+                Polygon
+              </button>
+            </div>
+          </div>
+          {mapMode === 'radius' && (
+            <div className="mb-4">
+              <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">
+                Search Radius (meters)
+              </label>
+              <input
+                type="number"
+                value={mapRadius}
+                onChange={(e) => setMapRadius(Number(e.target.value))}
+                className="w-full h-11 rounded-2xl border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400"
+              />
+            </div>
+          )}
+          <div className="h-[400px] rounded-xl overflow-hidden">
+            <PropertyMap
+              center={mapCenter}
+              mode={mapMode}
+              radius={mapRadius}
+              polygon={mapPolygon}
+              onViewportChange={handleViewportChange}
+              onRadiusChange={handleRadiusChange}
+              onPolygonChange={handlePolygonChange}
+              listings={listings.map(l => ({
+                id: l.id,
+                lat: l.address?.geo?.lat || 0,
+                lng: l.address?.geo?.lng || 0,
+                title: l.title,
+                price: l.price || l.monthlyRent || 0,
+              }))}
+              onListingClick={(id) => router.push(`/properties/${id}`)}
+            />
           </div>
         </div>
       )}
@@ -1027,6 +1193,7 @@ function AdminView() {
     status: statusFilter,
     limit: 20,
   });
+  const { data: stats } = useAdminListingsStats();
   const listings = data?.items ?? [];
 
   const STATUS_TABS = [
@@ -1051,6 +1218,28 @@ function AdminView() {
           </h1>
         </div>
       </div>
+
+      {/* Stats cards */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Total Listings</p>
+            <p className="text-2xl font-semibold text-black/80">{String(stats.total ?? 0)}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Pending Review</p>
+            <p className="text-2xl font-semibold text-amber-600">{String(stats.pendingReview ?? 0)}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Published</p>
+            <p className="text-2xl font-semibold text-emerald-600">{String((stats.byStatus as any)?.published ?? 0)}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Verified</p>
+            <p className="text-2xl font-semibold text-emerald-600">{String((stats.byVerification as any)?.verified ?? 0)}</p>
+          </div>
+        </div>
+      )}
 
       {/* Status tabs */}
       <div className="flex gap-1 flex-wrap mb-5">

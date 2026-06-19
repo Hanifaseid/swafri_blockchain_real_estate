@@ -52,6 +52,18 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       icon: 'Lock',
     },
     {
+      label: 'Compliance',
+      href: '/compliance',
+      icon: 'ShieldCheck',
+      requiredPermission: 'compliance:view',
+    },
+    {
+      label: 'Purchase Transactions',
+      href: '/transactions',
+      icon: 'CreditCard',
+      requiredPermission: 'transactions:view_all',
+    },
+    {
       label: 'Audit Logs',
       href: '/audit',
       icon: 'History',
@@ -104,6 +116,18 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       href: '/properties',
       icon: 'Building2',
       requiredPermission: 'properties:view_all',
+    },
+    {
+      label: 'Compliance',
+      href: '/compliance',
+      icon: 'ShieldCheck',
+      requiredPermission: 'compliance:view',
+    },
+    {
+      label: 'Purchase Transactions',
+      href: '/transactions',
+      icon: 'CreditCard',
+      requiredPermission: 'transactions:view_all',
     },
     {
       label: 'Audit Logs',

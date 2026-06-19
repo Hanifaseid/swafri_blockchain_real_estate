@@ -7,14 +7,16 @@ const KEYS = {
 };
 
 // ─── useNotifications ─────────────────────────────────────────────────────────
-// Polls every 30s. Accepts unreadOnly / page / limit filter params.
+// Polls every 2 minutes to avoid rate limiting. Accepts unreadOnly / page / limit filter params.
 
 export function useNotifications(params: NotificationsParams = {}) {
   return useQuery({
     queryKey: KEYS.list(params),
     queryFn: () => getNotifications(params),
-    refetchInterval: 30_000,
-    staleTime: 20_000,
+    refetchInterval: 120_000, // Increased from 30s to 2 minutes to avoid 429 errors
+    staleTime: 60_000,
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 }
 

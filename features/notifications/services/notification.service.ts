@@ -64,7 +64,12 @@ export async function getNotifications(
       unreadCount,
       total: typeof raw?.total === 'number' ? raw.total : list.length,
     };
-  } catch (err) {
+  } catch (err: any) {
+    // Handle rate limiting gracefully - return empty data instead of throwing
+    if (err?.response?.status === 429) {
+      console.warn('[Notifications API] Rate limit hit, will retry later');
+      return { notifications: [], unreadCount: 0, total: 0 };
+    }
     console.error('[Notifications API] error:', err);
     return { notifications: [], unreadCount: 0, total: 0 };
   }

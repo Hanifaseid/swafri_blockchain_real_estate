@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Loader2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Loader2, Crosshair, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 import { useAuthStore } from '@/stores/auth.store';
 import { useCreateListing } from '@/features/listings/queries/listing.queries';
@@ -52,6 +54,14 @@ export default function CreateListingPage() {
   const { currentUser } = useAuthStore();
   const { mutate: create, isPending } = useCreateListing();
   const [listingType, setListingType] = useState<'sale' | 'rent'>('rent');
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([40.4897, 9.1450]); // Ethiopia center
+  const [locationSearch, setLocationSearch] = useState('');
+  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<L.Marker | null>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(createSchema) as any,
@@ -74,6 +84,117 @@ export default function CreateListingPage() {
       router.push('/kyc');
     }
   }, [currentUser, router]);
+
+  // Initialize map when shown
+  useEffect(() => {
+    if (showMap && mapContainerRef.current && !mapRef.current) {
+      // Ensure container has proper dimensions
+      const container = mapContainerRef.current;
+      container.style.height = '300px';
+      container.style.width = '100%';
+
+      const map = L.map(container).setView(mapCenter, 13);
+
+      // Use standard OpenStreetMap tiles instead of MapTiler JSON style
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Handle map click to set location
+      map.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        setValue('latitude', lat);
+        setValue('longitude', lng);
+        setMapCenter([lng, lat]);
+
+        // Update or create marker
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        } else {
+          markerRef.current = L.marker([lat, lng]).addTo(map);
+        }
+      });
+
+      // Force map to invalidate size after initialization
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+
+      mapRef.current = map;
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [showMap, mapCenter, setValue]);
+
+  // Get current location
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setValue('latitude', latitude);
+        setValue('longitude', longitude);
+        setMapCenter([longitude, latitude]);
+        toast.success('Location captured successfully');
+        setGettingLocation(false);
+      },
+      (error) => {
+        toast.error('Failed to get location. Please enable location services.');
+        setGettingLocation(false);
+      }
+    );
+  };
+
+  // Search location using Nominatim (OpenStreetMap)
+  const handleLocationSearch = async (query: string) => {
+    setLocationSearch(query);
+    if (query.length < 3) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await response.json();
+      setLocationSuggestions(data);
+    } catch (error) {
+      console.error('Location search error:', error);
+    }
+  };
+
+  // Select location from suggestions
+  const handleSelectLocation = (suggestion: any) => {
+    const lat = parseFloat(suggestion.lat);
+    const lon = parseFloat(suggestion.lon);
+    setValue('latitude', lat);
+    setValue('longitude', lon);
+    setMapCenter([lon, lat]);
+    setLocationSearch(suggestion.display_name);
+    setLocationSuggestions([]);
+
+    // Update map if shown
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lon], 15);
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lon]);
+      } else {
+        markerRef.current = L.marker([lat, lon]).addTo(mapRef.current);
+      }
+    }
+  };
 
   if (!currentUser || (currentUser.role !== 'PROPERTY_OWNER' && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
     return <div className="p-8 text-sm text-black/50">You don't have permission to create listings.</div>;
@@ -268,12 +389,69 @@ export default function CreateListingPage() {
 
         {/* ── Location coordinates ── */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <MapPin size={14} className="text-black/40" />
-            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">GPS Coordinates</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin size={14} className="text-black/40" />
+              <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">GPS Coordinates</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowMap(!showMap)}
+              className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+            >
+              {showMap ? 'Hide Map' : 'Show Map'}
+            </button>
           </div>
-          <p className="text-xs text-black/40">Find coordinates at <a href="https://www.latlong.net" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:underline">latlong.net</a>. Format: [longitude, latitude]</p>
 
+          {/* Location options */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleGetCurrentLocation}
+              disabled={gettingLocation}
+              className="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 text-black/60 px-3 py-2 rounded-lg transition-colors"
+            >
+              {gettingLocation ? <Loader2 size={12} className="animate-spin" /> : <Crosshair size={12} />}
+              Use Current Location
+            </button>
+          </div>
+
+          {/* Location search */}
+          <div className="relative">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 pointer-events-none" />
+              <input
+                type="text"
+                value={locationSearch}
+                onChange={(e) => handleLocationSearch(e.target.value)}
+                placeholder="Search location (e.g., Bole, Addis Ababa)"
+                className="w-full h-11 rounded-2xl border border-gray-200 pl-10 pr-3 text-sm text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400"
+              />
+            </div>
+            {locationSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
+                {locationSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleSelectLocation(suggestion)}
+                    className="w-full text-left px-4 py-3 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="font-medium">{suggestion.display_name}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Map */}
+          {showMap && (
+            <div className="h-[300px] rounded-xl overflow-hidden border border-gray-200">
+              <div ref={mapContainerRef} className="w-full h-full" />
+            </div>
+          )}
+
+          {/* Manual coordinates */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Longitude" error={errors.longitude?.message} required>
               <input type="number" step="any" {...register('longitude', { valueAsNumber: true })} placeholder="38.7578"
@@ -284,6 +462,7 @@ export default function CreateListingPage() {
                 className={cn(inputClass, errors.latitude && inputErrorClass)} />
             </Field>
           </div>
+          <p className="text-xs text-black/40">Or find coordinates at <a href="https://www.latlong.net" target="_blank" rel="noopener noreferrer" className="text-emerald-500 hover:underline">latlong.net</a></p>
         </div>
 
         {/* Submit */}

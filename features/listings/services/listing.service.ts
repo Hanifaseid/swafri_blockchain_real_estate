@@ -258,6 +258,39 @@ export async function getAdminListings(
   }
 }
 
+// ─── Admin: getAdminListingsStats ───────────────────────────────────────────────
+
+export async function getAdminListingsStats(): Promise<Record<string, unknown> | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<Record<string, unknown>>>(
+      ENDPOINTS.ADMIN.LISTINGS_STATS,
+    );
+    return data.success ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Duplicate Detection ───────────────────────────────────────────────────────
+
+export interface DuplicateHint {
+  id: string;
+  title: string;
+  status: string;
+  reasons: string[];
+}
+
+export async function getListingDuplicates(id: string): Promise<DuplicateHint[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<DuplicateHint[]>>(
+      ENDPOINTS.LISTINGS.DUPLICATES(id),
+    );
+    return data.success ? (Array.isArray(data.data) ? data.data : []) : [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
 export interface ListingAnalytics {
@@ -345,6 +378,17 @@ export async function getDocumentSignedUrl(
   } catch {
     return null;
   }
+}
+
+export async function reviewDocument(
+  listingId: string,
+  docId: string,
+  input: { decision: "approve" | "reject"; note?: string },
+): Promise<void> {
+  await apiClient.post(
+    ENDPOINTS.ADMIN.DOC_REVIEW(listingId, docId),
+    input,
+  );
 }
 
 // ─── Photos ───────────────────────────────────────────────────────────────────

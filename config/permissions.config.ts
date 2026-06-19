@@ -25,6 +25,15 @@ export const protectedRoutes: RoutePermission[] = [
   // Audit logs — admin and super admin
   { path: '/audit', allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
 
+  // Compliance — admin and super admin
+  { path: '/compliance', allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+
+  // Purchase Transactions — admin and super admin
+  { path: '/transactions', allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+
+  // Chain Transactions — admin and super admin
+  { path: '/chain-transactions', allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
+
   // Settings — admin and super admin
   { path: '/settings', allowedRoles: ['SUPER_ADMIN', 'ADMIN'] },
 
