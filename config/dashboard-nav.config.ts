@@ -190,9 +190,9 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'Transactions',
-      href: '/transactions',
+      href: '/chain-transactions',
       icon: 'CreditCard',
-      requiredPermission: 'transactions:view_own',
+      // requiredPermission: 'transactions:view_own',
     },
     {
       label: 'KYC & Wallet',
