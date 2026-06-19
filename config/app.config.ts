@@ -38,7 +38,11 @@ export const appConfig = {
     walletLinking: process.env.NEXT_PUBLIC_ENABLE_WALLET === 'true',
     kycRestrictions: process.env.NEXT_PUBLIC_ENABLE_KYC === 'true',
   },
-
+  // ── Upload limits used by image/document upload components.
+  upload: {
+    maxFileSizeBytes: 10 * 1024 * 1024,
+    maxPhotos: 20,
+  },
   // ── Mock Mode ────────────────────────────────────────────────────────────
   // true = use localStorage mock services (no backend needed)
   // false = use real API via axios-client

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
 
@@ -22,7 +22,14 @@ import {
   STEP_FIELDS,
   type ListingFormValues,
 } from './schemas';
-import { appConfig } from '@/config/app.config';
+
+const STEP_LABELS = [
+  'Basic Info',
+  'Photos',
+  'Amenities',
+  'Tier & Pricing',
+  'Title Documents',
+] as const;
 
 /**
  * ListingFormWizard — 5-step form for creating or editing a listing.
@@ -43,8 +50,6 @@ interface ListingFormWizardProps {
   isSubmitting?: boolean;
 }
 
-const STEP_LABELS = appConfig.listingWizard.steps;
-
 export function ListingFormWizard({
   onSubmit,
   onUploadPhoto,
@@ -57,14 +62,13 @@ export function ListingFormWizard({
   const [uploadingDoc,   setUploadingDoc]   = React.useState(false);
 
   const methods = useForm<ListingFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(listingFormSchema) as any,
     defaultValues: { ...LISTING_FORM_DEFAULTS, ...defaultValues },
     mode: 'onTouched',
   });
 
-  const { handleSubmit, trigger, watch, setValue } = methods;
-  const photos = watch('photos') ?? [];
+  const { handleSubmit, trigger, setValue, control } = methods;
+  const photos = useWatch({ control, name: 'photos' }) ?? [];
 
   // ── Step navigation ─────────────────────────────────────────────────────
 
