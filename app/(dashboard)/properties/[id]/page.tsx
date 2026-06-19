@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Modal } from '@/components/ui/Modal';
 import {
   useListing, useTransitionListing,
-  useListingDocuments, useDocumentSignedUrl, useReviewDocument,
+  useListingDocuments, useUploadListingDocuments, useDocumentSignedUrl, useReviewDocument,
   useListingDuplicates,
   useUploadPhotos, useDeletePhoto, useSetCoverPhoto, useReorderPhotos,
   useListingAnalytics, useListingTitle,
@@ -20,8 +20,7 @@ import {
 import { useSendInquiry } from '@/features/inquiries/queries/inquiry.queries';
 import { useSubmitOffer } from '@/features/offers/queries/offer.queries';
 import type { TransitionAction, RejectionReason } from '@/features/listings/types/listing.types';
-import { apiClient } from '@/lib/api/axios-client';
-import { ENDPOINTS } from '@/lib/api/endpoints';
+import type { ListingDocumentType } from '@/features/listings/services/listing.service';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { RentalApplicationCard } from '@/components/listing/RentalApplicationCard';
@@ -50,6 +49,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const { data: duplicates = [] } = useListingDuplicates(id);
   const { mutate: getDocUrl } = useDocumentSignedUrl();
   const { mutate: doReviewDocument } = useReviewDocument(id);
+  const { mutate: doUploadDocuments, isPending: uploadingDocuments } = useUploadListingDocuments(id);
   const { mutate: doUploadPhotos, isPending: uploadingPhotos } = useUploadPhotos(id);
   const { mutate: doDeletePhoto } = useDeletePhoto(id);
   const { mutate: doSetCover } = useSetCoverPhoto(id);
@@ -63,7 +63,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef   = useRef<HTMLInputElement>(null);
-  const [docUploadType, setDocUploadType]     = useState('title_deed');
+  const [docUploadType, setDocUploadType]     = useState<ListingDocumentType>('title_deed');
   const [showDocReviewModal, setShowDocReviewModal] = useState(false);
   const [reviewDocId, setReviewDocId]         = useState<string | null>(null);
   const [reviewDecision, setReviewDecision]   = useState<'approve' | 'reject'>('approve');
@@ -73,9 +73,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [rejectNote, setRejectNote]             = useState('');
   const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
   const [requestInfoNote, setRequestInfoNote]   = useState('');
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [suspendNote, setSuspendNote]           = useState('');
   const [titleAction, setTitleAction]           = useState<'dispute' | 'clear' | 'revoke' | null>(null);
   const [titleReason, setTitleReason]           = useState('');
-  const [uploadingDocs, setUploadingDocs]       = useState(false);
   const [showInquiryForm, setShowInquiryForm]   = useState(false);
   const [inquiryMsg, setInquiryMsg]             = useState('');
   const [inquiryType, setInquiryType]           = useState<'rent' | 'buy' | 'general'>('general');
@@ -96,30 +97,29 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     setDragOverIdx(idx);
   }, []);
 
-  const handleDrop = useCallback((idx: number) => {
+  const handleDrop = (idx: number) => {
     if (dragIdx === null || dragIdx === idx || !listing?.photos) return;
     const photos = [...listing.photos];
     const [moved] = photos.splice(dragIdx, 1);
     photos.splice(idx, 0, moved);
-    const order = photos.map(p => p.publicId);
+    const order = photos.map((p) => p.publicId);
     doReorderPhotos(order);
     setDragIdx(null);
     setDragOverIdx(null);
-  }, [dragIdx, listing?.photos, doReorderPhotos]);
+  };
 
   const handleDragEnd = useCallback(() => {
     setDragIdx(null);
     setDragOverIdx(null);
   }, []);
 
-  useEffect(() => {
-    if (listing?.price) setOfferAmount(listing.price);
-  }, [listing?.price]);
+
 
   if (!currentUser) return null;
   const role    = currentUser.role;
-  const isOwner = role === 'PROPERTY_OWNER' || listing?.createdBy === currentUser.id;
+  const isOwner = listing?.createdBy === currentUser.id;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const canSubmitForReview = currentUser.kycStatus === 'verified' && currentUser.status === 'ACTIVE';
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
   if (!listing)  return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
@@ -155,22 +155,18 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     if (listing.status === 'suspended') adminActions.push({ action: 'unsuspend', label: 'Unsuspend', style: 'bg-gray-700 hover:bg-gray-800 text-white' });
   }
 
-  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    setUploadingDocs(true);
-    try {
-      const form = new FormData();
-      form.append('type', 'title_deed');
-      files.forEach((f) => form.append('documents', f));
-      await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(id), form, { 
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 0 
-      });
-      toast.success('Documents uploaded.');
-      refetch();
-    } catch { toast.error('Upload failed.'); }
-    finally { setUploadingDocs(false); if (docInputRef.current) docInputRef.current.value = ''; }
+
+    doUploadDocuments(
+      { type: docUploadType, files },
+      {
+        onSettled: () => {
+          if (docInputRef.current) docInputRef.current.value = '';
+        },
+      },
+    );
   };
 
   return (
@@ -199,7 +195,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap gap-2">
             {ownerActions.map(({ action, label, style }) => (
               <button key={action} type="button" disabled={transitioning}
-                onClick={() => { if (action === 'submit' && currentUser.kycStatus !== 'verified') { toast.error('KYC must be verified to submit.'); return; } transition({ action }); }}
+                onClick={() => {
+                  if (action === 'submit' && !canSubmitForReview) {
+                    toast.error('Your account must be active and KYC verified to submit for review.');
+                    return;
+                  }
+                  transition({ action });
+                }}
                 className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}>
                 {label}
               </button>
@@ -209,6 +211,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 onClick={() => {
                   if (action === 'reject') { setShowRejectModal(true); return; }
                   if (action === 'request_info') { setShowRequestInfoModal(true); return; }
+                  if (action === 'suspend') { setShowSuspendModal(true); return; }
                   transition({ action });
                 }}
                 className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}>
@@ -228,8 +231,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     Apply to Rent
                   </button>
                 )}
-                {listing.listingType === 'sale' && (
-                  <button type="button" onClick={() => setShowOfferModal(true)}
+                {listing.listingType === 'sale' && role === 'TENANT' && (
+                  <button type="button" onClick={() => { setOfferAmount(listing.price ?? 0); setShowOfferModal(true); }}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
                     Make Offer
                   </button>
@@ -296,10 +299,23 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             disabled={creatingOffer || offerAmount <= 0}
             onClick={() => {
               if (!listing) return;
+              if (role !== 'TENANT') {
+                toast.error('Only tenant accounts can submit offers.');
+                return;
+              }
+              if (listing.listingType !== 'sale' || listing.status !== 'published') {
+                toast.error('Offers are only available on published sale listings.');
+                return;
+              }
+              if (!Number.isFinite(offerAmount) || offerAmount <= 0) {
+                toast.error('Enter a valid offer amount.');
+                return;
+              }
+
               submitOffer({
                 listingId: id,
-                offerPrice: offerAmount,
-                currency: listing.currency,
+                amount: offerAmount,
+                currency: listing.currency.toUpperCase(),
                 message: offerMessage.trim() || undefined,
               }, {
                 onSuccess: () => {
@@ -374,8 +390,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               </button>
             )}
             <input ref={photoInputRef} type="file" multiple accept="image/*" className="hidden"
-              onChange={(e) => { 
-                const f = Array.from(e.target.files ?? []); 
+              onChange={(e) => {
+                const f = Array.from(e.target.files ?? []);
                 if (f.length) {
                   const previews = f.map(file => ({ url: URL.createObjectURL(file), file }));
                   setPreviewPhotos(previews);
@@ -386,7 +402,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     }
                   });
                 }
-                if (photoInputRef.current) photoInputRef.current.value = ''; 
+                if (photoInputRef.current) photoInputRef.current.value = '';
               }} />
           </div>
           {isOwner && listing.photos && listing.photos.length > 1 && (
@@ -451,20 +467,22 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Document Type</label>
-                  <select value={docUploadType} onChange={(e) => setDocUploadType(e.target.value)}
+                  <select value={docUploadType} onChange={(e) => setDocUploadType(e.target.value as ListingDocumentType)}
                     className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
                     <option value="title_deed">Title Deed</option>
                     <option value="tax_record">Tax Record</option>
                     <option value="utility_bill">Utility Bill</option>
                     <option value="ownership_certificate">Ownership Certificate</option>
+                    <option value="lease_authority">Lease Authority</option>
+                    <option value="government_doc">Government Document</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
                 <div className="flex items-end">
-                  <button type="button" onClick={() => docInputRef.current?.click()} disabled={uploadingDocs}
+                  <button type="button" onClick={() => docInputRef.current?.click()} disabled={uploadingDocuments}
                     className="flex items-center gap-2 h-9 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold rounded-xl transition-colors w-full justify-center">
-                    {uploadingDocs ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                    {uploadingDocs ? 'Uploading…' : 'Choose File'}
+                    {uploadingDocuments ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                    {uploadingDocuments ? 'Uploading…' : 'Choose File'}
                   </button>
                 </div>
               </div>
@@ -484,6 +502,11 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           {listing.verificationStatus === 'unverified' && isOwner && (
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
               <AlertCircle size={13} className="shrink-0 mt-0.5" /> Upload a title deed to start verification before submitting for review.
+            </div>
+          )}
+          {isOwner && !canSubmitForReview && (listing.status === 'draft' || listing.status === 'rejected') && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Submit for review requires an active account and verified KYC.
             </div>
           )}
           {listing.verificationStatus === 'requires_more_info' && (
@@ -648,6 +671,28 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   onClick={() => { transition({ action: 'request_info', note: requestInfoNote.trim() }); setShowRequestInfoModal(false); setRequestInfoNote(''); }}
                   className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
                   Request Info
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Suspend modal */}
+      {showSuspendModal && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowSuspendModal(false)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
+            <h3 className="text-sm font-semibold text-black mb-4">Suspend Listing</h3>
+            <div className="space-y-3">
+              <textarea value={suspendNote} onChange={(e) => setSuspendNote(e.target.value)} rows={4} placeholder="Reason for suspension…"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-orange-400 resize-none" />
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowSuspendModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" disabled={transitioning || !suspendNote.trim()}
+                  onClick={() => { transition({ action: 'suspend', note: suspendNote.trim() }); setShowSuspendModal(false); setSuspendNote(''); }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
+                  Suspend
                 </button>
               </div>
             </div>
