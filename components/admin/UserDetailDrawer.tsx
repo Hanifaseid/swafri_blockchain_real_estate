@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Mail, Phone, Calendar, Wallet, User, Shield, CreditCard, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { X, Mail, Phone, Calendar, Wallet, User, Shield, CreditCard, CheckCircle2, AlertCircle, Clock, Link2 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
 import type { UserAccount } from '@/features/users/types/user.types';
@@ -27,18 +27,49 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
   const walletBadge = WALLET_STATUS_BADGE[user.walletStatus];
   const roleBadge = ROLE_BADGE[user.role];
 
-  // Helper to get status icon - now accepts string | undefined
+  // Helper to get status icon with appropriate colors
   const getStatusIcon = (status: string | undefined) => {
     if (!status) return null;
     const upperStatus = status.toUpperCase();
-    if (upperStatus === 'ACTIVE' || upperStatus === 'VERIFIED' || upperStatus === 'APPROVED') {
-      return <CheckCircle2 size={12} className="text-emerald-400" />;
+    if (upperStatus === 'ACTIVE' || upperStatus === 'VERIFIED' || upperStatus === 'APPROVED' || upperStatus === 'LINKED') {
+      return <CheckCircle2 size={14} className="text-emerald-400" />;
     } else if (upperStatus === 'PENDING' || upperStatus === 'VERIFICATION_PENDING') {
-      return <Clock size={12} className="text-amber-400" />;
-    } else if (upperStatus === 'REJECTED' || upperStatus === 'FAILED') {
-      return <AlertCircle size={12} className="text-red-400" />;
+      return <Clock size={14} className="text-amber-400" />;
+    } else if (upperStatus === 'REJECTED' || upperStatus === 'FAILED' || upperStatus === 'NOT_LINKED') {
+      return <AlertCircle size={14} className="text-red-400" />;
+    } else if (upperStatus === 'NOT_STARTED') {
+      return <Clock size={14} className="text-gray-400" />;
     }
     return null;
+  };
+
+  // Helper to get status color
+  const getStatusColor = (label: string | undefined) => {
+    if (!label) return 'text-gray-400';
+    const upperLabel = label.toUpperCase();
+    if (upperLabel === 'ACTIVE' || upperLabel === 'VERIFIED' || upperLabel === 'APPROVED' || upperLabel === 'LINKED') {
+      return 'text-emerald-400';
+    } else if (upperLabel === 'PENDING' || upperLabel === 'VERIFICATION_PENDING') {
+      return 'text-amber-400';
+    } else if (upperLabel === 'REJECTED' || upperLabel === 'FAILED' || upperLabel === 'NOT_LINKED') {
+      return 'text-red-400';
+    } else if (upperLabel === 'NOT_STARTED') {
+      return 'text-gray-400';
+    }
+    return 'text-gray-400';
+  };
+
+  // Get role color with fallback to white
+  const getRoleColor = () => {
+    if (roleBadge?.color) {
+      // If the role badge color is dark (contains 'black' or 'gray-700' etc), override it
+      const color = roleBadge.color;
+      if (color.includes('black') || color.includes('gray-700') || color.includes('gray-800') || color.includes('gray-900')) {
+        return 'text-white border-white/30 bg-white/10';
+      }
+      return color;
+    }
+    return 'text-white border-white/30 bg-white/10';
   };
 
   return (
@@ -83,18 +114,27 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto scrollbar-thin px-6 py-6 space-y-6">
           {/* Profile summary */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-4 p-4 rounded-2xl" style={{ 
+            background: 'rgba(255,255,255,0.03)', 
+            border: '1px solid rgba(255,255,255,0.06)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.2)'
+          }}>
             <Avatar name={user.name} size="lg" />
             <div className="flex-1 min-w-0">
               <p className="text-base font-semibold text-white truncate">{user.name}</p>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className={cn(
-                  'text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full',
-                  roleBadge?.color || 'bg-gray-500 text-white'
+                  'text-[10px] font-mono uppercase tracking-wider px-3 py-1 rounded-full border',
+                  getRoleColor()
                 )}>
                   {roleBadge?.label || user.role}
                 </span>
-                {getStatusIcon(user.status)}
+                {getStatusIcon(user.status) && (
+                  <span className="flex items-center gap-1 text-[10px] font-mono text-white/40">
+                    {getStatusIcon(user.status)}
+                    <span className="hidden sm:inline text-white/60">{user.status}</span>
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -107,21 +147,21 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
               <div className="h-px flex-1" style={{ background: 'linear-gradient(to left, rgba(255,255,255,0), rgba(255,255,255,0.06))' }} />
             </div>
             <div className="space-y-2.5">
-              <div className="flex items-center gap-3 p-2.5 rounded-xl transition-all hover:bg-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div className="p-1.5 bg-emerald-500/10 rounded-lg">
                   <Mail size={14} className="text-emerald-400" />
                 </div>
                 <span className="text-sm text-gray-300 font-mono truncate">{user.email}</span>
               </div>
               {user.phone && (
-                <div className="flex items-center gap-3 p-2.5 rounded-xl transition-all hover:bg-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <div className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <div className="p-1.5 bg-emerald-500/10 rounded-lg">
                     <Phone size={14} className="text-emerald-400" />
                   </div>
                   <span className="text-sm text-gray-300 font-mono">{user.phone}</span>
                 </div>
               )}
-              <div className="flex items-center gap-3 p-2.5 rounded-xl transition-all hover:bg-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-white/5" style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div className="p-1.5 bg-emerald-500/10 rounded-lg">
                   <Calendar size={14} className="text-emerald-400" />
                 </div>
@@ -134,7 +174,7 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
             </div>
           </div>
 
-          {/* Status cards */}
+          {/* Status cards - Unified styling with colored text only */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.06))' }} />
@@ -149,27 +189,27 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
               ].map(({ label, badge, icon: Icon }) => {
                 // Safely get the label with fallback
                 const badgeLabel = badge?.label || 'Unknown';
-                const badgeColor = badge?.color || 'text-gray-400';
+                const statusColor = getStatusColor(badgeLabel);
                 
                 return (
                   <div
                     key={label}
-                    className="rounded-xl p-4 text-center transition-all hover:scale-[1.02]"
+                    className="rounded-xl p-4 text-center transition-all hover:scale-[1.05]"
                     style={{ 
-                      background: 'rgba(255,255,255,0.03)', 
+                      background: 'rgba(255,255,255,0.03)',
                       border: '1px solid rgba(255,255,255,0.06)',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}
                   >
                     <div className="flex justify-center mb-2">
                       <div className="p-1.5 bg-emerald-500/10 rounded-lg">
-                        <Icon size={12} className="text-emerald-400" />
+                        <Icon size={14} className="text-emerald-400" />
                       </div>
                     </div>
                     <p className="text-[9px] font-mono uppercase text-white/30 mb-1.5 tracking-wider">{label}</p>
                     <div className="flex items-center justify-center gap-1.5">
                       {getStatusIcon(badgeLabel)}
-                      <span className={cn('text-[10px] font-mono font-semibold', badgeColor)}>
+                      <span className={cn('text-[10px] font-mono font-semibold', statusColor)}>
                         {badgeLabel}
                       </span>
                     </div>
@@ -191,20 +231,22 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
                 className="flex items-start gap-3 p-4 rounded-xl transition-all hover:bg-white/5"
                 style={{ 
                   background: 'rgba(255,255,255,0.02)',
-                  border: '1px solid rgba(255,255,255,0.06)'
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                 }}
               >
                 <div className="p-1.5 bg-emerald-500/10 rounded-lg shrink-0 mt-0.5">
                   <Wallet size={14} className="text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-mono text-gray-400 break-all">
+                  <p className="text-[10px] font-mono text-gray-300 break-all">
                     {user.linkedWalletAddress}
                   </p>
                   <button 
                     onClick={() => user.linkedWalletAddress && navigator.clipboard?.writeText(user.linkedWalletAddress)}
-                    className="text-[9px] font-mono text-emerald-400/60 hover:text-emerald-400 transition-colors mt-1"
+                    className="text-[9px] font-mono text-emerald-400/60 hover:text-emerald-400 transition-colors mt-1 flex items-center gap-1"
                   >
+                    <Link2 size={10} />
                     Copy address
                   </button>
                 </div>
