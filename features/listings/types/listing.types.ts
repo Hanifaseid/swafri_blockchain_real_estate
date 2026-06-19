@@ -194,34 +194,7 @@ export interface ListingFilters {
   polygon?: [number, number][];
 }
 
-export interface SavedSearch {
-  id: string;
-  name: string;
-  query: {
-    listingType?: ListingType;
-    category?: ListingCategory;
-    minPrice?: number;
-    maxPrice?: number;
-    minBedrooms?: number;
-    minBathrooms?: number;
-    swLng?: number;
-    swLat?: number;
-    neLng?: number;
-    neLat?: number;
-    lng?: number;
-    lat?: number;
-    radius?: number;
-  };
-  alertEnabled: boolean;
-  createdAt: string;
-  updatedAt?: string;
-}
 
-export interface CreateSavedSearchInput {
-  name: string;
-  query: SavedSearch["query"];
-  alertEnabled?: boolean;
-}
 
 // ─── Paginated response ───────────────────────────────────────────────────────
 
