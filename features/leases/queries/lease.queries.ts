@@ -160,11 +160,12 @@ export function useResolveDispute() {
   });
 }
 
-export function useEscrowVerification(id: string) {
+export function useEscrowVerification(id: string, enabled = true) {
   return useQuery({
     queryKey: leaseKeys.escrow(id),
     queryFn: () => getEscrowVerification(id),
-    enabled: !!id,
-    refetchInterval: 10000, // Polling every 10 seconds for on-chain status
+    enabled: !!id && enabled,
+    retry: false,
+    refetchInterval: enabled ? 10000 : false,
   });
 }
