@@ -19,12 +19,13 @@ export const favoriteKeys = queryKeys.favorites;
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
-export function useFavorites() {
+export function useFavorites(enabled = true) {
   return useQuery({
     queryKey: favoriteKeys.all(),
     queryFn: favoritesService.getFavorites,
     staleTime: 60_000,
     select: (data) => data.map(normalise),
+    enabled,
   });
 }
 
