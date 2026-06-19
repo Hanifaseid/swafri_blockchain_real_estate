@@ -10,7 +10,7 @@ import type { Offer } from '@/features/offers/types/offer.types';
 import { cn } from '@/lib/utils';
 
 const STATUS_STYLE: Record<string, string> = {
-  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  submitted: 'bg-amber-50 text-amber-700 border-amber-200',
   accepted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   rejected: 'bg-red-50 text-red-700 border-red-200',
   countered: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -18,12 +18,12 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 const RESPONSE_ACTIONS = [
-  { label: 'Accept', value: 'accepted' as const },
-  { label: 'Reject', value: 'rejected' as const },
-  { label: 'Counter', value: 'countered' as const },
+  { label: 'Accept', value: 'accept' as const },
+  { label: 'Reject', value: 'reject' as const },
+  { label: 'Counter', value: 'counter' as const },
 ];
 
-type OfferResponseAction = 'accepted' | 'rejected' | 'countered';
+type OfferResponseAction = 'accept' | 'reject' | 'counter';
 
 // --- FIX APPLIED HERE ---
 function formatCurrency(amount: number | string | null | undefined, currency: string) {
@@ -32,7 +32,7 @@ function formatCurrency(amount: number | string | null | undefined, currency: st
 
   // 2. Convert to number (strips out currency symbols or commas safely)
   const num = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]+/g, '')) : amount;
-  
+
   // 3. Check if it's a valid finite number
   if (!isNaN(num) && isFinite(num)) {
     return new Intl.NumberFormat('en-US', {
@@ -40,7 +40,7 @@ function formatCurrency(amount: number | string | null | undefined, currency: st
       currency: currency || 'USD',
     }).format(num);
   }
-  
+
   // 4. Final fallback if parsing failed
   return '—';
 }
@@ -162,16 +162,16 @@ function OwnerOffersView() {
 
 function ReceivedOfferCard({ offer }: { offer: Offer }) {
   const [expanded, setExpanded] = useState(false);
-  const [responseMessage, setResponseMessage] = useState(offer.responseMessage || '');
-  const [responseAction, setResponseAction] = useState<OfferResponseAction>('accepted');
-  const [counterPrice, setCounterPrice] = useState<number>(offer.counterOfferPrice ?? offer.offerPrice);
+  const [responseNote, setResponseNote] = useState(offer.responseNote || '');
+  const [responseAction, setResponseAction] = useState<OfferResponseAction>('accept');
+  const [counterAmount, setCounterAmount] = useState<number>(offer.counterAmount ?? offer.amount);
   const { mutate: respond, isPending } = useRespondOffer();
 
-  // Safety check: If listing or offerer is just an ID string, we handle it gracefully
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
-  const offerer = typeof offer.offerer === 'string' ? null : offer.offerer;
+  const buyer = typeof offer.buyer === 'string' ? null : offer.buyer;
 
-  const canSubmit = responseAction !== 'countered' || counterPrice > 0;
+  const canRespond = offer.status === 'submitted' || offer.status === 'countered';
+  const canSubmit = responseAction !== 'counter' || counterAmount > 0;
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
@@ -188,10 +188,10 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Received</span>
           </div>
           <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
-          <p className="text-xs text-black/50">{offerer?.name ?? offerer?.email ?? 'Buyer'}</p>
+          <p className="text-xs text-black/50">{buyer?.name ?? buyer?.email ?? 'Buyer'}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
+          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.amount, offer.currency)}</span>
           {expanded ? <XCircle className="w-4 h-4 text-black/30" /> : <ArrowRightLeft className="w-4 h-4 text-black/30" />}
         </div>
       </button>
@@ -201,7 +201,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl bg-gray-50 p-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Offer amount</p>
-              <p className="text-sm font-semibold text-black/80">{formatCurrency(offer.offerPrice, offer.currency)}</p>
+              <p className="text-sm font-semibold text-black/80">{formatCurrency(offer.amount, offer.currency)}</p>
             </div>
             <div className="rounded-2xl bg-gray-50 p-3">
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Submitted</p>
@@ -214,10 +214,10 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.message || 'No message provided.'}</p>
           </div>
 
-          {offer.responseMessage && (
+          {offer.responseNote && (
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Previous response</p>
-              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseMessage}</p>
+              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseNote}</p>
             </div>
           )}
 
@@ -234,7 +234,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
                 ))}
               </select>
             </div>
-            {responseAction === 'countered' && (
+            {responseAction === 'counter' && (
               <div>
                 <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1 block">Counter offer</label>
                 <div className="flex items-center gap-2">
@@ -242,8 +242,8 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
                   <input
                     type="number"
                     min={0}
-                    value={counterPrice}
-                    onChange={(event) => setCounterPrice(Number(event.target.value))}
+                    value={counterAmount}
+                    onChange={(event) => setCounterAmount(Number(event.target.value))}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-emerald-400"
                   />
                 </div>
@@ -254,8 +254,8 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
           <div>
             <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1 block">Message</label>
             <textarea
-              value={responseMessage}
-              onChange={(event) => setResponseMessage(event.target.value)}
+              value={responseNote}
+              onChange={(event) => setResponseNote(event.target.value)}
               rows={3}
               placeholder="Write a response to the buyer…"
               className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400 resize-none"
@@ -268,12 +268,12 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             </div>
             <button
               type="button"
-              disabled={isPending || !canSubmit}
+              disabled={isPending || !canRespond || !canSubmit}
               onClick={() => {
                 respond({ id: offer.id, payload: {
-                  status: responseAction,
-                  responseMessage: responseMessage.trim() || undefined,
-                  counterOfferPrice: responseAction === 'countered' ? counterPrice : undefined,
+                  action: responseAction,
+                  responseNote: responseNote.trim() || undefined,
+                  counterAmount: responseAction === 'counter' ? counterAmount : undefined,
                 } });
               }}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
@@ -290,7 +290,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
 
 function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOfferMutation: ReturnType<typeof useCancelOffer> }) {
   const [expanded, setExpanded] = useState(false);
-  const isCancelable = offer.status === 'pending';
+  const isCancelable = offer.status === 'submitted' || offer.status === 'countered';
 
   // Safety check: If listing is just an ID string, we handle it gracefully
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
@@ -313,7 +313,7 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
           <p className="text-xs text-black/50">{new Date(offer.createdAt).toLocaleDateString()}</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
+          <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.amount, offer.currency)}</span>
           {expanded ? <XCircle className="w-4 h-4 text-black/30" /> : <ArrowRightLeft className="w-4 h-4 text-black/30" />}
         </div>
       </button>
@@ -325,10 +325,10 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
             <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.message || 'No message provided.'}</p>
           </div>
 
-          {offer.responseMessage && (
+          {offer.responseNote && (
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">Owner response</p>
-              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseMessage}</p>
+              <p className="text-sm text-black/70 leading-relaxed rounded-2xl bg-gray-50 p-3">{offer.responseNote}</p>
             </div>
           )}
 
