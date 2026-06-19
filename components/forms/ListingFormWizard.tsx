@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
 import * as React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 // import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
 
-import { Stepper } from '@/components/ui/Stepper';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Stepper } from "@/components/ui/Stepper";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
 
 // ❌ TEMPORARILY DISABLED (missing files cause build error)
 // import { BasicInfoStep }      from './BasicInfoStep';
@@ -62,7 +62,7 @@ export function ListingFormWizard({
   const methods = useForm<ListingFormValues>({
     resolver: zodResolver(listingFormSchema) as any,
     defaultValues: { ...LISTING_FORM_DEFAULTS, ...defaultValues },
-    mode: 'onTouched',
+    mode: "onTouched",
   });
 
   const { handleSubmit, watch, setValue } = methods;
