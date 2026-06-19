@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Loader2, Crosshair, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -15,6 +15,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { useCreateListing } from '@/features/listings/queries/listing.queries';
 import { inputClass, inputErrorClass } from '@/components/forms/styles';
 import { cn } from '@/lib/utils';
+import { geocode, reverseGeocode, type GeoResult } from '@/features/geo/services/geo.service';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -55,13 +56,17 @@ export default function CreateListingPage() {
   const { mutate: create, isPending } = useCreateListing();
   const [listingType, setListingType] = useState<'sale' | 'rent'>('rent');
   const [showMap, setShowMap] = useState(false);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([40.4897, 9.1450]); // Ethiopia center
+  const [mapCenter, setMapCenter] = useState<[number, number]>([9.1450, 40.4897]); // [lat, lng] Ethiopia center
   const [locationSearch, setLocationSearch] = useState('');
-  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<GeoResult[]>([]);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const [locationSearchTouched, setLocationSearchTouched] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<L.Marker | null>(null);
+  const mapCenterRef = useRef<[number, number]>([9.1450, 40.4897]);
+  const searchRequestIdRef = useRef(0);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(createSchema) as any,
@@ -78,6 +83,44 @@ export default function CreateListingPage() {
     } as any,
   });
 
+  const updateMapMarker = useCallback((lat: number, lng: number) => {
+    const nextCenter: [number, number] = [lat, lng];
+    mapCenterRef.current = nextCenter;
+    setMapCenter(nextCenter);
+
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lng], 15);
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lng]);
+      } else {
+        markerRef.current = L.marker([lat, lng]).addTo(mapRef.current);
+      }
+    }
+  }, []);
+
+  const applyGeoResult = useCallback((result: GeoResult | null, lat: number, lng: number) => {
+    setValue('latitude', lat);
+    setValue('longitude', lng);
+    updateMapMarker(lat, lng);
+
+    if (!result) return;
+
+    setLocationSearchTouched(false);
+    setLocationSearch(result.label);
+    const address = result.address ?? {};
+    const street = [address.house_number, address.road].filter(Boolean).join(' ').trim();
+
+    if (street) setValue('street', street);
+    if (address.city || address.town || address.village) setValue('city', address.city || address.town || address.village || '');
+    if (address.state || address.region || address.county) setValue('region', address.state || address.region || address.county || '');
+    if (address.country) setValue('country', address.country);
+    if (address.postcode) setValue('postalCode', address.postcode);
+  }, [setValue, updateMapMarker]);
+
+  useEffect(() => {
+    mapCenterRef.current = mapCenter;
+  }, [mapCenter]);
+
   useEffect(() => {
     if (currentUser && currentUser.role === 'PROPERTY_OWNER' && currentUser.kycStatus !== 'verified') {
       toast.error('Please complete KYC verification to create listings.');
@@ -93,7 +136,7 @@ export default function CreateListingPage() {
       container.style.height = '300px';
       container.style.width = '100%';
 
-      const map = L.map(container).setView(mapCenter, 13);
+      const map = L.map(container).setView(mapCenterRef.current, 13);
 
       // Use standard OpenStreetMap tiles instead of MapTiler JSON style
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -102,17 +145,15 @@ export default function CreateListingPage() {
       }).addTo(map);
 
       // Handle map click to set location
-      map.on('click', (e) => {
+      map.on('click', async (e) => {
         const { lat, lng } = e.latlng;
-        setValue('latitude', lat);
-        setValue('longitude', lng);
-        setMapCenter([lng, lat]);
+        applyGeoResult(null, lat, lng);
 
-        // Update or create marker
-        if (markerRef.current) {
-          markerRef.current.setLatLng([lat, lng]);
-        } else {
-          markerRef.current = L.marker([lat, lng]).addTo(map);
+        try {
+          const result = await reverseGeocode(lat, lng);
+          applyGeoResult(result, lat, lng);
+        } catch {
+          toast.error('Failed to look up address for the selected point.');
         }
       });
 
@@ -130,7 +171,7 @@ export default function CreateListingPage() {
         mapRef.current = null;
       }
     };
-  }, [showMap, mapCenter, setValue]);
+  }, [showMap, applyGeoResult]);
 
   // Get current location
   const handleGetCurrentLocation = () => {
@@ -141,63 +182,70 @@ export default function CreateListingPage() {
 
     setGettingLocation(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        setValue('latitude', latitude);
-        setValue('longitude', longitude);
-        setMapCenter([longitude, latitude]);
+        applyGeoResult(null, latitude, longitude);
+
+        try {
+          const result = await reverseGeocode(latitude, longitude);
+          applyGeoResult(result, latitude, longitude);
+        } catch {
+          toast.error('Location captured, but address lookup failed.');
+        }
+
         toast.success('Location captured successfully');
         setGettingLocation(false);
       },
-      (error) => {
+      () => {
         toast.error('Failed to get location. Please enable location services.');
         setGettingLocation(false);
       }
     );
   };
 
-  // Search location using Nominatim (OpenStreetMap)
-  const handleLocationSearch = async (query: string) => {
-    setLocationSearch(query);
-    if (query.length < 3) {
-      setLocationSuggestions([]);
+  useEffect(() => {
+    const query = locationSearch.trim();
+
+    if (!locationSearchTouched || query.length < 3) {
       return;
     }
 
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
-      );
-      const data = await response.json();
-      setLocationSuggestions(data);
-    } catch (error) {
-      console.error('Location search error:', error);
-    }
-  };
+    const requestId = searchRequestIdRef.current + 1;
+    searchRequestIdRef.current = requestId;
+
+    const timeoutId = window.setTimeout(async () => {
+      setSearchingLocation(true);
+      try {
+        const results = await geocode(query);
+        if (searchRequestIdRef.current !== requestId) return;
+        setLocationSuggestions(results.slice(0, 5));
+      } catch {
+        if (searchRequestIdRef.current !== requestId) return;
+        toast.error('Failed to search location. Please try again.');
+        setLocationSuggestions([]);
+      } finally {
+        if (searchRequestIdRef.current === requestId) {
+          setSearchingLocation(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [locationSearch, locationSearchTouched]);
 
   // Select location from suggestions
-  const handleSelectLocation = (suggestion: any) => {
-    const lat = parseFloat(suggestion.lat);
-    const lon = parseFloat(suggestion.lon);
-    setValue('latitude', lat);
-    setValue('longitude', lon);
-    setMapCenter([lon, lat]);
-    setLocationSearch(suggestion.display_name);
+  const handleSelectLocation = (suggestion: GeoResult) => {
+    const [lon, lat] = suggestion.location.coordinates;
+    searchRequestIdRef.current += 1;
+    setSearchingLocation(false);
+    applyGeoResult(suggestion, lat, lon);
     setLocationSuggestions([]);
-
-    // Update map if shown
-    if (mapRef.current) {
-      mapRef.current.setView([lat, lon], 15);
-      if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lon]);
-      } else {
-        markerRef.current = L.marker([lat, lon]).addTo(mapRef.current);
-      }
-    }
   };
 
   if (!currentUser || (currentUser.role !== 'PROPERTY_OWNER' && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
-    return <div className="p-8 text-sm text-black/50">You don't have permission to create listings.</div>;
+    return <div className="p-8 text-sm text-black/50">You don&apos;t have permission to create listings.</div>;
   }
 
   if (currentUser && currentUser.role === 'PROPERTY_OWNER' && currentUser.kycStatus !== 'verified') {
@@ -419,27 +467,43 @@ export default function CreateListingPage() {
           {/* Location search */}
           <div className="relative">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 pointer-events-none" />
+              {searchingLocation ? (
+                <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 animate-spin pointer-events-none" />
+              ) : (
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 pointer-events-none" />
+              )}
               <input
                 type="text"
                 value={locationSearch}
-                onChange={(e) => handleLocationSearch(e.target.value)}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setLocationSearchTouched(true);
+                  setLocationSearch(nextValue);
+
+                  if (nextValue.trim().length < 3) {
+                    searchRequestIdRef.current += 1;
+                    setSearchingLocation(false);
+                    setLocationSuggestions([]);
+                  }
+                }}
                 placeholder="Search location (e.g., Bole, Addis Ababa)"
                 className="w-full h-11 rounded-2xl border border-gray-200 pl-10 pr-3 text-sm text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400"
               />
             </div>
-            {locationSuggestions.length > 0 && (
+            {(locationSuggestions.length > 0 || (locationSearchTouched && locationSearch.trim().length >= 3 && !searchingLocation)) && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
-                {locationSuggestions.map((suggestion, index) => (
+                {locationSuggestions.length > 0 ? locationSuggestions.map((suggestion, index) => (
                   <button
-                    key={index}
+                    key={`${suggestion.label}-${index}`}
                     type="button"
                     onClick={() => handleSelectLocation(suggestion)}
                     className="w-full text-left px-4 py-3 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
-                    <div className="font-medium">{suggestion.display_name}</div>
+                    <div className="font-medium">{suggestion.label}</div>
                   </button>
-                ))}
+                )) : (
+                  <div className="px-4 py-3 text-sm text-black/45">No matching locations found.</div>
+                )}
               </div>
             )}
           </div>
