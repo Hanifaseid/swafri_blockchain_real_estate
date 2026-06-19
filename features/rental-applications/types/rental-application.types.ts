@@ -1,16 +1,57 @@
-export type RentalApplicationStatus = 
-  | 'PENDING'
-  | 'SCREENING'
-  | 'APPOINTMENT_REQUESTED'
-  | 'APPROVED'
-  | 'REJECTED'
-  | 'WITHDRAWN';
+export type RentalApplicationStatus =
+  | 'submitted'
+  | 'screening'
+  | 'approved'
+  | 'rejected'
+  | 'withdrawn'
+  | 'lease_created';
+
+export type RentalApplicationScreeningStatus = 'pending' | 'passed' | 'failed' | 'manual_review';
+
+export type RentalApplicationAppointmentStatus = 'requested' | 'scheduled' | 'cancelled';
+
+export interface RentalApplicationUser {
+  id: string;
+  name?: string;
+  email?: string;
+}
+
+export interface RentalApplicationListing {
+  id: string;
+  title?: string;
+  listingType?: string;
+  monthlyRent?: number;
+  currency?: string;
+  status?: string;
+}
+
+export interface RentalApplicationScreening {
+  status?: RentalApplicationScreeningStatus;
+  provider?: string;
+  reference?: string;
+  score?: number;
+  notes?: string;
+}
+
+export interface RentalApplicationAppointment {
+  status?: RentalApplicationAppointmentStatus;
+  scheduledFor?: string;
+  locationNote?: string;
+  note?: string;
+}
+
+export interface RentalApplicationLeaseRef {
+  id: string;
+}
 
 export interface RentalApplication {
   id: string;
   listingId: string;
-  tenantId: string;
-  ownerId: string;
+  listing?: RentalApplicationListing | string;
+  tenantId?: string;
+  tenant?: RentalApplicationUser | string;
+  landlordId?: string;
+  landlord?: RentalApplicationUser | string;
   desiredStartDate: string;
   desiredEndDate: string;
   occupants: number;
@@ -18,16 +59,12 @@ export interface RentalApplication {
   employer?: string;
   message?: string;
   status: RentalApplicationStatus;
-  
-  screeningScore?: number;
-  screeningProvider?: string;
-  screeningReference?: string;
-  
-  appointmentDate?: string;
-  appointmentLocationNote?: string;
-
-  adminNote?: string;
-  leaseId?: string;        // populated by the backend once a lease is created
+  screening?: RentalApplicationScreening;
+  appointment?: RentalApplicationAppointment;
+  lease?: RentalApplicationLeaseRef;
+  reviewNote?: string;
+  reviewedBy?: RentalApplicationUser | string;
+  reviewedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -48,7 +85,7 @@ export interface ReviewApplicationPayload {
 }
 
 export interface ScreeningUpdatePayload {
-  status: 'pending' | 'passed' | 'failed' | 'manual_review';
+  status: RentalApplicationScreeningStatus;
   provider: string;
   reference?: string;
   score?: number;
@@ -56,8 +93,8 @@ export interface ScreeningUpdatePayload {
 }
 
 export interface AppointmentUpdatePayload {
-  status: 'requested' | 'scheduled' | 'completed';
-  scheduledFor: string;
+  status: RentalApplicationAppointmentStatus;
+  scheduledFor?: string;
   locationNote?: string;
   note?: string;
 }
