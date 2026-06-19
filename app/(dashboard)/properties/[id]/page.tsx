@@ -2,6 +2,7 @@
 
 import { use, useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft, Upload, CheckCircle2, XCircle, Clock, AlertCircle,
   Loader2, Building2, MapPin, Bed, Bath, Maximize2, Calendar,
@@ -188,7 +189,17 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Cover + status + actions */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        {coverPhoto && <div className="h-56 overflow-hidden"><img src={coverPhoto.url} alt={listing.title} className="w-full h-full object-cover" /></div>}
+        {coverPhoto && (
+          <div className="relative h-56 overflow-hidden">
+            <Image
+              src={coverPhoto.url}
+              alt={listing.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 896px"
+              className="object-cover"
+            />
+          </div>
+        )}
         <div className="p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -430,7 +441,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     dragOverIdx === idx && dragIdx !== idx && 'ring-2 ring-emerald-400 ring-offset-2 scale-[1.02]',
                   )}
                 >
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                  <Image
+                    src={photo.url}
+                    alt="Listing photo"
+                    fill
+                    sizes="(max-width: 640px) 33vw, 25vw"
+                    className="object-cover"
+                  />
                   {photo.isCover && <span className="absolute top-1 left-1 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
                   {isOwner && (
                     <>
@@ -447,7 +464,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               ))}
               {previewPhotos.map((preview, i) => (
                 <div key={`preview-${i}`} className="relative rounded-lg overflow-hidden aspect-square border border-gray-200">
-                  <img src={preview.url} alt="uploading" className="w-full h-full object-cover opacity-40 blur-[2px]" />
+                  <Image
+                    src={preview.url}
+                    alt="Uploading preview"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 640px) 33vw, 25vw"
+                    className="object-cover opacity-40 blur-[2px]"
+                  />
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     <Loader2 size={24} className="animate-spin text-emerald-600" />
                     <span className="text-[10px] font-bold text-white bg-black/60 px-2 py-1 rounded tracking-widest shadow-sm">UPLOADING...</span>
