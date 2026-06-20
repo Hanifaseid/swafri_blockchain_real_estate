@@ -171,7 +171,7 @@ export function useChangePassword() {
         document.cookie = 'vex_authed=; path=/; max-age=0';
         document.cookie = 'vex_user_role=; path=/; max-age=0';
       }
-      router.push('/login');
+      router.push('/auth/login');
     },
   });
 }

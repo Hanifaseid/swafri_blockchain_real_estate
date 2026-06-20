@@ -1,23 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Mail, MessageSquare, Shield } from 'lucide-react';
+import { Mail, MessageSquare, Shield } from 'lucide-react';
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
+    <div className="relative overflow-x-hidden">
       <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-900/8 blur-[140px] pointer-events-none" />
-
-      {/* Back nav */}
-      <div className="px-6 md:px-16 pt-8 pb-4">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 text-emerald-400" />
-          Back to Home
-        </Link>
-      </div>
 
       <main className="max-w-2xl mx-auto px-6 md:px-12 py-16 relative z-10">
         <div className="mb-12">
@@ -71,10 +60,10 @@ export default function ContactPage() {
 
         <div className="text-center">
           <Link
-            href="/login"
+            href="/properties"
             className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
           >
-            Back to Platform
+            Browse Properties
           </Link>
         </div>
       </main>

@@ -7,23 +7,10 @@ export function isAdminRole(role?: UserRole | null): boolean {
 }
 
 export function getDefaultRouteForRole(role: UserRole): string {
-  if (role === "SUPER_ADMIN" || role === "ADMIN") return "/dashboard";
+  if (role === "SUPER_ADMIN" || role === "ADMIN") return "/admin/dashboard";
   return "/";
 }
 
 export function isAdminShellPath(pathname: string): boolean {
-  return (
-    pathname === "/dashboard" ||
-    pathname.startsWith("/dashboard/") ||
-    [
-      "/users",
-      "/roles",
-      "/permissions",
-      "/audit",
-      "/compliance",
-      "/transactions",
-      "/chain-transactions",
-      "/settings",
-    ].some((path) => pathname === path || pathname.startsWith(`${path}/`))
-  );
+  return pathname.startsWith("/admin");
 }

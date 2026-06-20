@@ -10,13 +10,18 @@ import {
   Building2,
   ChevronDown,
   ClipboardList,
+  Compass,
   FileCheck2,
   FileClock,
+  Heart,
   KeyRound,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Menu,
+  MessageSquare,
   Plus,
+  Shield,
   ShieldCheck,
   UserRound,
   X,
@@ -24,11 +29,19 @@ import {
 import { clearSession } from '@/lib/auth/session';
 import { useAuthStore } from '@/stores/auth.store';
 
-const NAV_ITEMS = [
+// ─── Navigation items ─────────────────────────────────────────────────────────
+// Top-level nav: visible to everyone. Mix of page links and in-page scroll targets.
+
+type NavLinkItem = { label: string; href: string };
+type NavScrollItem = { label: string; id: string };
+type NavItem = NavLinkItem | NavScrollItem;
+
+const NAV_ITEMS: readonly NavItem[] = [
+  { label: 'Home', href: '/' },
   { label: 'Browse', href: '/properties' },
-  { label: 'The Register', id: 'features-section' },
   { label: 'How It Works', id: 'how-it-works-section' },
-  { label: 'Reviews', id: 'testimonials-section' },
+  { label: 'About', href: '/about' },
+  { label: 'Contact', href: '/contact' },
 ] as const;
 
 export default function LandingNavbar() {
@@ -82,33 +95,45 @@ export default function LandingNavbar() {
   const isOwner = currentUser?.role === 'PROPERTY_OWNER';
   const isTenant = currentUser?.role === 'TENANT';
 
+  // ── Account dropdown links (role-specific) ──────────────────────────────────
   const accountLinks = useMemo(() => {
     if (!currentUser) return [];
+
+    // Admin / Super Admin → full admin dashboard
     if (isAdmin) {
       return [
-        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/dashboard/properties', label: 'Property Review', icon: Building2 },
-        { href: '/transactions', label: 'Transactions', icon: KeyRound },
-        { href: '/profile', label: 'Profile', icon: UserRound },
+        { href: '/admin/dashboard', label: 'Admin Dashboard', icon: LayoutDashboard },
+        { href: '/admin/users', label: 'Manage Users', icon: UserRound },
+        { href: '/admin/kyc', label: 'KYC Review', icon: BadgeCheck },
+        { href: '/admin/compliance', label: 'Compliance', icon: Shield },
+        { href: '/admin/transactions', label: 'Transactions', icon: KeyRound },
+        { href: '/admin/profile', label: 'Profile', icon: UserRound },
       ];
     }
-    const shared = [
-      { href: '/account/profile', label: 'Profile', icon: UserRound },
-      { href: '/account/kyc', label: 'KYC & Wallet', icon: FileCheck2 },
-      { href: '/account/applications', label: 'Applications', icon: ClipboardList },
-      { href: '/account/offers', label: 'Offers', icon: KeyRound },
-      { href: '/account/leases', label: 'Leases', icon: FileClock },
-    ];
+
+    // Property Owner → marketplace-first, account section for management
     if (isOwner) {
       return [
+        { href: '/properties', label: 'Browse Properties', icon: Compass },
         { href: '/account/listings', label: 'My Listings', icon: Building2 },
-        { href: '/account/listings/new', label: 'New Listing', icon: Plus },
-        ...shared,
+        { href: '/account/listings/new', label: 'List a Property', icon: Plus },
+        { href: '/account/applications', label: 'Applications', icon: ClipboardList },
+        { href: '/account/offers', label: 'Offers', icon: MessageSquare },
+        { href: '/account/leases', label: 'Leases', icon: FileClock },
+        { href: '/account/kyc', label: 'KYC & Wallet', icon: FileCheck2 },
+        { href: '/account/profile', label: 'Profile', icon: UserRound },
       ];
     }
+
+    // Tenant → marketplace-first, account section for saved/applications
     return [
-      { href: '/account/saved', label: 'Saved Searches', icon: Bookmark },
-      ...shared,
+      { href: '/properties', label: 'Browse Properties', icon: Compass },
+      { href: '/account/saved', label: 'Saved Searches', icon: Heart },
+      { href: '/account/applications', label: 'My Applications', icon: ClipboardList },
+      { href: '/account/offers', label: 'My Offers', icon: MessageSquare },
+      { href: '/account/leases', label: 'My Leases', icon: FileClock },
+      { href: '/account/kyc', label: 'KYC & Wallet', icon: FileCheck2 },
+      { href: '/account/profile', label: 'Profile', icon: UserRound },
     ];
   }, [currentUser, isAdmin, isOwner]);
 
@@ -120,13 +145,14 @@ export default function LandingNavbar() {
     window.location.href = '/';
   };
 
+  // ── Primary CTA button logic ────────────────────────────────────────────────
   const primaryAction = !currentUser
-    ? { href: '/auth', label: 'Get Started', icon: ArrowRight }
+    ? { href: '/auth/login', label: 'Get Started', icon: ArrowRight }
     : isAdmin
-      ? { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }
+      ? { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard }
       : isOwner
         ? { href: '/account/listings/new', label: 'List Property', icon: Plus }
-        : { href: '/properties', label: 'Browse Properties', icon: Building2 };
+        : { href: '/properties', label: 'Browse Properties', icon: Compass };
   const PrimaryIcon = primaryAction.icon;
 
   return (
@@ -145,7 +171,7 @@ export default function LandingNavbar() {
             : 'border-b border-transparent bg-black/15 py-5 backdrop-blur-[2px]',
         ].join(' ')}
       >
-        <Link href="/" className="group flex select-none items-center gap-3" aria-label="VEX home">
+        <Link href="/" className="group flex select-none items-center gap-3" aria-label="TerraChain home">
           <span className="relative grid h-9 w-9 place-items-center rounded-[8px] bg-linear-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-transform group-hover:scale-105">
             V
           </span>
@@ -157,6 +183,7 @@ export default function LandingNavbar() {
           </span>
         </Link>
 
+        {/* ── Desktop nav links ────────────────────────────────────────────── */}
         <nav className="hidden items-center gap-8 text-sm md:flex" aria-label="Primary">
           {NAV_ITEMS.map((item) =>
             'href' in item ? (
@@ -179,6 +206,7 @@ export default function LandingNavbar() {
           )}
         </nav>
 
+        {/* ── Right side: CTA + profile ────────────────────────────────────── */}
         <div className="flex items-center gap-2">
           {!currentUser && (
             <Link
@@ -197,6 +225,7 @@ export default function LandingNavbar() {
             <PrimaryIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
 
+          {/* ── Profile dropdown (desktop) ─────────────────────────────────── */}
           {currentUser && (
             <div className="relative hidden sm:block">
               <button
@@ -220,7 +249,7 @@ export default function LandingNavbar() {
                     <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
                     <p className="truncate text-xs text-white/45">{currentUser.email}</p>
                     <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-amber-300/70">
-                      {currentUser.role}
+                      {currentUser.role?.replace('_', ' ')}
                     </p>
                   </div>
                   <div className="p-2">
@@ -252,6 +281,7 @@ export default function LandingNavbar() {
             </div>
           )}
 
+          {/* ── Mobile hamburger ────────────────────────────────────────────── */}
           <button
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
@@ -264,6 +294,7 @@ export default function LandingNavbar() {
         </div>
       </div>
 
+      {/* ── Mobile menu ────────────────────────────────────────────────────── */}
       <div
         className={[
           'overflow-hidden border-b border-white/10 bg-black transition-[max-height,opacity] duration-300 ease-out md:hidden',

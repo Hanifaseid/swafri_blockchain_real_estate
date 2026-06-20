@@ -11,8 +11,8 @@ import { getDefaultRouteForRole } from '@/lib/auth/routes';
 //
 // This proxy handles three cases:
 //   1. Public route    → always allow through
-//   2. Auth route      → redirect to /dashboard if already logged in
-//   3. Protected route → redirect to /login if not logged in, or block wrong role
+//   2. Auth route      → redirect to default route if already logged in
+//   3. Protected route → redirect to /auth/login if not logged in, or block wrong role
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -58,7 +58,7 @@ export function proxy(request: NextRequest) {
   // ── 3. Protected routes ────────────────────────────────────────────────
   if (!isAuthed || !roleCookie) {
     // Not logged in — redirect to login and preserve the intended destination
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
   }

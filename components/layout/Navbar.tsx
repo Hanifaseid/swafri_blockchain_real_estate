@@ -7,12 +7,11 @@ import { cn } from '@/lib/utils';
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 // Public-facing navigation. Dark glass design matching LandingPage.
-// Used by app/(public)/layout.tsx.
+// Used by app/(public)/layout.tsx for about & contact pages.
 
 const NAV_LINKS = [
-  { label: 'Properties', href: '/#listings-section' },
-  { label: 'Platform', href: '/#features-section' },
-  { label: 'How It Works', href: '/#how-it-works-section' },
+  { label: 'Home', href: '/' },
+  { label: 'Browse', href: '/properties' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ] as const;
@@ -24,11 +23,11 @@ export function Navbar() {
     <header className="px-6 md:px-12 lg:px-16 pt-6 sticky top-0 z-50">
       <div className="liquid-glass rounded-xl px-4 py-2.5 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 select-none" aria-label="Swafir home">
+        <Link href="/" className="flex items-center gap-2.5 select-none" aria-label="TerraChain home">
           <div className="w-7 h-7 rounded bg-white flex items-center justify-center text-black font-extrabold text-sm">
-            S
+            V
           </div>
-          <span className="text-xl font-semibold tracking-tight text-white">Swafir</span>
+          <span className="text-xl font-semibold tracking-tight text-white">TerraChain</span>
         </Link>
 
         {/* Desktop nav */}
@@ -47,7 +46,7 @@ export function Navbar() {
         {/* CTA + mobile toggle */}
         <div className="flex items-center gap-3">
           <Link
-            href="/login"
+            href="/auth/login"
             className="hidden sm:inline-flex bg-white text-black text-sm font-semibold px-5 py-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
             Get Started
@@ -79,7 +78,7 @@ export function Navbar() {
           ))}
           <div className="pt-2 border-t border-white/10">
             <Link
-              href="/login"
+              href="/auth/login"
               onClick={() => setMobileOpen(false)}
               className="block text-center bg-white text-black text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-100 transition-colors"
             >

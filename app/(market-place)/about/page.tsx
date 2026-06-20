@@ -1,25 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, ShieldCheck, Building2, FileCheck2, Users } from 'lucide-react';
+import { ShieldCheck, Building2, FileCheck2, Users } from 'lucide-react';
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-x-hidden">
+    <div className="relative overflow-x-hidden">
       {/* Ambient glow */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-900/10 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[50%] h-[50%] rounded-full bg-blue-900/8 blur-[120px] pointer-events-none" />
-
-      {/* Back nav */}
-      <div className="px-6 md:px-16 pt-8 pb-4">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-gray-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 text-emerald-400" />
-          Back to Home
-        </Link>
-      </div>
 
       <main className="max-w-4xl mx-auto px-6 md:px-12 py-16 relative z-10">
         {/* Header */}
@@ -78,7 +67,7 @@ export default function AboutPage() {
         {/* CTA */}
         <div className="text-center">
           <Link
-            href="/login"
+            href="/auth/login"
             className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
           >
             Get Started

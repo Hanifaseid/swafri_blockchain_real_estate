@@ -23,7 +23,7 @@ export const appConfig = {
     // Public routes that do NOT require authentication
     publicRoutes: ["/", "/about", "/contact"],
     // Auth routes — redirect away if already logged in
-    authRoutes: ["/login", "/register"],
+    authRoutes: ["/auth/login", "/auth/register"],
   },
 
   // ── Pagination Defaults ──────────────────────────────────────────────────

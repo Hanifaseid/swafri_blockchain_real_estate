@@ -1,7 +1,7 @@
 import React from "react";
 import { notFound } from "next/navigation";
 import { getListing } from "@/features/listings/services/listing.service";
-import ListingDetail from "../../../components/listing/ListingDetail";
+import ListingDetail from "../../../../components/listing/ListingDetail";
 
 // Server route — fetch listing by id and render client detail component
 interface Props {

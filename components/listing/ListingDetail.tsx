@@ -7,7 +7,6 @@ import { PropertyMetadata } from "./PropertyMetadata";
 import {
   Heart,
   MapPin,
-  FileCheck2,
   MessageSquare,
   ArrowLeft,
 } from "lucide-react";
@@ -20,6 +19,7 @@ import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
 import { Modal } from "@/components/ui/Modal";
 import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
 import type { PropertyPhoto } from "./types";
+import { TitleCertificatePanel } from "./TitleCertificatePanel";
 
 type ListingAddress = {
   street?: string;
@@ -213,22 +213,8 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
             </div>
           )}
 
-          {/* ── Blockchain proof ───────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <h4 className="text-xs font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <FileCheck2 className="w-4 h-4 text-emerald-600" />
-              Blockchain Proof
-            </h4>
-            <p className="text-xs text-gray-500 break-all leading-relaxed">
-              {listing.blockchainHash ??
-                "No on-chain proof available for this listing."}
-            </p>
-            {listing.certificateId && (
-              <p className="mt-2 text-xs font-medium text-emerald-600">
-                Certificate: {listing.certificateId}
-              </p>
-            )}
-          </div>
+          {/* ── On-chain Certificate of Title ──────────────────────────── */}
+          <TitleCertificatePanel listingId={listing.id} />
         </aside>
       </div>
 
@@ -332,7 +318,7 @@ function FavoriteButton({ listingId }: { listingId: string }) {
   const toggle = async () => {
     const user = getCurrentUser();
     if (!user) {
-      window.location.href = "/login";
+      window.location.href = "/auth/login";
       return;
     }
     const key = SESSION_KEYS.FAVORITES(user.id);
@@ -385,7 +371,7 @@ function InquiryCard({
     e.preventDefault();
     const user = getCurrentUser();
     if (!user) {
-      window.location.href = "/login";
+      window.location.href = "/auth/login";
       return;
     }
     if (!msg.trim()) {
@@ -448,7 +434,7 @@ function InquiryCard({
               </p>
               <div className="flex gap-2 flex-wrap">
                 <Link
-                  href="/login"
+                  href="/auth/login"
                   className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Sign in

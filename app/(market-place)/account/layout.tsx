@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import LandingNavbar from '@/components/landing/LandingNavbar';
 import { getCurrentUser } from '@/lib/auth/session';
 import { getDefaultRouteForRole, isAdminRole } from '@/lib/auth/routes';
 import { useAuthStore } from '@/stores/auth.store';
+
+// ─── Account layout ──────────────────────────────────────────────────────────
+// Nested inside (market-place) layout which provides LandingNavbar + Footer.
+// This layout only handles auth guard + content card styling.
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -16,7 +19,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     queueMicrotask(() => {
       const user = getCurrentUser();
       if (!user) {
-        router.replace('/login');
+        router.replace('/auth/login');
         return;
       }
       if (isAdminRole(user.role)) {
@@ -31,20 +34,17 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   if (!mounted || !currentUser || isAdminRole(currentUser.role)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f4f0e8]">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1e5a3d] border-t-transparent" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#050504] text-white">
-      <LandingNavbar />
-      <div className="mx-auto max-w-7xl px-4 pb-10 pt-28 lg:px-6">
-        <section className="min-w-0 rounded-2xl border border-white/10 bg-[#11100d]/92 p-5 shadow-2xl md:p-7">
-          {children}
-        </section>
-      </div>
-    </main>
+    <div className="mx-auto max-w-7xl px-4 pb-16 pt-8 lg:px-6">
+      <section className="min-w-0 rounded-2xl border border-white/10 bg-white/5 p-5 shadow-sm backdrop-blur md:p-7">
+        {children}
+      </section>
+    </div>
   );
 }

@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex flex-col min-h-screen relative z-10">
       <header className="px-6 md:px-16 pt-8 pb-4 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur">
-        <Link href="/login" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg border border-white/10">
+        <Link href="/auth/login" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg border border-white/10">
           <ArrowLeft className="w-4 h-4 text-emerald-400" />
           Back to Login
         </Link>
@@ -63,7 +63,7 @@ export default function ForgotPasswordPage() {
                   <p className="text-sm text-white/50 font-light leading-relaxed">
                     If an account exists for that email, you will receive a password reset link shortly.
                   </p>
-                  <Link href="/login" className="inline-block mt-4 text-emerald-400 text-sm hover:text-emerald-300 transition-colors font-mono">
+                  <Link href="/auth/login" className="inline-block mt-4 text-emerald-400 text-sm hover:text-emerald-300 transition-colors font-mono">
                     ← Back to Login
                   </Link>
                 </div>

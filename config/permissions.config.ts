@@ -6,22 +6,12 @@ export interface RoutePermission {
 }
 
 export const protectedRoutes: RoutePermission[] = [
-  { path: "/dashboard", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/users", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/roles", allowedRoles: ["SUPER_ADMIN"] },
-  { path: "/permissions", allowedRoles: ["SUPER_ADMIN"] },
-  { path: "/audit", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/compliance", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/transactions", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/chain-transactions", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/settings", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/kyc", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/profile", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/inquiries", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/offers", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/leases", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/applications", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
-  { path: "/saved", allowedRoles: ["TENANT"] },
+  // Admin routes — all under /admin
+  { path: "/admin", allowedRoles: ["SUPER_ADMIN", "ADMIN"] },
+  { path: "/admin/roles", allowedRoles: ["SUPER_ADMIN"] },
+  { path: "/admin/permissions", allowedRoles: ["SUPER_ADMIN"] },
+
+  // Account routes — tenant/owner self-service
   { path: "/account", allowedRoles: ["PROPERTY_OWNER", "TENANT"] },
 ];
 
@@ -34,10 +24,10 @@ export const publicRoutes: string[] = [
 ];
 
 export const authRoutes: string[] = [
-  "/login",
-  "/register",
-  "/forgot-password",
-  "/reset-password",
+  "/auth/login",
+  "/auth/register",
+  "/auth/forgot-password",
+  "/auth/reset-password",
 ];
 
 export function canAccessRoute(path: string, role: UserRole): boolean {

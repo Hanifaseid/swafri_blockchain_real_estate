@@ -143,7 +143,7 @@ export function LoginForm() {
           <button
             type="button"
             className="text-[10px] font-mono text-white/75 hover:text-white/60 transition-colors cursor-pointer"
-            onClick={() => { if (typeof window !== 'undefined') window.location.href = '/forgot-password'; }}
+            onClick={() => { if (typeof window !== 'undefined') window.location.href = '/auth/forgot-password'; }}
           >
             Forgot password?
           </button>

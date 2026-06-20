@@ -35,7 +35,7 @@ function ResetPasswordForm() {
       onSuccess: () => {
         setDone(true);
         toast.success('Password reset. Please sign in again.');
-        setTimeout(() => router.push('/login'), 2000);
+        setTimeout(() => router.push('/auth/login'), 2000);
       },
       onError: (err) => toast.error((err as Error).message),
     });
@@ -45,7 +45,7 @@ function ResetPasswordForm() {
     return (
       <div className="text-center py-8 space-y-3">
         <p className="text-red-400 text-sm">Invalid or missing reset token.</p>
-        <Link href="/forgot-password" className="text-emerald-400 text-sm hover:text-emerald-300 transition-colors font-mono">
+        <Link href="/auth/forgot-password" className="text-emerald-400 text-sm hover:text-emerald-300 transition-colors font-mono">
           Request a new link
         </Link>
       </div>
@@ -98,7 +98,7 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex flex-col min-h-screen relative z-10">
       <header className="px-6 md:px-16 pt-8 pb-4 flex items-center justify-between border-b border-white/5 bg-black/40 backdrop-blur">
-        <Link href="/login" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg border border-white/10">
+        <Link href="/auth/login" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest font-mono text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2.5 rounded-lg border border-white/10">
           <ArrowLeft className="w-4 h-4 text-emerald-400" />
           Back to Login
         </Link>

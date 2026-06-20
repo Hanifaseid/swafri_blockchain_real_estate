@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { AuthCard } from '@/features/auth/components/AuthCard';
-import { RegisterForm } from '@/features/auth/components/RegisterForm';
+import { LoginForm } from '@/features/auth/components/LoginForm';
 
-// ─── Register Page ────────────────────────────────────────────────────────────
-// Uses AuthCard glass wrapper + RegisterForm component.
-// Layout (dark background) comes from (auth)/layout.tsx.
+// ─── Login Page ───────────────────────────────────────────────────────────────
+// Uses AuthCard glass wrapper + LoginForm component.
+// Layout (dark background + ambient glows) comes from (auth)/layout.tsx.
 
-export default function RegisterPage() {
+export default function LoginPage() {
   return (
     <div className="flex flex-col min-h-screen relative z-10">
       {/* Header */}
@@ -38,42 +38,42 @@ export default function RegisterPage() {
           {/* Page label */}
           <div className="text-center mb-8">
             <span className="text-[10px] font-mono tracking-widest text-emerald-400 uppercase bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-900/30">
-              Create Your Account
+              Secure Portal Access
             </span>
           </div>
 
           {/* Auth card */}
           <AuthCard>
             {/* Mode toggle — Login / Register */}
-            <div className="px-6 md:px-8 pt-8 pb-0">
+            <div className="px-6 md:px-8 pt-15 pb-0">
               <div className="grid grid-cols-2 bg-white/5 p-1 rounded-xl border border-white/10 font-mono text-xs">
+                <span className="py-3 rounded-lg text-center bg-white text-black font-semibold shadow select-none">
+                  Sign In
+                </span>
                 <Link
-                  href="/login"
+                  href="/auth/register"
                   className="py-3 rounded-lg text-center text-white/40 hover:text-white transition-colors"
                 >
-                  Sign In
-                </Link>
-                <span className="py-3 rounded-lg text-center bg-white text-black font-semibold shadow select-none">
                   Register
-                </span>
+                </Link>
               </div>
             </div>
 
-            <RegisterForm />
+            <LoginForm />
           </AuthCard>
 
-          {/* Login link */}
-          <p className="text-center text-xs text-white/35 font-mono mt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 transition-colors">
-              Sign in
+          {/* Register link */}
+          {/* <p className="text-center text-xs text-white/35 font-mono mt-6">
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/register" className="text-emerald-400 hover:text-emerald-300 transition-colors">
+              Create one
             </Link>
-          </p>
+          </p> */}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="py-5 border-t border-white/5 bg-black/20 text-center text-[10px] font-mono text-white/25">
+      <footer className="py-5 border-t border-white/5 bg-black/20 text-center text-[10px] font-mono text-white/65">
         © {new Date().getFullYear()} Swafir Real Estate Platform. All rights reserved.
       </footer>
     </div>

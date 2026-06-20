@@ -7,53 +7,44 @@ import { useAuthStore } from '@/stores/auth.store';
 import { DashboardSidebar } from '@/components/layout/dashboard/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/dashboard/DashboardTopbar';
 import { getNavItems } from '@/config/dashboard-nav.config';
-import { getDefaultRouteForRole, isAdminRole, isAdminShellPath } from '@/lib/auth/routes';
+import { isAdminRole } from '@/lib/auth/routes';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+// ─── Admin layout ─────────────────────────────────────────────────────────────
+// All admin pages live under /admin/*. Only ADMIN and SUPER_ADMIN can access.
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { currentUser, setUser, setLoading } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const isPublicMarketplace =
-    pathname === '/properties' || pathname.startsWith('/properties/');
 
   useEffect(() => {
-    // Defer all state updates out of the synchronous effect body
-    const init = () => {
+    queueMicrotask(() => {
       const user = getCurrentUser();
       if (!user) {
-        if (isPublicMarketplace) {
-          setLoading(false);
-          setMounted(true);
-          return;
-        }
-        router.replace('/login');
+        router.replace('/auth/login');
         return;
       }
-      if (isAdminShellPath(pathname) && !isAdminRole(user.role)) {
-        router.replace(getDefaultRouteForRole(user.role));
+      if (!isAdminRole(user.role)) {
+        router.replace('/');
         return;
       }
       setUser(user);
       setLoading(false);
       setMounted(true);
-    };
+    });
+  }, [pathname, router, setUser, setLoading]);
 
-    // queueMicrotask pushes updates after the current render cycle,
-    // breaking the synchronous setState-in-effect chain
-    queueMicrotask(init);
-  }, [isPublicMarketplace, pathname, router, setUser, setLoading]);
-
- useEffect(() => {
-  queueMicrotask(() => setMobileOpen(false));
-}, [pathname]);
+  useEffect(() => {
+    queueMicrotask(() => setMobileOpen(false));
+  }, [pathname]);
 
   const handleSignOut = () => {
     clearSession();
     document.cookie = 'vex_authed=; path=/; max-age=0';
     document.cookie = 'vex_user_role=; path=/; max-age=0';
-    window.location.href = '/login';
+    window.location.href = '/auth/login';
   };
 
   const getPageTitle = (): string => {
@@ -63,15 +54,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const cleanHref = item.href.split('?')[0];
       return (
         pathname === cleanHref ||
-        (cleanHref !== '/dashboard' && pathname.startsWith(cleanHref + '/'))
+        (cleanHref !== '/admin/dashboard' && pathname.startsWith(cleanHref + '/'))
       );
     });
     return match?.label ?? 'Dashboard';
   };
-
-  if (isPublicMarketplace && (!currentUser || !isAdminShellPath(pathname))) {
-    return <>{children}</>;
-  }
 
   if (!mounted || !currentUser || !isAdminRole(currentUser.role)) {
     return (

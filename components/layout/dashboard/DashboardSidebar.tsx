@@ -19,6 +19,10 @@ import {
   User,
   LogOut,
   X,
+  FileSignature,
+  ServerCog,
+  FileText,
+  CreditCard,
   type LucideIcon,
 } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
@@ -46,6 +50,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
   MessageSquare,
   ArrowRightLeft,
   User,
+  FileSignature,
+  ServerCog,
+  FileText,
+  CreditCard,
 };
 
 function NavIcon({ name, className }: { name: string; className?: string }) {
@@ -80,7 +88,7 @@ export function DashboardSidebar({
       {/* Logo */}
       <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--color-dash-border)' }}>
         <Link
-          href="/dashboard"
+          href="/admin/dashboard"
           className="flex items-center gap-2.5 select-none"
           aria-label={`${siteConfig.name} dashboard`}
         >
@@ -148,7 +156,7 @@ export function DashboardSidebar({
               // Item has NO query — exact path match, BUT not if another sibling item owns this path with a query
               (!itemQuery && pathname === itemPath && !currentPathOwnsQuery) ||
               // Item has NO query — sub-path match for nested routes like /users/123
-              (!itemQuery && item.href !== '/dashboard' && pathname.startsWith(item.href + '/'));
+              (!itemQuery && item.href !== '/admin/dashboard' && pathname.startsWith(item.href + '/'));
 
             return (
               <li key={item.href + item.label}>

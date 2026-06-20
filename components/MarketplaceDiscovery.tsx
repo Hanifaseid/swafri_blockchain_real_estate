@@ -66,15 +66,52 @@ export function MarketplaceDiscovery() {
   const [selectedNeighborhoodId, setSelectedNeighborhoodId] = useState<string | undefined>();
   const [reversePoint, setReversePoint] = useState<[number, number] | null>(null);
 
+  // Advanced filters (backend-supported)
+  const [showFilters, setShowFilters] = useState(false);
+  const [category, setCategory] = useState<'' | 'residential' | 'commercial'>('');
+  const [propertyType, setPropertyType] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [minBeds, setMinBeds] = useState('');
+  const [minBaths, setMinBaths] = useState('');
+  const [sort, setSort] = useState<NonNullable<ListingFilters['sort']>>('newest');
+
+  const resetFilters = () => {
+    setCategory('');
+    setPropertyType('');
+    setMinPrice('');
+    setMaxPrice('');
+    setMinBeds('');
+    setMinBaths('');
+    setSort('newest');
+    setListingType('');
+    setVerifiedOnly(false);
+  };
+
+  const activeFilterCount =
+    (category ? 1 : 0) +
+    (propertyType ? 1 : 0) +
+    (minPrice ? 1 : 0) +
+    (maxPrice ? 1 : 0) +
+    (minBeds ? 1 : 0) +
+    (minBaths ? 1 : 0) +
+    (sort !== 'newest' ? 1 : 0);
+
   const filters = useMemo<ListingFilters>(() => {
     const next: ListingFilters = {
       q: query || undefined,
       listingType: listingType || undefined,
       verifiedOnly,
       availabilityStatus: 'available',
-      sort: 'newest',
+      sort,
       limit: 24,
     };
+    if (category) next.category = category;
+    if (propertyType) next.propertyType = propertyType as ListingFilters['propertyType'];
+    if (minPrice) next.minPrice = Number(minPrice);
+    if (maxPrice) next.maxPrice = Number(maxPrice);
+    if (minBeds) next.minBedrooms = Number(minBeds);
+    if (minBaths) next.minBathrooms = Number(minBaths);
     if (mode === 'viewport') Object.assign(next, viewport);
     if (mode === 'radius') {
       next.lng = radiusCenter[0];
@@ -83,7 +120,23 @@ export function MarketplaceDiscovery() {
     }
     if (mode === 'polygon' && polygon.length >= 3) next.polygon = polygon;
     return next;
-  }, [listingType, mode, polygon, query, radiusCenter, radiusKm, verifiedOnly, viewport]);
+  }, [
+    category,
+    listingType,
+    maxPrice,
+    minBaths,
+    minBeds,
+    minPrice,
+    mode,
+    polygon,
+    propertyType,
+    query,
+    radiusCenter,
+    radiusKm,
+    sort,
+    verifiedOnly,
+    viewport,
+  ]);
 
   const listings = useListings(filters);
   const clusters = useListingClusters({ ...filters, zoom: mode === 'viewport' ? 11 : 13 });
@@ -153,11 +206,121 @@ export function MarketplaceDiscovery() {
                     className="h-11 w-full rounded-lg border border-white/10 bg-white/8 pl-10 pr-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-amber-300/70"
                   />
                 </div>
-                <Button variant="outline" size="icon" title="Filters">
+                <button
+                  type="button"
+                  onClick={() => setShowFilters((v) => !v)}
+                  title="Filters"
+                  className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border ${
+                    showFilters || activeFilterCount > 0
+                      ? 'border-amber-300/70 bg-amber-400 text-emerald-950'
+                      : 'border-white/10 bg-white/8 text-white/75'
+                  }`}
+                >
                   <SlidersHorizontal size={16} />
-                </Button>
+                  {activeFilterCount > 0 && (
+                    <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-emerald-700 text-[9px] font-bold text-white">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
+
+            {showFilters && (
+              <div className="grid gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value as typeof category)}
+                    className="h-10 rounded-lg border border-white/10 bg-[#171511] px-2 text-sm text-white"
+                  >
+                    <option value="">Any category</option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                  </select>
+                  <select
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                    className="h-10 rounded-lg border border-white/10 bg-[#171511] px-2 text-sm text-white"
+                  >
+                    <option value="">Any type</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="house">House</option>
+                    <option value="villa">Villa</option>
+                    <option value="condominium">Condominium</option>
+                    <option value="land">Land</option>
+                    <option value="commercial_space">Commercial space</option>
+                    <option value="office">Office</option>
+                    <option value="warehouse">Warehouse</option>
+                    <option value="shop">Shop</option>
+                    <option value="mixed_use">Mixed use</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value)}
+                    placeholder="Min price"
+                    className="h-10 rounded-lg border border-white/10 bg-white/8 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-amber-300/70"
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value)}
+                    placeholder="Max price"
+                    className="h-10 rounded-lg border border-white/10 bg-white/8 px-3 text-sm text-white outline-none placeholder:text-white/35 focus:border-amber-300/70"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <select
+                    value={minBeds}
+                    onChange={(e) => setMinBeds(e.target.value)}
+                    className="h-10 rounded-lg border border-white/10 bg-[#171511] px-2 text-sm text-white"
+                  >
+                    <option value="">Any beds</option>
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>{n}+ beds</option>
+                    ))}
+                  </select>
+                  <select
+                    value={minBaths}
+                    onChange={(e) => setMinBaths(e.target.value)}
+                    className="h-10 rounded-lg border border-white/10 bg-[#171511] px-2 text-sm text-white"
+                  >
+                    <option value="">Any baths</option>
+                    {[1, 2, 3, 4].map((n) => (
+                      <option key={n} value={n}>{n}+ baths</option>
+                    ))}
+                  </select>
+                </div>
+
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as NonNullable<ListingFilters['sort']>)}
+                  className="h-10 rounded-lg border border-white/10 bg-[#171511] px-2 text-sm text-white"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                  <option value="price_asc">Price: low to high</option>
+                  <option value="price_desc">Price: high to low</option>
+                </select>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="text-xs font-medium text-amber-300 hover:text-amber-200"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="grid gap-2">
               <label className="text-xs font-semibold uppercase tracking-[0.14em] text-white/45">
