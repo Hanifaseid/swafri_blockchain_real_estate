@@ -10,6 +10,8 @@ export interface Notification {
   isRead: boolean;
   createdAt: string;
   data?: Record<string, unknown>;
+  // optional metadata used by getNotificationHref and other helpers
+  metadata?: Record<string, unknown>;
 }
 
 export interface NotificationsResponse {

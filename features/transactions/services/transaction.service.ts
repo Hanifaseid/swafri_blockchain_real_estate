@@ -12,8 +12,9 @@ import type {
 export async function createPurchaseTransaction(
   payload: CreatePurchaseTransactionPayload
 ): Promise<PurchaseTransaction> {
+  // POST to the collection path to create a new purchase transaction
   const response = await apiClient.post<PurchaseTransaction>(
-    ENDPOINTS.PURCHASES.CREATE,
+    ENDPOINTS.PURCHASES.LIST,
     payload
   );
   return response.data;
