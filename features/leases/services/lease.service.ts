@@ -13,6 +13,7 @@ const ENDPOINTS = {
   MINE: '/leases/mine',
   DETAIL: (id: string) => `/leases/${id}`,
   PROPOSE: (id: string) => `/leases/${id}/propose`,
+  SIGN: (id: string) => `/leases/${id}/sign`,
   FUND: (id: string) => `/leases/${id}/fund`,
   ACTIVATE: (id: string) => `/leases/${id}/activate`,
   CANCEL: (id: string) => `/leases/${id}/cancel`,
@@ -70,6 +71,16 @@ export async function proposeLease(id: string): Promise<Lease> {
     return data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to propose lease');
+  }
+}
+
+export async function signLease(id: string): Promise<Lease> {
+  try {
+    const { data } = await apiClient.post<ApiSingleResponse<Lease>>(ENDPOINTS.SIGN(id));
+    if (!data.success) throw new Error(data.message || 'Failed to sign lease');
+    return data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || error.message || 'Failed to sign lease');
   }
 }
 

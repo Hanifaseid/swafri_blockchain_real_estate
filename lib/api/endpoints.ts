@@ -118,6 +118,7 @@ export const ENDPOINTS = {
     MINE:            '/leases/mine',
     DETAIL:          (id: string) => `/leases/${id}`,
     PROPOSE:         (id: string) => `/leases/${id}/propose`,
+    SIGN:            (id: string) => `/leases/${id}/sign`,
     FUND:            (id: string) => `/leases/${id}/fund`,
     ACTIVATE:        (id: string) => `/leases/${id}/activate`,
     CANCEL:          (id: string) => `/leases/${id}/cancel`,

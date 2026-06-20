@@ -2,30 +2,21 @@
 
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { ShieldCheck, WalletCards } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { useUpdateProfile, useUnlinkWallet } from '@/features/auth/queries/auth.queries';
+import { WalletSection } from '@/components/account/WalletSection';
+import { useUpdateProfile } from '@/features/auth/queries/auth.queries';
 import { useAuthStore } from '@/stores/auth.store';
-
-const WALLET_LABEL: Record<string, string> = {
-  LINKED: 'Linked',
-  VERIFIED: 'Linked',
-  NOT_LINKED: 'Not linked',
-  PENDING: 'Pending signature',
-  REVOKED: 'Revoked',
-};
 
 export default function AccountProfilePage() {
   const { currentUser } = useAuthStore();
   const updateProfile = useUpdateProfile();
-  const unlinkWallet = useUnlinkWallet();
 
   const [name, setName] = useState(currentUser?.name ?? '');
   const [phone, setPhone] = useState(currentUser?.phone ?? '');
 
   const dirty =
     name.trim() !== (currentUser?.name ?? '') || phone.trim() !== (currentUser?.phone ?? '');
-  const walletLinked = !!currentUser?.linkedWalletAddress;
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -39,14 +30,6 @@ export default function AccountProfilePage() {
         onError: (e: any) => toast.error(e?.message ?? 'Could not update profile.'),
       },
     );
-  };
-
-  const handleUnlink = () => {
-    unlinkWallet.mutate(undefined, {
-      onSuccess: () => toast.success('Wallet unlinked.'),
-      onError: (e: any) =>
-        toast.error(e?.message ?? 'Could not unlink wallet (active escrow may block this).'),
-    });
   };
 
   return (
@@ -126,35 +109,7 @@ export default function AccountProfilePage() {
       </section>
 
       {/* Wallet */}
-      <section className="rounded-lg border border-[#d5c8b3] bg-white p-5">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-[#f1ece0] p-2.5 text-[#7d561f]">
-              <WalletCards size={20} />
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-[#153828]">Linked wallet</h2>
-              <p className="mt-0.5 font-mono text-xs text-[#5f6b61]">
-                {currentUser?.linkedWalletAddress ?? 'No wallet linked'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full bg-[#f7f2e8] px-3 py-1.5 text-xs font-semibold text-[#163c2c]">
-              {WALLET_LABEL[currentUser?.walletStatus ?? 'NOT_LINKED'] ?? currentUser?.walletStatus}
-            </span>
-            {walletLinked && (
-              <Button variant="outline" onClick={handleUnlink} loading={unlinkWallet.isPending}>
-                Unlink
-              </Button>
-            )}
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-[#5f6b61]">
-          A linked wallet is where your property title certificate is issued and where escrow refunds
-          are received.
-        </p>
-      </section>
+      <WalletSection />
     </div>
   );
 }

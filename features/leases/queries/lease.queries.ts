@@ -6,6 +6,7 @@ import {
   getAllLeases,
   getLease,
   proposeLease,
+  signLease,
   fundLease,
   activateLease,
   cancelLease,
@@ -68,6 +69,19 @@ export function useProposeLease() {
       qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: leaseKeys.mine() });
       toast.success('Lease proposed to tenant.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useSignLease() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => signLease(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
+      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      toast.success('Lease signed.');
     },
     onError: (err: Error) => toast.error(err.message),
   });

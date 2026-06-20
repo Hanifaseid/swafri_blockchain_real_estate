@@ -225,16 +225,18 @@ export async function requestWalletChallenge(walletAddress: string): Promise<str
     ENDPOINTS.AUTH.WALLET_CHALLENGE,
     { walletAddress }
   );
-  
+
   if (typeof data === 'string') return data;
-  if (data?.nonce) return data.nonce;
-  if (data?.data?.nonce) return data.data.nonce;
-  
   if (data?.success === false) {
     throw new Error(data.message || 'Failed to get wallet challenge');
   }
-  
-  return JSON.stringify(data);
+
+  // Backend returns { data: { walletAddress, message, expiresAt } }. The user
+  // must sign the exact `message` string — fall back to other shapes defensively.
+  const payload = data?.data ?? data;
+  const challenge = payload?.message ?? payload?.challenge ?? payload?.nonce;
+  if (!challenge) throw new Error('Wallet challenge response did not contain a message to sign.');
+  return challenge as string;
 }
 
 export async function linkWallet(

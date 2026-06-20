@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { clearSession } from '@/lib/auth/session';
 import { useAuthStore } from '@/stores/auth.store';
+import { WalletConnectButton } from '@/components/ui/WalletConnectButton';
 
 // ─── Navigation items ─────────────────────────────────────────────────────────
 // Top-level nav: visible to everyone. Mix of page links and in-page scroll targets.
@@ -39,7 +40,6 @@ type NavItem = NavLinkItem | NavScrollItem;
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Browse', href: '/properties' },
-  { label: 'How It Works', id: 'how-it-works-section' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ] as const;
@@ -146,14 +146,18 @@ export default function LandingNavbar() {
   };
 
   // ── Primary CTA button logic ────────────────────────────────────────────────
+  // Unauthenticated → Get Started (login)
+  // Admin → Dashboard link
+  // Owner → List Property link
+  // Tenant → no link CTA (shows WalletConnectButton instead)
   const primaryAction = !currentUser
     ? { href: '/auth/login', label: 'Get Started', icon: ArrowRight }
     : isAdmin
       ? { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard }
       : isOwner
         ? { href: '/account/listings/new', label: 'List Property', icon: Plus }
-        : { href: '/properties', label: 'Browse Properties', icon: Compass };
-  const PrimaryIcon = primaryAction.icon;
+        : null;
+  const PrimaryIcon = primaryAction?.icon ?? null;
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
@@ -210,20 +214,29 @@ export default function LandingNavbar() {
         <div className="flex items-center gap-2">
           {!currentUser && (
             <Link
-              href="/auth"
+              href="/auth/login"
               className="hidden px-4 py-2 text-sm font-medium text-white/75 transition-colors hover:text-white sm:inline-flex"
             >
               Sign in
             </Link>
           )}
 
-          <Link
-            href={primaryAction.href}
-            className="group hidden items-center gap-2 rounded-lg bg-amber-500 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-colors hover:bg-amber-400 sm:inline-flex"
-          >
-            {primaryAction.label}
-            <PrimaryIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          {/* CTA: link for unauthenticated / admin / owner — wallet for tenant */}
+          {primaryAction && PrimaryIcon ? (
+            <Link
+              href={primaryAction.href}
+              className="group hidden items-center gap-2 rounded-lg bg-amber-500 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-colors hover:bg-amber-400 sm:inline-flex"
+            >
+              {primaryAction.label}
+              <PrimaryIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          ) : currentUser ? (
+            <div className="hidden sm:block">
+              <WalletConnectButton
+                className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] hover:bg-amber-400"
+              />
+            </div>
+          ) : null}
 
           {/* ── Profile dropdown (desktop) ─────────────────────────────────── */}
           {currentUser && (
@@ -326,16 +339,22 @@ export default function LandingNavbar() {
           )}
 
           <div className="mt-4 flex flex-col gap-2.5">
-            <Link
-              href={primaryAction.href}
-              onClick={closeMenus}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950"
-            >
-              {primaryAction.label} <PrimaryIcon className="h-4 w-4" />
-            </Link>
+            {primaryAction && PrimaryIcon ? (
+              <Link
+                href={primaryAction.href}
+                onClick={closeMenus}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950"
+              >
+                {primaryAction.label} <PrimaryIcon className="h-4 w-4" />
+              </Link>
+            ) : currentUser ? (
+              <WalletConnectButton
+                className="rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950 justify-center"
+              />
+            ) : null}
             {!currentUser && (
               <Link
-                href="/auth"
+                href="/auth/login"
                 onClick={closeMenus}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-medium text-white"
               >
