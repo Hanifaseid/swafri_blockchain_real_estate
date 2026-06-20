@@ -1,4 +1,6 @@
-export type OfferStatus = 'pending' | 'accepted' | 'rejected' | 'countered' | 'cancelled';
+// Backend statuses: submitted | accepted | rejected | countered | cancelled.
+// 'pending' kept as a legacy alias for older UI checks.
+export type OfferStatus = 'submitted' | 'pending' | 'accepted' | 'rejected' | 'countered' | 'cancelled';
 
 export interface OfferUser {
   id: string;

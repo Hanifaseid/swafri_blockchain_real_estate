@@ -144,8 +144,21 @@ export async function getReceivedOffers(): Promise<Offer[]> {
 }
 
 export async function respondOffer(id: string, input: RespondOfferInput): Promise<Offer> {
+  // Map the UI shape ({ status, responseMessage, counterOfferPrice }) onto the
+  // backend contract ({ action, responseNote, counterAmount }).
+  const actionByStatus: Record<RespondOfferInput['status'], 'accept' | 'reject' | 'counter'> = {
+    accepted: 'accept',
+    rejected: 'reject',
+    countered: 'counter',
+  };
+  const payload = {
+    action: actionByStatus[input.status],
+    ...(input.responseMessage ? { responseNote: input.responseMessage } : {}),
+    ...(input.counterOfferPrice != null ? { counterAmount: input.counterOfferPrice } : {}),
+  };
+
   try {
-    const { data } = await apiClient.patch<ApiResp<Offer>>(ENDPOINTS.OFFERS.RESPOND(id), input);
+    const { data } = await apiClient.patch<ApiResp<Offer>>(ENDPOINTS.OFFERS.RESPOND(id), payload);
 
     if (!data.success) throw new Error(data.message);
 

@@ -26,6 +26,9 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import type { Listing } from '@/features/listings/types/listing.types';
+import { FavoriteSaveButton, InquiryCard, OfferCard } from './tenant-actions';
+import { RentalApplicationCard } from './RentalApplicationCard';
+import { TitleCertificatePanel } from './TitleCertificatePanel';
 
 interface Props {
   listing: Listing;
@@ -206,14 +209,31 @@ export function ListingDetailView({ listing }: Props) {
                 <p className="text-xs text-text-muted">+ {formatCurrency(listing.serviceCharge, cur)} service charge</p>
               )}
               <div className="mt-4 flex gap-2">
-                <Link href={`/discovery/${listing.id}`} className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-500 transition-colors">
-                  Inquire Now
-                </Link>
+                <div className="flex-1">
+                  <FavoriteSaveButton listingId={listing.id} />
+                </div>
                 <button onClick={handleShare} className="rounded-lg border border-border-primary bg-surface-input px-3 py-2.5 text-text-secondary hover:bg-surface-highlight transition-colors">
                   <Share2 size={16} />
                 </button>
               </div>
             </div>
+
+            {/* Tenant / buyer actions */}
+            <InquiryCard listing={listing} />
+
+            {listing.listingType === 'rent' && (
+              <RentalApplicationCard
+                listingId={listing.id}
+                title={listing.title}
+                monthlyRent={listing.monthlyRent}
+                currency={listing.currency}
+              />
+            )}
+
+            {listing.listingType === 'sale' && <OfferCard listing={listing} />}
+
+            {/* On-chain certificate of title */}
+            <TitleCertificatePanel listingId={listing.id} />
 
             {/* Status & meta */}
             <div className="rounded-2xl border border-border-primary bg-surface-card p-5 space-y-3">
