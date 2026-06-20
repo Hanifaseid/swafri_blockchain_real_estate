@@ -501,7 +501,7 @@ function OwnerActionsPanel({ app }: { app: RentalApplication }) {
     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <h3 className="text-sm font-semibold text-gray-900">Owner Review</h3>
 
-      {app.status !== 'approved' && app.status !== 'screening' && (
+      {app.status !== 'screening' && (
         <div className="space-y-3">
           <textarea
             value={note}

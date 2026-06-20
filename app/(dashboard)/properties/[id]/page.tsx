@@ -1,12 +1,13 @@
 'use client';
 
-import { use, useRef, useState, useEffect, useCallback } from 'react';
+import { use, useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
   ArrowLeft, Upload, CheckCircle2, XCircle, Clock, AlertCircle,
   Loader2, Building2, MapPin, Bed, Bath, Maximize2, Calendar,
   Image as ImageIcon, FileText, BarChart2, ShieldCheck, Trash2, Star, Send, GripVertical,
+  AlertTriangle, FileCheck,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { Modal } from '@/components/ui/Modal';
@@ -27,16 +28,25 @@ import toast from 'react-hot-toast';
 import { RentalApplicationCard } from '@/components/listing/RentalApplicationCard';
 
 const STATUS_STYLE: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-500', submitted: 'bg-amber-50 text-amber-600',
-  under_review: 'bg-blue-50 text-blue-600', approved: 'bg-emerald-50 text-emerald-700',
-  published: 'bg-emerald-100 text-emerald-800', rejected: 'bg-red-50 text-red-600',
-  suspended: 'bg-orange-50 text-orange-600', rented: 'bg-sky-50 text-sky-600',
-  sold: 'bg-purple-50 text-purple-600', archived: 'bg-gray-100 text-gray-400',
+  draft: 'bg-gray-100 text-gray-500', 
+  submitted: 'bg-amber-50 text-amber-600',
+  under_review: 'bg-blue-50 text-blue-600', 
+  approved: 'bg-emerald-50 text-emerald-700',
+  published: 'bg-emerald-100 text-emerald-800', 
+  rejected: 'bg-red-50 text-red-600',
+  suspended: 'bg-orange-50 text-orange-600', 
+  rented: 'bg-sky-50 text-sky-600',
+  sold: 'bg-purple-50 text-purple-600', 
+  archived: 'bg-gray-100 text-gray-400',
 };
+
 const VERIFY_STYLE: Record<string, string> = {
-  unverified: 'bg-gray-100 text-gray-500', pending: 'bg-amber-50 text-amber-600',
-  verified: 'bg-emerald-50 text-emerald-700', rejected: 'bg-red-50 text-red-600',
-  requires_more_info: 'bg-blue-50 text-blue-600', suspended: 'bg-orange-50 text-orange-600',
+  unverified: 'bg-gray-100 text-gray-500', 
+  pending: 'bg-amber-50 text-amber-600',
+  verified: 'bg-emerald-50 text-emerald-700', 
+  rejected: 'bg-red-50 text-red-600',
+  requires_more_info: 'bg-blue-50 text-blue-600', 
+  suspended: 'bg-orange-50 text-orange-600',
 };
 
 export default function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,30 +73,34 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const { mutate: submitOffer, isPending: creatingOffer } = useSubmitOffer();
 
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef   = useRef<HTMLInputElement>(null);
-  const [docUploadType, setDocUploadType]     = useState<ListingDocumentType>('title_deed');
+  const docInputRef = useRef<HTMLInputElement>(null);
+  const [docUploadType, setDocUploadType] = useState<ListingDocumentType>('title_deed');
   const [showDocReviewModal, setShowDocReviewModal] = useState(false);
-  const [reviewDocId, setReviewDocId]         = useState<string | null>(null);
-  const [reviewDecision, setReviewDecision]   = useState<'approve' | 'reject'>('approve');
-  const [reviewNote, setReviewNote]           = useState('');
-  const [showRejectModal, setShowRejectModal]   = useState(false);
-  const [rejectReason, setRejectReason]         = useState<RejectionReason>('missing_document');
-  const [rejectNote, setRejectNote]             = useState('');
+  const [reviewDocId, setReviewDocId] = useState<string | null>(null);
+  const [reviewDecision, setReviewDecision] = useState<'approve' | 'reject'>('approve');
+  const [reviewNote, setReviewNote] = useState('');
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState<RejectionReason>('missing_document');
+  const [rejectNote, setRejectNote] = useState('');
   const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
-  const [requestInfoNote, setRequestInfoNote]   = useState('');
+  const [requestInfoNote, setRequestInfoNote] = useState('');
   const [showSuspendModal, setShowSuspendModal] = useState(false);
-  const [suspendNote, setSuspendNote]           = useState('');
-  const [titleAction, setTitleAction]           = useState<'dispute' | 'clear' | 'revoke' | null>(null);
-  const [titleReason, setTitleReason]           = useState('');
-  const [showInquiryForm, setShowInquiryForm]   = useState(false);
-  const [inquiryMsg, setInquiryMsg]             = useState('');
-  const [inquiryType, setInquiryType]           = useState<'rent' | 'buy' | 'general'>('general');
-  const [showOfferModal, setShowOfferModal]     = useState(false);
-  const [offerAmount, setOfferAmount]           = useState<number>(0);
-  const [offerMessage, setOfferMessage]         = useState('');
-  const [previewPhotos, setPreviewPhotos]       = useState<{url: string, file: File}[]>([]);
-  const [dragIdx, setDragIdx]                   = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx]           = useState<number | null>(null);
+  const [suspendNote, setSuspendNote] = useState('');
+  const [titleAction, setTitleAction] = useState<'dispute' | 'clear' | 'revoke' | null>(null);
+  const [titleReason, setTitleReason] = useState('');
+  const [showInquiryForm, setShowInquiryForm] = useState(false);
+  const [inquiryMsg, setInquiryMsg] = useState('');
+  const [inquiryType, setInquiryType] = useState<'rent' | 'buy' | 'general'>('general');
+  const [showOfferModal, setShowOfferModal] = useState(false);
+  const [showRentalAppModal, setShowRentalAppModal] = useState(false);
+  const [offerAmount, setOfferAmount] = useState<number>(0);
+  const [offerMessage, setOfferMessage] = useState('');
+  const [previewPhotos, setPreviewPhotos] = useState<{ url: string; file: File }[]>([]);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const [showPublishError, setShowPublishError] = useState(false);
+
+  const photos = useMemo(() => listing?.photos ?? [], [listing?.photos]);
 
   const handleDragStart = useCallback((idx: number) => {
     setDragIdx(idx);
@@ -97,34 +111,59 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     setDragOverIdx(idx);
   }, []);
 
-  const handleDrop = (idx: number) => {
-    if (dragIdx === null || dragIdx === idx || !listing?.photos) return;
-    const photos = [...listing.photos];
-    const [moved] = photos.splice(dragIdx, 1);
-    photos.splice(idx, 0, moved);
-    const order = photos.map((p) => p.publicId);
+  const handleDrop = useCallback((idx: number) => {
+    if (dragIdx === null || dragIdx === idx || !photos.length) return;
+    const photosCopy = [...photos];
+    const [moved] = photosCopy.splice(dragIdx, 1);
+    photosCopy.splice(idx, 0, moved);
+    const order = photosCopy.map(p => p.publicId);
     doReorderPhotos(order);
     setDragIdx(null);
     setDragOverIdx(null);
-  };
+  }, [dragIdx, photos, doReorderPhotos]);
 
   const handleDragEnd = useCallback(() => {
     setDragIdx(null);
     setDragOverIdx(null);
   }, []);
 
+  const handleOpenOfferModal = useCallback(() => {
+    if (listing?.price) {
+      setOfferAmount(listing.price);
+    }
+    setShowOfferModal(true);
+  }, [listing]);
 
+  const handlePublishClick = () => {
+    const isVerified = listing?.verificationStatus === 'verified';
+    const hasApprovedDoc = docs.some(d => d.status === 'approved');
+    
+    if (!isVerified || !hasApprovedDoc) {
+      setShowPublishError(true);
+      // Auto-hide after 8 seconds
+      setTimeout(() => setShowPublishError(false), 8000);
+      // Scroll to error message
+      const errorElement = document.querySelector('[data-publish-error]');
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+    
+    // Proceed with publish
+    transition({ action: 'publish' });
+  };
 
   if (!currentUser) return null;
-  const role    = currentUser.role;
-  const isOwner = listing?.createdBy === currentUser.id;
+  const role = currentUser.role;
+  const isOwner = role === 'PROPERTY_OWNER' || listing?.createdBy === currentUser.id;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
   const canSubmitForReview = currentUser.kycStatus === 'verified' && currentUser.status === 'ACTIVE';
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
-  if (!listing)  return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
+  if (!listing) return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
 
-  const coverPhoto = listing.photos?.find((p) => p.isCover) ?? listing.photos?.[0];
+  const coverPhoto = photos.find((p) => p.isCover) ?? photos[0];
   const price = listing.listingType === 'rent' ? `$${listing.monthlyRent?.toLocaleString()}/mo` : `$${listing.price?.toLocaleString()}`;
   const approvedTitleDeed = docs.find((doc) => doc.type === 'title_deed' && doc.status === 'approved');
   const publishReadinessChecks = [
@@ -136,44 +175,90 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
   const ownerActions: { action: TransitionAction; label: string; style: string }[] = [];
   if (isOwner) {
-    if (listing.status === 'draft' || listing.status === 'rejected') ownerActions.push({ action: 'submit', label: 'Submit for Review', style: 'bg-emerald-600 hover:bg-emerald-700 text-white' });
-    if (listing.status === 'published') {
-      ownerActions.push({ action: 'mark_rented', label: 'Mark Rented', style: 'bg-sky-600 hover:bg-sky-700 text-white' });
-      ownerActions.push({ action: 'mark_sold',   label: 'Mark Sold',   style: 'bg-purple-600 hover:bg-purple-700 text-white' });
+    if (listing.status === 'draft' || listing.status === 'rejected') {
+      ownerActions.push({ action: 'submit', label: '📤 Submit for Review', style: 'bg-emerald-600 hover:bg-emerald-700 text-white' });
     }
-    if (listing.status === 'rented') ownerActions.push({ action: 'unmark_rented', label: 'Unmark Rented', style: 'border border-gray-300 text-black/60 hover:bg-gray-50' });
-    if (listing.status === 'sold')   ownerActions.push({ action: 'unmark_sold',   label: 'Unmark Sold',   style: 'border border-gray-300 text-black/60 hover:bg-gray-50' });
-    if (listing.status !== 'archived') ownerActions.push({ action: 'archive', label: 'Archive', style: 'border border-gray-300 text-red-500 hover:bg-red-50' });
+    if (listing.status === 'published') {
+      ownerActions.push({ action: 'mark_rented', label: '🏠 Mark Rented', style: 'bg-sky-600 hover:bg-sky-700 text-white' });
+      ownerActions.push({ action: 'mark_sold', label: '💰 Mark Sold', style: 'bg-purple-600 hover:bg-purple-700 text-white' });
+    }
+    if (listing.status === 'rented') {
+      ownerActions.push({ action: 'unmark_rented', label: '↩️ Unmark Rented', style: 'border border-gray-300 text-black/60 hover:bg-gray-50' });
+    }
+    if (listing.status === 'sold') {
+      ownerActions.push({ action: 'unmark_sold', label: '↩️ Unmark Sold', style: 'border border-gray-300 text-black/60 hover:bg-gray-50' });
+    }
+    if (listing.status !== 'archived') {
+      ownerActions.push({ action: 'archive', label: '📦 Archive', style: 'border border-gray-300 text-red-500 hover:bg-red-50' });
+    }
   }
 
-  const adminActions: { action: TransitionAction; label: string; style: string }[] = [];
+  const adminActions: { 
+    action: TransitionAction; 
+    label: string; 
+    style: string;
+  }[] = [];
+
   if (isAdmin) {
     if (listing.status === 'submitted') {
-      adminActions.push({ action: 'start_review', label: 'Start Review', style: 'bg-blue-600 hover:bg-blue-700 text-white' });
-      adminActions.push({ action: 'request_info', label: 'Request Info', style: 'bg-amber-600 hover:bg-amber-700 text-white' });
+      adminActions.push({ 
+        action: 'start_review', 
+        label: '🔍 Start Review', 
+        style: 'bg-blue-600 hover:bg-blue-700 text-white'
+      });
+      adminActions.push({ 
+        action: 'request_info', 
+        label: '📋 Request Info', 
+        style: 'bg-amber-600 hover:bg-amber-700 text-white'
+      });
     }
     if (listing.status === 'under_review') {
-      adminActions.push({ action: 'approve', label: 'Approve', style: 'bg-emerald-600 hover:bg-emerald-700 text-white' });
-      adminActions.push({ action: 'reject',  label: 'Reject',  style: 'bg-red-600 hover:bg-red-700 text-white' });
-      adminActions.push({ action: 'request_info', label: 'Request Info', style: 'bg-amber-600 hover:bg-amber-700 text-white' });
+      adminActions.push({ 
+        action: 'approve', 
+        label: '✅ Approve', 
+        style: 'bg-emerald-600 hover:bg-emerald-700 text-white'
+      });
+      adminActions.push({ 
+        action: 'reject',  
+        label: '❌ Reject',  
+        style: 'bg-red-600 hover:bg-red-700 text-white'
+      });
+      adminActions.push({ 
+        action: 'request_info', 
+        label: '📋 Request Info', 
+        style: 'bg-amber-600 hover:bg-amber-700 text-white'
+      });
     }
-    if (listing.status === 'approved')  adminActions.push({ action: 'publish',   label: 'Publish',   style: 'bg-emerald-700 hover:bg-emerald-800 text-white' });
-    if (listing.status === 'published') adminActions.push({ action: 'suspend',   label: 'Suspend',   style: 'bg-orange-600 hover:bg-orange-700 text-white' });
-    if (listing.status === 'suspended') adminActions.push({ action: 'unsuspend', label: 'Unsuspend', style: 'bg-gray-700 hover:bg-gray-800 text-white' });
+    if (listing.status === 'approved') {
+      adminActions.push({ 
+        action: 'publish', 
+        label: '🚀 Publish', 
+        style: 'bg-emerald-700 hover:bg-emerald-800 text-white'
+      });
+    }
+    if (listing.status === 'published') {
+      adminActions.push({ 
+        action: 'suspend',   
+        label: '⏸️ Suspend',   
+        style: 'bg-orange-600 hover:bg-orange-700 text-white' 
+      });
+    }
+    if (listing.status === 'suspended') {
+      adminActions.push({ 
+        action: 'unsuspend', 
+        label: '▶️ Unsuspend', 
+        style: 'bg-gray-700 hover:bg-gray-800 text-white' 
+      });
+    }
   }
 
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-
-    doUploadDocuments(
-      { type: docUploadType, files },
-      {
-        onSettled: () => {
-          if (docInputRef.current) docInputRef.current.value = '';
-        },
-      },
-    );
+    doUploadDocuments({ files, type: docUploadType }, {
+      onSuccess: () => { refetch(); },
+    });
+    if (docInputRef.current) docInputRef.current.value = '';
   };
 
   return (
@@ -204,7 +289,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', STATUS_STYLE[listing.status] ?? 'bg-gray-100 text-gray-500')}>{listing.status}</span>
-              <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', VERIFY_STYLE[listing.verificationStatus] ?? 'bg-gray-100 text-gray-500')}>{listing.verificationStatus}</span>
+              <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', VERIFY_STYLE[listing.verificationStatus] ?? 'bg-gray-100 text-gray-500')}>
+                {listing.verificationStatus === 'verified' && '✅ Verified'}
+                {listing.verificationStatus === 'pending' && '⏳ Pending'}
+                {listing.verificationStatus === 'rejected' && '❌ Rejected'}
+                {listing.verificationStatus === 'requires_more_info' && '📋 More Info'}
+                {listing.verificationStatus === 'unverified' && '📄 Not Verified'}
+                {listing.verificationStatus === 'suspended' && '⚠️ Suspended'}
+              </span>
               {listing.availabilityStatus && <span className="text-[10px] font-mono uppercase bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{listing.availabilityStatus}</span>}
             </div>
             <p className="text-lg font-bold text-emerald-600">{price}</p>
@@ -224,15 +316,24 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               </button>
             ))}
             {adminActions.map(({ action, label, style }) => (
-              <button key={action} type="button" disabled={transitioning}
+              <button 
+                key={action} 
+                type="button" 
+                disabled={transitioning}
                 onClick={() => {
+                  if (action === 'publish') {
+                    handlePublishClick();
+                    return;
+                  }
                   if (action === 'reject') { setShowRejectModal(true); return; }
                   if (action === 'request_info') { setShowRequestInfoModal(true); return; }
                   if (action === 'suspend') { setShowSuspendModal(true); return; }
                   transition({ action });
                 }}
-                className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}>
+                className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}
+              >
                 {label}
+                {transitioning && action === 'publish' && <Loader2 className="w-3.5 h-3.5 animate-spin inline ml-1" />}
               </button>
             ))}
             {listing.status === 'published' && !isOwner && (
@@ -245,34 +346,114 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     }
                   }}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors">
-                    Apply to Rent
+                    🏠 Apply to Rent
                   </button>
                 )}
                 {listing.listingType === 'sale' && role === 'TENANT' && (
                   <button type="button" onClick={() => { setOfferAmount(listing.price ?? 0); setShowOfferModal(true); }}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
-                    Make Offer
+                    💰 Make Offer
                   </button>
                 )}
               </>
             )}
             {isOwner && (listing.status === 'draft' || listing.status === 'rejected') && (
-              <Link href={`/properties/${id}/edit`} className="text-xs font-semibold px-3 py-2 rounded-xl border border-gray-300 text-black/60 hover:bg-gray-50">Edit</Link>
+              <Link href={`/properties/${id}/edit`} className="text-xs font-semibold px-3 py-2 rounded-xl border border-gray-300 text-black/60 hover:bg-gray-50">✏️ Edit</Link>
             )}
           </div>
         </div>
       </div>
 
+      {/* PUBLISH ERROR MESSAGE - Clear and visible */}
+      {showPublishError && (
+        <div data-publish-error className="bg-red-50 border-l-4 border-red-500 border rounded-xl p-5 shadow-lg animate-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-red-100 rounded-lg shrink-0">
+              <XCircle className="w-6 h-6 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-base font-bold text-red-800">⚠️ Cannot Publish Property</h4>
+              <p className="text-sm text-red-700 mt-1">
+                Please approve the ownership document before publishing this property.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <div className="flex items-center gap-1.5 text-xs text-red-700 bg-red-100/50 px-3 py-1.5 rounded-lg">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Status: {listing.verificationStatus === 'pending' ? '⏳ Pending Review' : '📄 Not Verified'}</span>
+                </div>
+                <button 
+                  onClick={() => {
+                    const docSection = document.querySelector('[data-documents-section]');
+                    if (docSection) {
+                      docSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    setShowPublishError(false);
+                  }}
+                  className="text-xs font-medium text-red-700 hover:text-red-800 underline underline-offset-2"
+                >
+                  Go to Documents →
+                </button>
+                <button 
+                  onClick={() => setShowPublishError(false)}
+                  className="text-xs font-medium text-red-600 hover:text-red-700"
+                >
+                  ✕ Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verification Status Banner - Informational */}
+      {isAdmin && listing.status === 'approved' && listing.verificationStatus !== 'verified' && !showPublishError && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+          <div className="p-1.5 bg-amber-100 rounded-lg shrink-0">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-amber-800">📋 Ownership Verification Required</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Please review and approve the ownership document before publishing.
+            </p>
+          </div>
+          <button 
+            onClick={() => {
+              const docSection = document.querySelector('[data-documents-section]');
+              if (docSection) docSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+            className="text-xs font-medium text-amber-700 hover:text-amber-800 underline underline-offset-2 shrink-0"
+          >
+            Review →
+          </button>
+        </div>
+      )}
+
+      {/* Success banner for verified listings */}
+      {listing.verificationStatus === 'verified' && listing.status === 'approved' && isAdmin && !showPublishError && (
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
+          <div className="p-1.5 bg-emerald-100 rounded-lg shrink-0">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-emerald-800">✅ Ownership Verified</p>
+            <p className="text-xs text-emerald-700 mt-0.5">
+              This listing is ready to be published. Click the <strong>Publish</strong> button above.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Details */}
       <div className="bg-white rounded-2xl border border-gray-200 p-5">
         <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-4">Details</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-          {listing.bedrooms   !== undefined && <span className="flex items-center gap-1.5 text-sm text-black/60"><Bed size={13} className="text-black/30" />{listing.bedrooms} beds</span>}
-          {listing.bathrooms  !== undefined && <span className="flex items-center gap-1.5 text-sm text-black/60"><Bath size={13} className="text-black/30" />{listing.bathrooms} baths</span>}
-          {listing.area       && <span className="flex items-center gap-1.5 text-sm text-black/60"><Maximize2 size={13} className="text-black/30" />{listing.area.value} {listing.area.unit}</span>}
-          {listing.yearBuilt  && <span className="flex items-center gap-1.5 text-sm text-black/60"><Calendar size={13} className="text-black/30" />Built {listing.yearBuilt}</span>}
+          {listing.bedrooms !== undefined && <span className="flex items-center gap-1.5 text-sm text-black/60"><Bed size={13} className="text-black/30" />{listing.bedrooms} beds</span>}
+          {listing.bathrooms !== undefined && <span className="flex items-center gap-1.5 text-sm text-black/60"><Bath size={13} className="text-black/30" />{listing.bathrooms} baths</span>}
+          {listing.area && <span className="flex items-center gap-1.5 text-sm text-black/60"><Maximize2 size={13} className="text-black/30" />{listing.area.value} {listing.area.unit}</span>}
+          {listing.yearBuilt && <span className="flex items-center gap-1.5 text-sm text-black/60"><Calendar size={13} className="text-black/30" />Built {listing.yearBuilt}</span>}
           {listing.parkingSpaces && <span className="flex items-center gap-1.5 text-sm text-black/60">🅿 {listing.parkingSpaces} parking</span>}
-          {listing.furnishingStatus && <span className="text-[10px] font-mono bg-gray-100 text-gray-500 px-2 py-0.5 rounded capitalize">{listing.furnishingStatus.replace('_',' ')}</span>}
+          {listing.furnishingStatus && <span className="text-[10px] font-mono bg-gray-100 text-gray-500 px-2 py-0.5 rounded capitalize">{listing.furnishingStatus.replace('_', ' ')}</span>}
         </div>
         <div className="flex items-start gap-2 text-sm text-black/60 mb-3">
           <MapPin size={13} className="text-black/30 mt-0.5 shrink-0" />
@@ -331,7 +512,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
               submitOffer({
                 listingId: id,
-                amount: offerAmount,
+                offerPrice: offerAmount,
                 currency: listing.currency.toUpperCase(),
                 message: offerMessage.trim() || undefined,
               }, {
@@ -422,12 +603,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 if (photoInputRef.current) photoInputRef.current.value = '';
               }} />
           </div>
-          {isOwner && listing.photos && listing.photos.length > 1 && (
-            <p className="text-[9px] text-black/30 font-mono mb-2">Drag photos to reorder</p>
+          {isOwner && photos.length > 1 && (
+            <p className="text-[9px] text-black/30 font-mono mb-2">🔄 Drag photos to reorder</p>
           )}
-          {(listing.photos?.length > 0) || previewPhotos.length > 0 ? (
+          {photos.length > 0 || previewPhotos.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {(listing.photos || []).map((photo, idx) => (
+              {photos.map((photo, idx) => (
                 <div
                   key={photo.publicId}
                   draggable={isOwner}
@@ -455,8 +636,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                         <GripVertical size={14} className="text-white drop-shadow-md" />
                       </div>
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        {!photo.isCover && <button type="button" onClick={(e) => { e.stopPropagation(); doSetCover(photo.publicId); }} className="bg-white/90 text-black text-[9px] font-bold px-2 py-1 rounded"><Star size={10} /></button>}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); doDeletePhoto(photo.publicId); }} className="bg-red-600 text-white text-[9px] font-bold px-2 py-1 rounded"><Trash2 size={10} /></button>
+                        {!photo.isCover && <button type="button" onClick={(e) => { e.stopPropagation(); doSetCover(photo.publicId); }} className="bg-white/90 text-black text-[9px] font-bold px-2 py-1 rounded hover:bg-white transition-colors"><Star size={10} /></button>}
+                        <button type="button" onClick={(e) => { e.stopPropagation(); doDeletePhoto(photo.publicId); }} className="bg-red-600 hover:bg-red-700 text-white text-[9px] font-bold px-2 py-1 rounded transition-colors"><Trash2 size={10} /></button>
                       </div>
                     </>
                   )}
@@ -479,21 +660,28 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-black/35 font-light">No photos yet. Upload photos to improve your listing.</p>}
+          ) : <p className="text-xs text-black/35 font-light">📷 No photos yet. Upload photos to improve your listing.</p>}
         </div>
       )}
 
       {/* Documents */}
       {(isOwner || isAdmin) && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-4 flex items-center gap-1.5">
-            <FileText size={10} /> Ownership Documents
-          </p>
+        <div data-documents-section className="bg-white rounded-2xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 flex items-center gap-1.5">
+              <FileText size={10} /> Ownership Documents
+            </p>
+            {isAdmin && (
+              <span className="text-[10px] font-mono bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+                {docs.filter(d => d.status === 'approved').length} approved / {docs.length} total
+              </span>
+            )}
+          </div>
 
           {/* Owner upload section */}
           {isOwner && (
             <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3">
-              <p className="text-xs font-medium text-black/60">Upload a document</p>
+              <p className="text-xs font-medium text-black/60">📤 Upload a document</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Document Type</label>
@@ -516,7 +704,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   </button>
                 </div>
               </div>
-              <p className="text-[10px] text-black/35">PDF, JPG, PNG — max 5 MB. Images and PDFs accepted.</p>
+              <p className="text-[10px] text-black/35">📎 PDF, JPG, PNG — max 5 MB. Images and PDFs accepted.</p>
               <input ref={docInputRef} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleDocUpload} />
             </div>
           )}
@@ -589,16 +777,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
               <AlertCircle size={13} className="shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium mb-1">Potential duplicates detected:</p>
-                <ul className="space-y-1">
-                  {duplicates.map((dup) => (
-                    <li key={dup.id} className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono">{dup.title}</span>
-                      <span className="text-[10px] text-black/50">({dup.status})</span>
-                      <span className="text-[10px] text-black/40">— {dup.reasons.join(', ')}</span>
-                    </li>
-                  ))}
-                </ul>
+                <p className="font-medium">📝 Draft Mode</p>
+                <p className="mt-0.5">Upload photos and documents, then submit for review when ready.</p>
               </div>
             </div>
           )}
@@ -607,24 +787,38 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           {docs.length > 0 ? (
             <div className="space-y-2">
               {docs.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-                  <div>
-                    <span className="text-sm text-black/70 font-mono capitalize">{doc.type.replace('_',' ')}</span>
-                    {doc.reviewNote && <p className="text-[10px] text-amber-600 mt-0.5">{doc.reviewNote}</p>}
+                <div key={doc.id} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 hover:bg-gray-100 transition-colors">
+                  <div className="flex items-center gap-2">
+                    <FileText size={14} className="text-gray-400" />
+                    <div>
+                      <span className="text-sm text-black/70 font-mono capitalize">{doc.type.replace('_', ' ')}</span>
+                      {doc.reviewNote && <p className="text-[10px] text-amber-600 mt-0.5">{doc.reviewNote}</p>}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', doc.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : doc.status === 'rejected' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600')}>{doc.status}</span>
+                    <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded', 
+                      doc.status === 'approved' ? 'bg-emerald-50 text-emerald-600' : 
+                      doc.status === 'rejected' ? 'bg-red-50 text-red-500' : 
+                      'bg-amber-50 text-amber-600')}>
+                      {doc.status === 'approved' && '✅ Approved'}
+                      {doc.status === 'rejected' && '❌ Rejected'}
+                      {doc.status === 'pending' && '⏳ Pending'}
+                    </span>
                     <button type="button" onClick={() => getDocUrl({ listingId: id, docId: doc.id }, { onSuccess: (url) => { if (url) window.open(url, '_blank'); } })}
-                      className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50">View</button>
+                      className="text-[10px] font-mono text-blue-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition-colors">
+                      👁️ View
+                    </button>
                     {isAdmin && doc.status === 'pending' && (
                       <button type="button" onClick={() => { setReviewDocId(doc.id); setShowDocReviewModal(true); }}
-                        className="text-[10px] font-mono text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded hover:bg-emerald-50">Review</button>
+                        className="text-[10px] font-mono text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded hover:bg-emerald-50 transition-colors">
+                        📋 Review
+                      </button>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-          ) : <p className="text-xs text-black/35 font-light">No documents uploaded yet.</p>}
+          ) : <p className="text-xs text-black/35 font-light">📄 No documents uploaded yet.</p>}
         </div>
       )}
 
@@ -673,7 +867,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             <div className="space-y-3">
               <div className={cn('flex items-center gap-2 rounded-xl p-3 text-xs', titleInfo.verified ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-gray-50 border border-gray-200 text-black/60')}>
                 {titleInfo.verified ? <CheckCircle2 size={13} /> : <Clock size={13} />}
-                Token #{titleInfo.tokenId} — {titleInfo.verified ? 'Verified on-chain ✓' : 'Not verified'}
+                Token #{titleInfo.tokenId} — {titleInfo.verified ? '✅ Verified on-chain' : '⏳ Not verified'}
               </div>
               <div className="space-y-1 text-[10px] font-mono text-black/40 break-all">
                 <p>Contract: {titleInfo.contractAddress}</p>
@@ -684,15 +878,15 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               </div>
               {isAdmin && (
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <button type="button" onClick={() => setTitleAction('dispute')} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100">Dispute</button>
-                  <button type="button" onClick={() => setTitleAction('clear')}   className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100">Clear Dispute</button>
-                  <button type="button" onClick={() => setTitleAction('revoke')}  className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100">Revoke</button>
+                  <button type="button" onClick={() => setTitleAction('dispute')} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 transition-colors">⚠️ Dispute</button>
+                  <button type="button" onClick={() => setTitleAction('clear')} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 transition-colors">✅ Clear Dispute</button>
+                  <button type="button" onClick={() => setTitleAction('revoke')} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-colors">❌ Revoke</button>
                 </div>
               )}
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-black/40 font-light">No on-chain title minted yet.</p>
+              <p className="text-xs text-black/40 font-light">🔗 No on-chain title minted yet.</p>
               {isAdmin && listing.verificationStatus === 'verified' && !listing.tokenId && (
                 <button type="button" onClick={() => doMintTitle()} disabled={minting}
                   className="flex items-center gap-2 bg-black hover:bg-gray-900 disabled:bg-gray-200 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-colors">
@@ -709,22 +903,22 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         <>
           <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowRejectModal(false)} />
           <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
-            <h3 className="text-sm font-semibold text-black mb-4">Reject Listing</h3>
+            <h3 className="text-sm font-semibold text-black mb-4">❌ Reject Listing</h3>
             <div className="space-y-3">
               <select value={rejectReason} onChange={(e) => setRejectReason(e.target.value as RejectionReason)}
                 className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-red-400">
-                {['missing_document','invalid_ownership_proof','wrong_location','poor_quality','suspicious','duplicate','other'].map((r) => (
-                  <option key={r} value={r}>{r.replace(/_/g,' ')}</option>
+                {['missing_document', 'invalid_ownership_proof', 'wrong_location', 'poor_quality', 'suspicious', 'duplicate', 'other'].map((r) => (
+                  <option key={r} value={r}>{r.replace(/_/g, ' ').toUpperCase()}</option>
                 ))}
               </select>
-              <textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} rows={3} placeholder="Note for the owner…"
+              <textarea value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} rows={3} placeholder="📝 Note for the owner…"
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-red-400 resize-none" />
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setShowRejectModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" onClick={() => setShowRejectModal(false)} className="text-xs text-black/40 px-4 py-2 hover:text-black/60 transition-colors">Cancel</button>
                 <button type="button" disabled={transitioning}
                   onClick={() => { transition({ action: 'reject', reason: rejectReason, note: rejectNote || undefined }); setShowRejectModal(false); }}
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
-                  Reject
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-colors">
+                  Confirm Reject
                 </button>
               </div>
             </div>
@@ -737,16 +931,16 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         <>
           <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowRequestInfoModal(false)} />
           <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
-            <h3 className="text-sm font-semibold text-black mb-4">Request Additional Information</h3>
+            <h3 className="text-sm font-semibold text-black mb-4">📋 Request Additional Information</h3>
             <div className="space-y-3">
               <textarea value={requestInfoNote} onChange={(e) => setRequestInfoNote(e.target.value)} rows={4} placeholder="Describe what additional information is needed from the owner…"
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-amber-400 resize-none" />
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setShowRequestInfoModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" onClick={() => setShowRequestInfoModal(false)} className="text-xs text-black/40 px-4 py-2 hover:text-black/60 transition-colors">Cancel</button>
                 <button type="button" disabled={transitioning || !requestInfoNote.trim()}
                   onClick={() => { transition({ action: 'request_info', note: requestInfoNote.trim() }); setShowRequestInfoModal(false); setRequestInfoNote(''); }}
-                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
-                  Request Info
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-colors">
+                  Send Request
                 </button>
               </div>
             </div>
@@ -785,7 +979,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             <textarea value={titleReason} onChange={(e) => setTitleReason(e.target.value)} rows={3} placeholder="Reason (required)…"
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none resize-none mb-3" />
             <div className="flex gap-2 justify-end">
-              <button type="button" onClick={() => setTitleAction(null)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+              <button type="button" onClick={() => setTitleAction(null)} className="text-xs text-black/40 px-4 py-2 hover:text-black/60 transition-colors">Cancel</button>
               <button type="button" disabled={!titleReason.trim() || disputing}
                 onClick={() => {
                   if (titleAction === 'dispute') doDisputeTitle(titleReason);
@@ -793,7 +987,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   else if (titleAction === 'revoke') doRevokeTitle(titleReason);
                   setTitleAction(null); setTitleReason('');
                 }}
-                className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 capitalize">
+                className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-colors capitalize">
                 {titleAction}
               </button>
             </div>
@@ -806,31 +1000,31 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         <>
           <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowDocReviewModal(false)} />
           <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
-            <h3 className="text-sm font-semibold text-black mb-4">Review Document</h3>
+            <h3 className="text-sm font-semibold text-black mb-4">📋 Review Document</h3>
             <div className="space-y-3">
               <div className="flex gap-2">
                 <button type="button" onClick={() => setReviewDecision('approve')}
                   className={cn('flex-1 py-2 rounded-lg text-xs font-medium border transition-colors',
                     reviewDecision === 'approve' ? 'bg-emerald-50 border-emerald-300 text-emerald-600' : 'border-gray-200 text-black/60 hover:bg-gray-50')}>
-                  Approve
+                  ✅ Approve
                 </button>
                 <button type="button" onClick={() => setReviewDecision('reject')}
                   className={cn('flex-1 py-2 rounded-lg text-xs font-medium border transition-colors',
                     reviewDecision === 'reject' ? 'bg-red-50 border-red-300 text-red-600' : 'border-gray-200 text-black/60 hover:bg-gray-50')}>
-                  Reject
+                  ❌ Reject
                 </button>
               </div>
-              <textarea value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} rows={3} placeholder="Review note (optional for approve, required for reject)…"
+              <textarea value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} rows={3} placeholder="📝 Review note (optional for approve, required for reject)…"
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none resize-none" />
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setShowDocReviewModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" onClick={() => setShowDocReviewModal(false)} className="text-xs text-black/40 px-4 py-2 hover:text-black/60 transition-colors">Cancel</button>
                 <button type="button" disabled={reviewDecision === 'reject' && !reviewNote.trim()}
                   onClick={() => {
                     doReviewDocument({ docId: reviewDocId, input: { decision: reviewDecision, note: reviewNote.trim() || undefined } });
                     setShowDocReviewModal(false); setReviewDocId(null); setReviewNote('');
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
-                  {reviewDecision === 'approve' ? 'Approve' : 'Reject'}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-colors">
+                  {reviewDecision === 'approve' ? '✅ Approve' : '❌ Reject'}
                 </button>
               </div>
             </div>

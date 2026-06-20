@@ -227,7 +227,7 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
             submitOffer(
               {
                 listingId: listing.id,
-                amount: offerAmount,
+                offerPrice: offerAmount,
                 currency: listing.currency ?? "USD",
                 message: offerMessage.trim() || undefined,
               },

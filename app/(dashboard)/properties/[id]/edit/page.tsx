@@ -36,8 +36,8 @@ const editSchema = z.object({
   region:           z.string().optional(),
   country:          z.string().min(1, 'Required'),
   postalCode:       z.string().optional(),
-  longitude:        z.number({ invalid_type_error: 'Enter valid longitude' }),
-  latitude:         z.number({ invalid_type_error: 'Enter valid latitude' }),
+  longitude:        z.number().refine((v) => !Number.isNaN(v), { message: 'Enter valid longitude' }),
+  latitude:         z.number().refine((v) => !Number.isNaN(v), { message: 'Enter valid latitude' }),
   amenities:        z.string().optional(),
   neighborhoodInfo: z.string().optional(),
   utilityDetails:   z.string().optional(),
@@ -54,6 +54,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const { currentUser } = useAuthStore();
   const { data: listing, isLoading } = useListing(id);
   const { mutate: update, isPending } = useUpdateListing(id);
+  
   const [showMap, setShowMap] = useState(false);
   const [mapCenterOverride, setMapCenterOverride] = useState<[number, number] | null>(null);
   const [locationSearchOverride, setLocationSearchOverride] = useState<string | null>(null);
@@ -76,11 +77,16 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     : '';
   const locationSearch = locationSearchOverride ?? listingLocationLabel;
 
-  const { register, handleSubmit, control, setValue, reset, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(editSchema),
+  const { register, handleSubmit, control, setValue, reset, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(editSchema) as any,
+    defaultValues: {
+      listingType: 'rent' as const,
+      currency: 'USD',
+      areaUnit: 'sqm',
+    },
   });
 
-  const listingType = useWatch({ control, name: 'listingType' }) ?? 'rent';
+  const listingType = watch('listingType') ?? 'rent';
 
   const updateMapMarker = useCallback((lat: number, lng: number) => {
     const nextCenter: [number, number] = [lat, lng];
@@ -119,6 +125,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   // Populate form once listing loads
   useEffect(() => {
     if (!listing) return;
+    
     reset({
       title:            listing.title,
       description:      listing.description ?? '',
@@ -295,7 +302,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     setLocationSuggestions([]);
   };
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = (data: FormValues): void => {
     const input = {
       title:            data.title,
       description:      data.description,
@@ -345,7 +352,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6" noValidate>
 
         {/* Listing type */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
@@ -353,7 +360,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
           <div className="grid grid-cols-2 gap-3">
             {(['rent', 'sale'] as const).map((type) => (
               <button key={type} type="button"
-                onClick={() => { setValue('listingType', type); }}
+                onClick={() => setValue('listingType', type)}
                 className={cn('py-3 rounded-xl border text-sm font-medium transition-all capitalize',
                   listingType === type ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-black/50 hover:border-gray-300')}>
                 For {type === 'rent' ? 'Rent' : 'Sale'}

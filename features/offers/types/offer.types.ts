@@ -38,9 +38,9 @@ export interface CreateOfferInput {
 }
 
 export interface RespondOfferInput {
-  status: 'accepted' | 'rejected' | 'countered';
-  counterOfferPrice?: number;
-  responseMessage?: string;
+  status: 'accepted' | 'rejected' | 'countered';  // Maps to action
+  responseMessage?: string;  // Maps to responseNote
+  counterOfferPrice?: number;  // Maps to counterAmount
 }
 
 export interface PaginatedOffers {

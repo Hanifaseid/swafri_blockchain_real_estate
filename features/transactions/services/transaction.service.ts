@@ -14,8 +14,12 @@ import type {
 export async function createPurchaseTransaction(
   payload: CreatePurchaseTransactionPayload
 ): Promise<PurchaseTransaction> {
-  // This endpoint doesn't exist in the spec - transactions are created via offer acceptance
-  throw new Error('Purchase transactions are auto-created when offers are accepted. Use the offers API instead.');
+  // POST to the collection path to create a new purchase transaction
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.LIST,
+    payload
+  );
+  return response.data;
 }
 
 export async function getPurchaseTransactions(

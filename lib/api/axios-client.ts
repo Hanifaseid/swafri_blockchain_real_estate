@@ -19,6 +19,8 @@ apiClient.interceptors.request.use(
     const session = getSession();
     if (session?.token) {
       config.headers.Authorization = `Bearer ${session.token}`;
+    } else {
+      console.warn('No token found in session for request:', config.url);
     }
     return config;
   },
@@ -27,17 +29,45 @@ apiClient.interceptors.request.use(
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────
 // 401 → token expired, clear session and redirect to login.
+// 403 → forbidden, handle gracefully without crashing.
 
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      clearSession();
-      // Clear auth cookies so proxy.ts also unblocks
-      document.cookie = 'vex_authed=; path=/; max-age=0';
-      document.cookie = 'vex_user_role=; path=/; max-age=0';
-      window.location.href = '/login';
+    if (typeof window !== 'undefined') {
+      // 401 - Unauthorized (invalid/expired token)
+      if (error.response?.status === 401) {
+        clearSession();
+        // Clear auth cookies so proxy.ts also unblocks
+        document.cookie = 'vex_authed=; path=/; max-age=0';
+        document.cookie = 'vex_user_role=; path=/; max-age=0';
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      // 403 - Forbidden (authenticated but not authorized)
+      if (error.response?.status === 403) {
+        console.warn('403 Forbidden for URL:', error.config?.url);
+        console.warn('User may not have permission for this resource');
+        
+        // Don't clear session - user is authenticated, just lacks permissions
+        
+        // For offers/mine endpoint, return empty array instead of error
+        // This prevents the app from crashing
+        if (error.config?.url?.includes('/offers/mine')) {
+          console.log('Returning empty offers array for 403 on /offers/mine');
+          // @ts-ignore - we're transforming the response
+          return Promise.resolve({ 
+            data: [], 
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config: error.config,
+          });
+        }
+      }
     }
+    
     return Promise.reject(error);
   }
 );

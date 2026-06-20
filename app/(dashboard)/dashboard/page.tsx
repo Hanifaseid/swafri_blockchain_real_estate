@@ -135,19 +135,19 @@ function OwnerOverview() {
         icon={<Building2 className="w-5 h-5 text-purple-400" />}
         title="My Properties"
         desc="Manage your listed and draft properties"
-        href="/dashboard/properties"
+        href="/properties"
       />
       <QuickCard
         icon={<Activity className="w-5 h-5 text-purple-400" />}
         title="Inquiries"
         desc="View and respond to tenant inquiries"
-        href="/dashboard/inquiries"
+        href="/inquiries"
       />
       <QuickCard
         icon={<BadgeCheck className="w-5 h-5 text-purple-400" />}
         title="KYC & Wallet"
         desc="Complete verification to publish properties"
-        href="/dashboard/kyc"
+        href="/kyc"
       />
     </div>
   );

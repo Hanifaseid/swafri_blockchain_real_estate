@@ -71,7 +71,7 @@ export function ListingCard({
             <MapPin size={11} />
             <span className="truncate">{listing.city}</span>
           </div>
-          <p className="text-sm font-semibold text-emerald-600">{priceLabel}</p>
+          <p className="font-display text-base font-semibold text-emerald-800">{priceLabel}</p>
         </div>
       </Link>
     );
@@ -118,7 +118,7 @@ export function ListingCard({
             </span>
           )}
           {listing.tier === "premium" && (
-            <span className="inline-flex items-center rounded-full bg-violet-600 px-2 py-0.5 text-xs font-medium text-white">
+            <span className="inline-flex items-center rounded-full bg-emerald-900 px-2 py-0.5 text-xs font-medium text-amber-200 ring-1 ring-amber-400/30">
               Premium
             </span>
           )}
@@ -171,7 +171,7 @@ export function ListingCard({
 
         {/* Price — pushed to bottom */}
         <div className="mt-auto pt-2 flex items-end justify-between border-t border-gray-100">
-          <p className="text-base font-bold text-emerald-600">{priceLabel}</p>
+          <p className="font-display text-lg font-semibold text-emerald-800">{priceLabel}</p>
           <Badge status={listing.status} />
         </div>
       </div>

@@ -107,11 +107,7 @@ function TransactionsTable() {
       header: 'Status',
       cell: ({ row }) => {
         const config = STATUS_CONFIG[row.original.status];
-        return (
-          <Badge className={cn('text-xs font-medium', config.color)}>
-            {config.label}
-          </Badge>
-        );
+        return <Badge status={row.original.status} label={config.label} className={cn('text-xs font-medium', config.color)} />;
       },
     },
     {

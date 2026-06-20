@@ -256,7 +256,7 @@ export function DashboardTopbar({
                 </div>
 
                 <a
-                  href="/dashboard/profile"
+                  href="/profile"
                   onClick={() => setShowUserMenu(false)}
                   className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-700 hover:text-black hover:bg-slate-100 transition-colors"
                 >

@@ -9,14 +9,6 @@ import { DashboardTopbar } from '@/components/layout/dashboard/DashboardTopbar';
 import { getNavItems } from '@/config/dashboard-nav.config';
 import { useWalletListeners } from '@/features/wallet/hooks/useWalletListeners';
 
-// ─── Dashboard Layout ─────────────────────────────────────────────────────────
-// Wraps all /dashboard/* routes.
-// Handles:
-//   - Auth guard (redirect to /login if no session)
-//   - Zustand store hydration
-//   - Sidebar + Topbar shell with mobile toggle
-//   - Sign out
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -28,24 +20,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useWalletListeners();
 
   useEffect(() => {
-    const user = getCurrentUser();
-    if (!user) {
-      router.replace('/login');
-      return;
-    }
-    setUser(user);
-    setLoading(false);
-    setMounted(true);
+    // Defer all state updates out of the synchronous effect body
+    const init = () => {
+      const user = getCurrentUser();
+      if (!user) {
+        router.replace('/login');
+        return;
+      }
+      setUser(user);
+      setLoading(false);
+      setMounted(true);
+    };
+
+    // queueMicrotask pushes updates after the current render cycle,
+    // breaking the synchronous setState-in-effect chain
+    queueMicrotask(init);
   }, [router, setUser, setLoading]);
 
-  // Close mobile sidebar on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+ useEffect(() => {
+  queueMicrotask(() => setMobileOpen(false));
+}, [pathname]);
 
   const handleSignOut = () => {
     clearSession();
-    // Clear auth cookies so proxy.ts stops treating user as authenticated
     document.cookie = 'vex_authed=; path=/; max-age=0';
     document.cookie = 'vex_user_role=; path=/; max-age=0';
     window.location.href = '/login';
@@ -54,16 +51,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const getPageTitle = (): string => {
     if (!currentUser) return '';
     const items = getNavItems(currentUser.role);
-    const match = items.find(
-      (item) => {
-        const cleanHref = item.href.split('?')[0];
-        return pathname === cleanHref || (cleanHref !== '/dashboard' && pathname.startsWith(cleanHref + '/'));
-      }
-    );
+    const match = items.find((item) => {
+      const cleanHref = item.href.split('?')[0];
+      return (
+        pathname === cleanHref ||
+        (cleanHref !== '/dashboard' && pathname.startsWith(cleanHref + '/'))
+      );
+    });
     return match?.label ?? 'Dashboard';
   };
 
-  // Show minimal spinner while resolving session
   if (!mounted || !currentUser) {
     return (
       <div
@@ -76,11 +73,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div
-      className="flex h-screen overflow-hidden"
-      style={{ background: 'var(--color-dash-bg)' }}
-    >
-      {/* Sidebar */}
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--color-dash-bg)' }}>
       <DashboardSidebar
         role={currentUser.role}
         user={{
@@ -93,20 +86,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onClose={() => setMobileOpen(false)}
       />
 
-      {/* Main area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Topbar */}
         <DashboardTopbar
           user={currentUser}
           pageTitle={getPageTitle()}
           onMenuClick={() => setMobileOpen((v) => !v)}
           onSignOut={handleSignOut}
         />
-
-        {/* Page content */}
-        <main className="flex-1 overflow-y-auto scrollbar-thin">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto scrollbar-thin">{children}</main>
       </div>
     </div>
   );

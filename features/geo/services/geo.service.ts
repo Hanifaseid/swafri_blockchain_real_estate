@@ -7,6 +7,8 @@ import type {
   NeighborhoodAnalyticsData,
 } from '../types/geo.types';
 
+export type { GeoResult };
+
 interface ApiResp<T> {
   success?: boolean;
   message?: string;

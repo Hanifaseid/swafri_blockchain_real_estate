@@ -1,6 +1,11 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
-import type { Offer, CreateOfferInput, RespondOfferInput } from '@/features/offers/types/offer.types';
+import type {
+  Offer,
+  CreateOfferInput,
+  RespondOfferInput,
+} from '@/features/offers/types/offer.types';
+
 
 interface ApiResp<T> {
   success: boolean;
@@ -9,21 +14,32 @@ interface ApiResp<T> {
   errors?: Array<{ field?: string; message?: string }>;
 }
 
+
 interface ApiPaginatedResp<T> {
   success: boolean;
   message: string;
-  data: T[] | { items: T[]; total?: number; page?: number; limit?: number };
+  data: T[] | {
+    items: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+  };
   items?: T[];
   total?: number;
   page?: number;
   limit?: number;
 }
 
-function isArrayPayload<T>(payload: T[] | { items: T[] } | undefined): payload is T[] {
+
+function isArrayPayload<T>(
+  payload: T[] | { items: T[] } | undefined
+): payload is T[] {
   return Array.isArray(payload);
 }
 
+
 function normalizeOffer(offer: any): Offer {
+
   return {
     ...offer,
     listingId: offer.listingId ?? (typeof offer.listing === 'string' ? offer.listing : offer.listing?.id) ?? '',
@@ -59,32 +75,43 @@ function extractOfferError(error: unknown, fallback: string): Error {
 function normalizeArray<T>(data: ApiResp<T[]> | ApiPaginatedResp<T>): T[] {
   let items: T[] = [];
 
+
   if (isArrayPayload(data.data)) {
+
     items = data.data;
   } else if ('items' in data && Array.isArray(data.items)) {
     items = data.items;
   } else {
     const nested = data.data;
 
+
     if (
       nested &&
       typeof nested === 'object' &&
-      Array.isArray((nested as { items?: unknown }).items)
+      Array.isArray(
+        (nested as { items?: unknown }).items
+      )
     ) {
-      items = (nested as { items: T[] }).items;
+
+      items =
+        (nested as { items: T[] }).items;
+
     }
+
   }
+
 
   return items;
 }
 
 export async function submitOffer(input: CreateOfferInput): Promise<Offer> {
   const payload = {
+
     listingId: input.listingId,
-    amount: input.amount,
+    amount: input.offerPrice,
     currency: input.currency,
+
     message: input.message,
-    expiresAt: input.expiresAt,
   };
 
   try {
@@ -139,11 +166,15 @@ export async function cancelOffer(id: string): Promise<Offer> {
     throw extractOfferError(error, 'Failed to cancel offer.');
   }
 }
-
 export const offerService = {
+
   submitOffer,
+
   getMyOffers,
+
   getReceivedOffers,
+
   respondOffer,
+
   cancelOffer,
 };

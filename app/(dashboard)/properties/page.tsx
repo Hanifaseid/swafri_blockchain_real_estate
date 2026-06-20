@@ -1017,8 +1017,8 @@ function TenantView() {
               onPolygonChange={handlePolygonChange}
               listings={listings.map((l) => ({
                 id: l.id,
-                lat: l.address?.geo?.lat || 0,
-                lng: l.address?.geo?.lng || 0,
+                lat: l.location.coordinates[1] ?? 0,
+                lng: l.location.coordinates[0] ?? 0,
                 title: l.title,
                 price: l.price || l.monthlyRent || 0,
               }))}

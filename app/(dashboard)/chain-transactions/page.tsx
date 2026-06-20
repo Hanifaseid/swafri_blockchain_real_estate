@@ -81,7 +81,7 @@ function ChainTransactionsTable() {
         header: 'Status',
         cell: ({ row }) => {
           const config = STATUS_CONFIG[row.original.status];
-          return <Badge className={cn('text-xs font-medium', config.color)}>{config.label}</Badge>;
+          return <Badge status={row.original.status} label={config.label} className={cn('text-xs font-medium', config.color)} />;
         },
       },
       {
@@ -102,7 +102,7 @@ function ChainTransactionsTable() {
               <Button
                 size="sm"
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-                disabled={reconcileMutation.isLoading}
+                disabled={reconcileMutation.status === 'pending'}
                 onClick={() => reconcileMutation.mutate({ id: row.original.id, payload: { confirmations: row.original.confirmations } })}
               >
                 Reconcile
@@ -113,7 +113,7 @@ function ChainTransactionsTable() {
                 size="sm"
                 variant="outline"
                 className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
-                disabled={staleMutation.isLoading}
+                disabled={staleMutation.status === 'pending'}
                 onClick={() => staleMutation.mutate({ id: row.original.id, payload: { reason: 'Manual reconciliation required' } })}
               >
                 Mark Stale

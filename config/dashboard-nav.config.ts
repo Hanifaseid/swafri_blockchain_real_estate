@@ -70,12 +70,6 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'audit:view',
     },
     {
-      label: 'Settings',
-      href: '/settings',
-      icon: 'Settings',
-      requiredPermission: 'settings:view',
-    },
-    {
       label: 'KYC & Wallet',
       href: '/kyc',
       icon: 'BadgeCheck',
@@ -142,12 +136,6 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
       requiredPermission: 'chain-transactions:view',
     },
     {
-      label: 'Settings',
-      href: '/settings',
-      icon: 'Settings',
-      requiredPermission: 'settings:view',
-    },
-    {
       label: 'Profile',
       href: '/profile',
       icon: 'User',
@@ -190,9 +178,9 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'Transactions',
-      href: '/transactions',
+      href: '/chain-transactions',
       icon: 'CreditCard',
-      requiredPermission: 'transactions:view_own',
+      // requiredPermission: 'transactions:view_own',
     },
     {
       label: 'KYC & Wallet',

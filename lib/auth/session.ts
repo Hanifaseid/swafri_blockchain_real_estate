@@ -51,6 +51,10 @@ export function setSession(user: UserAccount, token?: string): void {
   }
   // Full session object
   localStorage.setItem('vex_session', JSON.stringify(session));
+
+  // Debug log
+  console.log('Session set for user:', user.email, 'Role:', user.role);
+  console.log('Token exists:', !!activeToken);
 }
 
 // ─── Get Session ──────────────────────────────────────────────────────────────
@@ -62,7 +66,16 @@ export function getSession(): Session | null {
   const raw = localStorage.getItem('vex_session');
   if (raw) {
     try {
-      return JSON.parse(raw) as Session;
+      const session = JSON.parse(raw) as Session;
+      // Debug log (remove in production)
+      if (session?.user?.email) {
+        console.log('Session loaded for user:', session.user.email, 'Role:', session.user.role);
+        console.log('Token exists:', !!session.token);
+        if (session.token) {
+          console.log('Token preview:', session.token.substring(0, 20) + '...');
+        }
+      }
+      return session;
     } catch {
       // fall through to legacy key
     }
@@ -73,7 +86,9 @@ export function getSession(): Session | null {
   if (legacyRaw) {
     try {
       const user = JSON.parse(legacyRaw) as UserAccount;
-      return { user };
+      // Try to get token from separate key
+      const token = localStorage.getItem(SESSION_KEYS.TOKEN) || undefined;
+      return { user, token };
     } catch {
       return null;
     }
@@ -95,12 +110,14 @@ export function clearSession(): void {
   localStorage.removeItem('vex_session');
   localStorage.removeItem(SESSION_KEYS.ACTIVE_USER);
   localStorage.removeItem(SESSION_KEYS.TOKEN);
+  console.log('Session cleared');
 }
 
 // ─── Is Authenticated ─────────────────────────────────────────────────────────
 
 export function isAuthenticated(): boolean {
-  return getCurrentUser() !== null;
+  const session = getSession();
+  return session !== null && !!session.token;
 }
 
 // ─── Update Session User ──────────────────────────────────────────────────────
