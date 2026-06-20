@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
@@ -255,6 +255,10 @@ export function PropertyMap({
 
     if (clusters.length > 0) {
       clusters.forEach((cluster) => {
+        const clusterLat = cluster.lat ?? cluster.latitude ?? cluster.center?.[1];
+        const clusterLng = cluster.lng ?? cluster.longitude ?? cluster.center?.[0];
+        if (clusterLat == null || clusterLng == null) return;
+
         const clusterIcon = L.divIcon({
           className: 'property-cluster-marker',
           html: `<div style="background-color: #10b981; color: white; width: 36px; height: 36px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 12px; font-weight: 700;">${cluster.count}</div>`,
@@ -262,7 +266,7 @@ export function PropertyMap({
           iconAnchor: [18, 18],
         });
 
-        const marker = L.marker([cluster.lat, cluster.lng], { icon: clusterIcon })
+        const marker = L.marker([clusterLat, clusterLng], { icon: clusterIcon })
           .addTo(mapRef.current!)
           .bindPopup(`
             <div style="min-width: 180px;">
@@ -273,7 +277,7 @@ export function PropertyMap({
 
         marker.on('click', () => {
           if (mapRef.current) {
-            mapRef.current.setView([cluster.lat, cluster.lng], Math.min(mapRef.current.getZoom() + 2, 18));
+            mapRef.current.setView([clusterLat, clusterLng], Math.min(mapRef.current.getZoom() + 2, 18));
           }
         });
 

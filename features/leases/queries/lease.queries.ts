@@ -13,7 +13,6 @@ import {
   completeLease,
   terminateLease,
   disputeLease,
-  respondToDispute,
   resolveDispute,
   getEscrowVerification,
   getLeaseTimeline,
@@ -26,7 +25,6 @@ export const leaseKeys = {
   detail: (id: string) => [...leaseKeys.all, 'detail', id] as const,
   escrow: (id: string) => [...leaseKeys.all, 'escrow', id] as const,
   timeline: (id: string) => [...leaseKeys.all, 'timeline', id] as const,
-  tenants: (params?: object) => [...leaseKeys.all, 'tenants', params ?? {}] as const,
 };
 
 export function useCreateLease() {
@@ -188,7 +186,6 @@ export function useEscrowVerification(id: string, enabled = true) {
   });
 }
 
-// ─── Additional Hooks ─────────────────────────────────────────────────────────
 
 export function useLeaseTimeline(id: string) {
   return useQuery({
@@ -198,15 +195,15 @@ export function useLeaseTimeline(id: string) {
   });
 }
 
+
 export function useRespondToDispute() {
   const qc = useQueryClient();
-
   return useMutation({
-    mutationFn: ({ id, response }: { id: string; response: string }) =>
-      respondToDispute(id, { response }),
+    mutationFn: ({ id, payload }: { id: string; payload: ResolveDisputePayload }) =>
+      resolveDispute(id, payload),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      toast.success('Dispute response submitted');
+      toast.success('Dispute resolved.');
     },
     onError: (err: Error) => toast.error(err.message),
   });

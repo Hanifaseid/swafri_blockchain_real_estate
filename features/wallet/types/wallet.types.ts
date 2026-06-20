@@ -1,6 +1,6 @@
 // ─── Wallet Status Types ─────────────────────────────────────────────────────
 
-export type WalletStatus = 'NOT_LINKED' | 'LINKED' | 'VERIFIED' | 'REVOKED';
+export type WalletStatus = 'NOT_LINKED' | 'PENDING_SIGNATURE' | 'LINKED' | 'VERIFIED' | 'REVOKED';
 
 // ─── Wallet Fields on User ───────────────────────────────────────────────────
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { notFound } from "next/navigation";
 import { getListing } from "@/features/listings/services/listing.service";
 import ListingDetail from "@/components/listing/ListingDetail";
 

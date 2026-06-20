@@ -4,6 +4,7 @@ import * as React from "react";
 import { Plus, Wrench, Calendar, DollarSign, FileText } from "lucide-react";
 import { useMaintenanceRecords, useCreateMaintenanceRecord } from "@/features/listings/queries/listing.queries";
 import type { MaintenanceRecord, CreateMaintenanceInput } from "@/features/listings/types/listing.types";
+
 import toast from "react-hot-toast";
 
 interface MaintenanceRecordsProps {
@@ -15,6 +16,7 @@ export default function MaintenanceRecords({ listingId }: MaintenanceRecordsProp
   const createMutation = useCreateMaintenanceRecord();
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [formData, setFormData] = React.useState<CreateMaintenanceInput>({
+
     type: 'maintenance',
     amount: 0,
     currency: 'USD',
@@ -164,8 +166,9 @@ export default function MaintenanceRecords({ listingId }: MaintenanceRecordsProp
       )}
 
       <div className="space-y-3">
-        {data?.items && data.items.length > 0 ? (
-          data.items.map((record) => (
+        {data && data.items.length > 0 ? (
+          data.items.map((record: MaintenanceRecord) => (
+
             <div
               key={record.id}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"

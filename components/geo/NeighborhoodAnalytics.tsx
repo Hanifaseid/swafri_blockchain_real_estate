@@ -2,14 +2,14 @@
 
 import * as React from "react";
 import { MapPin, TrendingUp, Home, DollarSign, BarChart3 } from "lucide-react";
-import { useNeighborhoodAnalytics } from "@/features/listings/queries/listing.queries";
+import { useGeoNeighborhoodStats } from "@/features/listings/queries/listing.queries";
 
 interface NeighborhoodAnalyticsProps {
   region?: string;
 }
 
 export default function NeighborhoodAnalytics({ region }: NeighborhoodAnalyticsProps) {
-  const { data, isLoading, error } = useNeighborhoodAnalytics({ region });
+  const { data, isLoading, error } = useGeoNeighborhoodStats(region ? { region } : undefined);
 
   if (isLoading) {
     return (

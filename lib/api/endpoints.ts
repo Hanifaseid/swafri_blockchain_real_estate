@@ -41,7 +41,6 @@ export const ENDPOINTS = {
     DASHBOARD:    '/listings/dashboard',
     ANALYTICS:    (id: string) => `/listings/${id}/analytics`,
     YIELD:        (id: string) => `/listings/${id}/yield`,
-    MAINTENANCE:  (id: string) => `/listings/${id}/maintenance-records`,
 
     // Photos
     UPLOAD_PHOTOS:   (id: string) => `/listings/${id}/photos`,
@@ -68,14 +67,14 @@ export const ENDPOINTS = {
     RENTAL_YIELD: (id: string) => `/listings/${id}/rental-yield`,
     DASHBOARD_YIELD: '/listings/dashboard/yield',
 
-    // Maintenance Records
-    // MAINTENANCE: (id: string) => `/listings/${id}/maintenance`,
+    // Maintenance Records (rental yield ledger)
+    MAINTENANCE: (id: string) => `/listings/${id}/maintenance-records`,
 
-    // Neighborhood Analytics
+    // Neighborhood Analytics (city/region breakdown — array)
     NEIGHBORHOOD_ANALYTICS: '/listings/analytics/neighborhood',
 
     // Bulk Actions
-    BULK_ACTIONS: '/listings/bulk',
+    BULK_ACTIONS: '/listings/bulk-action',
   },
 
   // ── Favorites ─────────────────────────────────────────────────────────────
@@ -180,7 +179,6 @@ export const ENDPOINTS = {
     USER_KYC:         (id: string) => `/admin/users/${id}/kyc`,
     USER_KYC_REVIEW:  (id: string) => `/admin/users/${id}/kyc/review`,
     USER_KYC_DOC_URL: (id: string, docId: string) => `/admin/users/${id}/kyc/documents/${docId}/url`,
-    USER_WALLET_REVOKE: (id: string) => `/admin/users/${id}/wallet/revoke`, // POST — Admin only
 
     // Admins — super_admin only
     ADMINS:           '/admin/admins',                               // GET list + POST create

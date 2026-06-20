@@ -52,17 +52,21 @@ export interface EscrowVerification {
 
 export interface LeaseTimelineEvent {
   id?: string;
+  key: string;          // unique key for React list rendering
   type: string;
-  label?: string;
-  status?: string;
+  label: string;        // human-readable label
+  status: string;       // completed | active | pending | etc.
   description?: string;
   txHash?: string;
-  occurredAt: string;
+  at?: string;          // ISO datetime when event occurred
+  occurredAt?: string;  // fallback from API
   actorId?: string;
   metadata?: Record<string, unknown>;
 }
 
 export interface LeaseTimeline {
   leaseId: string;
+  currentStatus: string;  // current lease status
+  escrowState: string;    // current escrow state
   events: LeaseTimelineEvent[];
 }

@@ -13,8 +13,6 @@ import type * as Leaflet from 'leaflet';
 
 import { useAuthStore } from '@/stores/auth.store';
 import { useCreateListing } from '@/features/listings/queries/listing.queries';
-import { geocode } from '@/features/listings/services/listing.service';
-import type { GeocodeResult } from '@/features/listings/types/listing.types';
 import { inputClass, inputErrorClass } from '@/components/forms/styles';
 import { cn } from '@/lib/utils';
 import { geocode, reverseGeocode, type GeoResult } from '@/features/geo/services/geo.service';
@@ -60,12 +58,16 @@ export default function CreateListingPage() {
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([9.1450, 40.4897]); // [lat, lng] Ethiopia center
   const [locationSearch, setLocationSearch] = useState('');
-  const [locationSuggestions, setLocationSuggestions] = useState<GeocodeResult[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<GeoResult[]>([]);
   const [gettingLocation, setGettingLocation] = useState(false);
   const leafletRef = useRef<typeof import('leaflet') | null>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markerRef = useRef<Leaflet.Marker | null>(null);
+  const mapCenterRef = useRef<[number, number]>([9.1450, 40.4897]);
+  const searchRequestIdRef = useRef<number>(0);
+  const [locationSearchTouched, setLocationSearchTouched] = useState(false);
+  const [searchingLocation, setSearchingLocation] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(createSchema) as any,
@@ -87,12 +89,13 @@ export default function CreateListingPage() {
     mapCenterRef.current = nextCenter;
     setMapCenter(nextCenter);
 
-    if (mapRef.current) {
+    if (mapRef.current && leafletRef.current) {
+      const L = leafletRef.current;
       mapRef.current.setView([lat, lng], 15);
       if (markerRef.current) {
         markerRef.current.setLatLng([lat, lng]);
       } else {
-        markerRef.current = L.marker([lat, lng]).addTo(mapRef.current);
+        markerRef.current = L.marker([lat, lng]).addTo(mapRef.current!);
       }
     }
   }, []);
@@ -228,22 +231,24 @@ export default function CreateListingPage() {
   };
 
   // Select location from suggestions
-  const handleSelectLocation = (suggestion: GeocodeResult) => {
-    const lat = suggestion.lat;
-    const lon = suggestion.lng;
+  const handleSelectLocation = (suggestion: GeoResult) => {
+    // GeoResult uses GeoJSON: coordinates = [lng, lat]
+    const lng = suggestion.location.coordinates[0];
+    const lat = suggestion.location.coordinates[1];
     setValue('latitude', lat);
-    setValue('longitude', lon);
-    setMapCenter([lon, lat]);
+    setValue('longitude', lng);
+    setMapCenter([lat, lng]);
     setLocationSearch(suggestion.label);
     setLocationSuggestions([]);
+    applyGeoResult(suggestion, lat, lng);
 
     // Update map if shown
     if (mapRef.current) {
-      mapRef.current.setView([lat, lon], 15);
+      mapRef.current.setView([lat, lng], 15);
       if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lon]);
+        markerRef.current.setLatLng([lat, lng]);
       } else if (leafletRef.current) {
-        markerRef.current = leafletRef.current.marker([lat, lon]).addTo(mapRef.current);
+        markerRef.current = leafletRef.current.marker([lat, lng]).addTo(mapRef.current);
       }
     }
   };

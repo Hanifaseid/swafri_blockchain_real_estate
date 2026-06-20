@@ -103,6 +103,9 @@ export interface CreateMaintenanceInput {
   note?: string;
 }
 
+// Alias for compatibility with the service layer
+export type CreateMaintenanceRecordInput = CreateMaintenanceInput;
+
 export interface MaintenanceRecordsResponse {
   items: MaintenanceRecord[];
   total: number;
@@ -110,9 +113,12 @@ export interface MaintenanceRecordsResponse {
   limit: number;
 }
 
-// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
 
-export interface NeighborhoodAnalytics {
+// ─── Geo Neighborhood Stats (array returned by GEO endpoint) ────────────────
+// Used by the NeighborhoodAnalytics component — different shape from the
+// per-neighbourhood NeighborhoodAnalytics used in MarketplaceDiscovery.
+
+export interface GeoNeighborhoodStat {
   city: string;
   region: string;
   count: number;
@@ -259,6 +265,16 @@ export interface CreateListingInput {
   location: GeoPoint;
 }
 
+// ─── Paginated discovery response ───────────────────────────────────────────
+// Shape returned by GET /listings and GET /admin/listings (data: { items, total, page, limit }).
+
+export interface PaginatedListings {
+  items: Listing[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 // ─── Discovery Filters ────────────────────────────────────────────────────────
 
 export interface ListingFilters {
@@ -351,91 +367,7 @@ export interface NeighborhoodAnalytics {
   rentalApplicationCount?: number;
 }
 
-export type MaintenanceRecordType =
-  | "maintenance"
-  | "repair"
-  | "utility"
-  | "tax"
-  | "insurance"
-  | "management"
-  | "other";
 
-export interface MaintenanceRecord {
-  id: string;
-  listingId: string;
-  leaseId?: string;
-  type: MaintenanceRecordType;
-  amount: number;
-  currency: string;
-  incurredAt: string;
-  note?: string;
-  createdAt?: string;
-}
-
-export interface CreateMaintenanceRecordInput {
-  leaseId?: string;
-  type: MaintenanceRecordType;
-  amount: number;
-  currency?: string;
-  incurredAt: string;
-  note?: string;
-}
-
-export interface YieldSummary {
-  listingId: string;
-  currency: string;
-  grossRent?: number;
-  occupancyRate?: number;
-  escrowHistory?: unknown[];
-  maintenanceCost?: number;
-  netYield?: number;
-  annualizedYield?: number;
-  annualRent?: number;
-  expenseTotal?: number;
-  purchasePrice?: number;
-}
-
-export interface SavedSearch {
-  id: string;
-  name: string;
-  query: {
-    listingType?: ListingType;
-    category?: ListingCategory;
-    minPrice?: number;
-    maxPrice?: number;
-    minBedrooms?: number;
-    minBathrooms?: number;
-    swLng?: number;
-    swLat?: number;
-    neLng?: number;
-    neLat?: number;
-    lng?: number;
-    lat?: number;
-    radius?: number;
-  };
-  alertEnabled: boolean;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-
-// ─── Paginated response ───────────────────────────────────────────────────────
-
-export interface PaginatedListings {
-  items: Listing[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface ListingCluster {
-  id: string;
-  count: number;
-  center: GeoPoint;
-  listingIds: string[];
-  minPrice?: number;
-  maxPrice?: number;
-}
 
 export interface ListingClusterFilters {
   swLng: number;
@@ -532,4 +464,21 @@ function mapStatus(s: ListingStatus): import("@/types").ListingStatus {
     archived: "expired",
   };
   return map[s] ?? "active";
+}
+
+// ─── Saved Searches ───────────────────────────────────────────────────────────
+
+export interface SavedSearch {
+  id: string;
+  name?: string;
+  query?: Record<string, unknown>;
+  alertEnabled?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSavedSearchInput {
+  name?: string;
+  query: Record<string, unknown>;
+  alertEnabled?: boolean;
 }

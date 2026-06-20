@@ -4,14 +4,12 @@
 // injected provider directly — no provider tree required, works in any browser
 // with a wallet extension.
 
+// The global `Window.ethereum` type is declared once in types/ethereum.d.ts
+// (as EthereumProvider). We keep a minimal local alias for our return type so
+// callers here only depend on `request`, while avoiding a conflicting global
+// augmentation that would shadow the fuller provider type elsewhere.
 interface Eip1193Provider {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-}
-
-declare global {
-  interface Window {
-    ethereum?: Eip1193Provider;
-  }
 }
 
 export function getInjected(): Eip1193Provider | null {

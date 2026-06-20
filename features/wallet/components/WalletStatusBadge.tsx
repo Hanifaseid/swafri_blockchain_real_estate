@@ -22,6 +22,8 @@ export function getWalletStatusDisplay(
         color: 'green',
         action: 'Unlink',
       };
+    case 'PENDING_SIGNATURE':
+      return { label: 'Awaiting signature', color: 'yellow', action: 'Complete Link' };
     case 'REVOKED':
       return { label: 'Revoked by admin', color: 'red', action: 'Re-link Wallet' };
     default:
