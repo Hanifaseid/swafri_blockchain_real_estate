@@ -29,7 +29,7 @@ export function PhotoGallery({ photos, title }: ViewGalleryProps) {
 
   if (photos.length === 0) {
     return (
-      <div className="flex h-80 items-center justify-center rounded-xl bg-gray-100 text-gray-400">
+      <div className="flex h-80 items-center justify-center rounded-xl bg-surface-card text-text-muted">
         No photos
       </div>
     );
@@ -43,7 +43,7 @@ export function PhotoGallery({ photos, title }: ViewGalleryProps) {
       {/* Main image + thumbnails */}
       <div className="flex flex-col gap-3">
         {/* Main */}
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-surface-card">
           <Image
             src={photos[active].url}
             alt={photos[active].alt ?? `${title} photo ${active + 1}`}
@@ -59,14 +59,14 @@ export function PhotoGallery({ photos, title }: ViewGalleryProps) {
               <button
                 onClick={prev}
                 aria-label="Previous photo"
-                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow transition hover:bg-white"
+                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white shadow transition hover:bg-black/80"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={next}
                 aria-label="Next photo"
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 shadow transition hover:bg-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-2 text-white shadow transition hover:bg-black/80"
               >
                 <ChevronRight size={18} />
               </button>
@@ -91,7 +91,7 @@ export function PhotoGallery({ photos, title }: ViewGalleryProps) {
                 className={cn(
                   'relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border-2 transition-all',
                   i === active
-                    ? 'border-emerald-500 opacity-100'
+                    ? 'border-accent-400 opacity-100'
                     : 'border-transparent opacity-70 hover:opacity-100'
                 )}
               >

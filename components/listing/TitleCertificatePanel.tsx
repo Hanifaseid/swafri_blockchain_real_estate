@@ -56,12 +56,12 @@ export function TitleCertificatePanel({
   // No on-chain title yet
   if (!title) {
     return (
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-900">
-          <ShieldAlert className="h-4 w-4 text-gray-400" />
+      <div className="rounded-2xl border border-border-primary bg-surface-card p-5">
+        <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold text-white">
+          <ShieldAlert className="h-4 w-4 text-text-muted" />
           Certificate of Title
         </h4>
-        <p className="text-xs leading-relaxed text-gray-500">
+        <p className="text-xs leading-relaxed text-text-muted">
           {verificationStatus === 'verified'
             ? 'Ownership verified — a blockchain title certificate is being prepared for this listing.'
             : 'This listing does not yet have an on-chain title certificate.'}
@@ -79,7 +79,7 @@ export function TitleCertificatePanel({
   const seal = {
     verified: { label: 'Title · Active', Icon: ShieldCheck, cls: 'text-emerald-800 ring-emerald-700/25 bg-emerald-700/12' },
     unverified: { label: 'Unverified', Icon: ShieldX, cls: 'text-[#7d561f] ring-[#9d6f22]/30 bg-[#9d6f22]/12' },
-    none: { label: 'No title', Icon: ShieldAlert, cls: 'text-gray-600 ring-gray-300 bg-gray-100' },
+    none: { label: 'No title', Icon: ShieldAlert, cls: 'text-text-muted ring-border-primary bg-surface-highlight' },
   }[state];
 
   return (

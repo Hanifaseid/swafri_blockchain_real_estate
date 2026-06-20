@@ -14,12 +14,12 @@ const DOC_TYPES = [
 ];
 
 const STATUS_STYLE: Record<string, string> = {
-  verified: 'bg-[#e7f0e8] text-[#163c2c]',
-  approved: 'bg-[#e7f0e8] text-[#163c2c]',
-  pending: 'bg-[#f7f2e8] text-[#7d561f]',
-  under_review: 'bg-[#f7f2e8] text-[#7d561f]',
-  rejected: 'bg-[#f6e6e1] text-[#a33b27]',
-  not_started: 'bg-[#efe9dc] text-[#5f6b61]',
+  verified: 'bg-surface-success text-emerald-400',
+  approved: 'bg-surface-success text-emerald-400',
+  pending: 'bg-surface-warning text-amber-400',
+  under_review: 'bg-surface-warning text-amber-400',
+  rejected: 'bg-surface-danger text-text-danger',
+  not_started: 'bg-surface-highlight text-text-muted',
 };
 
 export default function AccountKycPage() {
@@ -53,20 +53,20 @@ export default function AccountKycPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a6f3c]">Compliance</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold text-[#153828]">KYC &amp; verification</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-400">Compliance</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold text-white">KYC &amp; verification</h1>
       </div>
 
       {/* Status */}
-      <section className="rounded-lg border border-[#d5c8b3] bg-white p-6">
+      <section className="rounded-lg border border-border-primary bg-surface-card p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-[#e7f0e8] p-3 text-[#163c2c]">
+            <div className="rounded-lg bg-surface-success p-3 text-emerald-400">
               <ShieldCheck size={22} />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#153828]">Verification status</h2>
-              <p className="mt-1 text-sm text-[#5f6b61]">
+              <h2 className="text-lg font-semibold text-white">Verification status</h2>
+              <p className="mt-1 text-sm text-text-muted">
                 KYC approval is required before listing a property or moving funds in escrow.
               </p>
             </div>
@@ -83,21 +83,21 @@ export default function AccountKycPage() {
 
       {/* Upload */}
       {!isVerified && (
-        <section className="rounded-lg border border-[#d5c8b3] bg-white p-6">
-          <h2 className="text-sm font-semibold text-[#153828]">Submit identity documents</h2>
-          <p className="mt-1 text-sm text-[#5f6b61]">
+        <section className="rounded-lg border border-border-primary bg-surface-card p-6">
+          <h2 className="text-sm font-semibold text-white">Submit identity documents</h2>
+          <p className="mt-1 text-sm text-text-muted">
             Upload a clear image or PDF. Accepted: national ID, passport, or driver&apos;s licence.
           </p>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f6b61]">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
                 Document type
               </span>
               <select
                 value={documentType}
                 onChange={(e) => setDocumentType(e.target.value)}
-                className="mt-1.5 h-11 w-full rounded-lg border border-[#d5c8b3] bg-[#fbf8f1] px-3 text-sm text-[#1c1a16] outline-none focus:border-[#1e5a3d]"
+                className="mt-1.5 h-11 w-full rounded-lg border border-border-primary bg-surface-input px-3 text-sm text-white outline-none focus:border-accent-400"
               >
                 {DOC_TYPES.map((d) => (
                   <option key={d.value} value={d.value}>
@@ -108,7 +108,7 @@ export default function AccountKycPage() {
             </label>
 
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f6b61]">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
                 File(s)
               </span>
               <input
@@ -117,17 +117,17 @@ export default function AccountKycPage() {
                 multiple
                 accept="image/*,application/pdf"
                 onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-                className="mt-1.5 block w-full text-sm text-[#5f6b61] file:mr-3 file:rounded-lg file:border-0 file:bg-[#1e5a3d] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#17492f]"
+                className="mt-1.5 block w-full text-sm text-text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-emerald-700"
               />
             </label>
           </div>
 
           {files.length > 0 && (
-            <ul className="mt-3 space-y-1 text-xs text-[#5f6b61]">
+            <ul className="mt-3 space-y-1 text-xs text-text-muted">
               {files.map((f) => (
                 <li key={f.name} className="flex items-center gap-2">
-                  <UploadCloud size={13} className="text-[#8a6f3c]" />
-                  {f.name} <span className="text-[#9a917f]">({Math.round(f.size / 1024)} KB)</span>
+                  <UploadCloud size={13} className="text-accent-400" />
+                  {f.name} <span className="text-text-placeholder">({Math.round(f.size / 1024)} KB)</span>
                 </li>
               ))}
             </ul>

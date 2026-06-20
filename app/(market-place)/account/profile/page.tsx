@@ -35,48 +35,48 @@ export default function AccountProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a6f3c]">Account</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold text-[#153828]">Profile</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-400">Account</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold text-white">Profile</h1>
       </div>
 
       {/* Editable details */}
-      <section className="rounded-lg border border-[#d5c8b3] bg-white p-5">
-        <h2 className="mb-4 text-sm font-semibold text-[#153828]">Personal details</h2>
+      <section className="rounded-lg border border-border-primary bg-surface-card p-5">
+        <h2 className="mb-4 text-sm font-semibold text-white">Personal details</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f6b61]">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
               Name
             </span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1.5 h-11 w-full rounded-lg border border-[#d5c8b3] bg-[#fbf8f1] px-3 text-sm text-[#1c1a16] outline-none focus:border-[#1e5a3d]"
+              className="mt-1.5 h-11 w-full rounded-lg border border-border-primary bg-surface-input px-3 text-sm text-white outline-none focus:border-accent-400"
             />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f6b61]">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
               Phone
             </span>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="Optional"
-              className="mt-1.5 h-11 w-full rounded-lg border border-[#d5c8b3] bg-[#fbf8f1] px-3 text-sm text-[#1c1a16] outline-none placeholder:text-[#9a917f] focus:border-[#1e5a3d]"
+              className="mt-1.5 h-11 w-full rounded-lg border border-border-primary bg-surface-input px-3 text-sm text-white outline-none placeholder:text-text-placeholder focus:border-accent-400"
             />
           </label>
           <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f6b61]">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
               Email
             </span>
-            <p className="mt-1.5 flex h-11 items-center text-sm font-medium text-[#3a4640]">
+            <p className="mt-1.5 flex h-11 items-center text-sm font-medium text-text-secondary">
               {currentUser?.email}
             </p>
           </div>
           <div>
-            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f6b61]">
+            <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
               Role
             </span>
-            <p className="mt-1.5 flex h-11 items-center text-sm font-medium text-[#3a4640]">
+            <p className="mt-1.5 flex h-11 items-center text-sm font-medium text-text-secondary">
               {currentUser?.role?.replace('_', ' ')}
             </p>
           </div>
@@ -89,20 +89,20 @@ export default function AccountProfilePage() {
       </section>
 
       {/* KYC status */}
-      <section className="rounded-lg border border-[#d5c8b3] bg-white p-5">
+      <section className="rounded-lg border border-border-primary bg-surface-card p-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-lg bg-[#e7f0e8] p-2.5 text-[#163c2c]">
+            <div className="rounded-lg bg-surface-success p-2.5 text-emerald-400">
               <ShieldCheck size={20} />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-[#153828]">Identity (KYC)</h2>
-              <p className="mt-0.5 text-xs text-[#5f6b61]">
+              <h2 className="text-sm font-semibold text-white">Identity (KYC)</h2>
+              <p className="mt-0.5 text-xs text-text-muted">
                 Required before listing or moving funds in escrow.
               </p>
             </div>
           </div>
-          <span className="rounded-full bg-[#f7f2e8] px-3 py-1.5 text-xs font-semibold text-[#163c2c]">
+          <span className="rounded-full bg-surface-highlight px-3 py-1.5 text-xs font-semibold text-emerald-400">
             {currentUser?.kycStatus ?? 'not_started'}
           </span>
         </div>

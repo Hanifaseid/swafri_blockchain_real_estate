@@ -34,23 +34,23 @@ function OfferRow({ offer, isOwner }: { offer: Offer; isOwner: boolean }) {
   const id = listingId(offer);
 
   return (
-    <div className="rounded-lg border border-[#d5c8b3] bg-white p-4">
+    <div className="rounded-lg border border-border-primary bg-surface-card p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="font-semibold">{listingTitle(offer)}</h2>
-          <p className="mt-1 text-sm text-[#5f6b61]">
+          <h2 className="font-semibold text-white">{listingTitle(offer)}</h2>
+          <p className="mt-1 text-sm text-text-muted">
             {offer.currency ?? 'USD'} {Number(offer.offerPrice ?? 0).toLocaleString()}
-            <span className="mx-2 text-[#c3b9a3]">·</span>
-            <span className="font-medium capitalize text-[#163c2c]">{offer.status}</span>
+            <span className="mx-2 text-border-primary">·</span>
+            <span className="font-medium capitalize text-emerald-400">{offer.status}</span>
             {offer.counterOfferPrice ? (
-              <span className="ml-2 text-[#8a6f3c]">
+              <span className="ml-2 text-accent-400">
                 (countered {offer.currency ?? 'USD'} {offer.counterOfferPrice.toLocaleString()})
               </span>
             ) : null}
           </p>
         </div>
         {id && (
-          <Link href={`/properties/${id}`} className="text-sm font-medium text-[#1e5a3d]">
+          <Link href={`/properties/${id}`} className="text-sm font-medium text-accent-400">
             View listing
           </Link>
         )}
@@ -58,12 +58,12 @@ function OfferRow({ offer, isOwner }: { offer: Offer; isOwner: boolean }) {
 
       {/* Actions */}
       {actionable && (
-        <div className="mt-4 border-t border-[#efe7d6] pt-3">
+        <div className="mt-4 border-t border-border-secondary pt-3">
           {isOwner ? (
             countering ? (
               <div className="flex flex-wrap items-end gap-2">
                 <label className="flex-1">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[#5f6b61]">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">
                     Counter price
                   </span>
                   <input
@@ -71,7 +71,7 @@ function OfferRow({ offer, isOwner }: { offer: Offer; isOwner: boolean }) {
                     min={0}
                     value={counterPrice}
                     onChange={(e) => setCounterPrice(e.target.value)}
-                    className="mt-1 h-10 w-full rounded-lg border border-[#d5c8b3] bg-[#fbf8f1] px-3 text-sm text-[#1c1a16] outline-none focus:border-[#1e5a3d]"
+                    className="mt-1 h-10 w-full rounded-lg border border-border-primary bg-surface-input px-3 text-sm text-white outline-none focus:border-accent-400"
                   />
                 </label>
                 <Button
@@ -143,8 +143,8 @@ export default function AccountOffersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a6f3c]">Purchases</p>
-        <h1 className="mt-2 font-display text-3xl font-semibold text-[#153828]">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-400">Purchases</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold text-white">
           {isOwner ? 'Received offers' : 'My offers'}
         </h1>
       </div>
@@ -153,10 +153,10 @@ export default function AccountOffersPage() {
           <OfferRow key={offer.id} offer={offer} isOwner={isOwner} />
         ))}
         {!isLoading && data.length === 0 && (
-          <div className="rounded-lg border border-[#d5c8b3] bg-white p-8 text-center">
-            <BadgeDollarSign className="mx-auto h-8 w-8 text-[#8a6f3c]" />
-            <p className="mt-3 font-medium">No offers yet</p>
-            <p className="mt-1 text-sm text-[#5f6b61]">
+          <div className="rounded-lg border border-border-primary bg-surface-card p-8 text-center">
+            <BadgeDollarSign className="mx-auto h-8 w-8 text-accent-400" />
+            <p className="mt-3 font-medium text-white">No offers yet</p>
+            <p className="mt-1 text-sm text-text-muted">
               {isOwner
                 ? 'Offers from buyers on your listings appear here.'
                 : 'Make an offer from any sale listing to see it here.'}

@@ -36,13 +36,13 @@ function SpecItem({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
-      <div className="rounded-md bg-white p-2 text-emerald-600 shadow-sm">
+    <div className="flex items-center gap-3 rounded-lg border border-border-primary bg-surface-highlight p-3">
+      <div className="rounded-md bg-surface-card p-2 text-accent-400 shadow-sm">
         <Icon size={16} aria-hidden="true" />
       </div>
       <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-sm font-semibold text-gray-900">{value}</p>
+        <p className="text-xs text-text-muted">{label}</p>
+        <p className="text-sm font-semibold text-white">{value}</p>
       </div>
     </div>
   );
@@ -60,7 +60,7 @@ export function PropertyMetadata({ listing, className }: PropertyMetadataProps) 
 
       {/* Price + status ──────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
-        <p className="text-3xl font-bold text-emerald-600">{priceLabel}</p>
+        <p className="text-3xl font-bold text-accent-400">{priceLabel}</p>
         <Badge status={listing.status} />
         <Badge
           status={listing.listingType === 'sale' ? 'active' : 'rented'}
@@ -78,8 +78,8 @@ export function PropertyMetadata({ listing, className }: PropertyMetadataProps) 
 
       {/* Title + address ─────────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{listing.title}</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-white">{listing.title}</h1>
+        <p className="mt-1 text-sm text-text-muted">
           {listing.address}, {listing.city}, {listing.country}
         </p>
       </div>
@@ -149,10 +149,10 @@ export function PropertyMetadata({ listing, className }: PropertyMetadataProps) 
       {/* Description ─────────────────────────────────────────────────────── */}
       {listing.description && (
         <div>
-          <h2 className="mb-2 text-base font-semibold text-gray-900">
+          <h2 className="mb-2 text-base font-semibold text-white">
             About this property
           </h2>
-          <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
+          <p className="whitespace-pre-line text-sm leading-relaxed text-text-secondary">
             {listing.description}
           </p>
         </div>
@@ -161,17 +161,17 @@ export function PropertyMetadata({ listing, className }: PropertyMetadataProps) 
       {/* Amenities ───────────────────────────────────────────────────────── */}
       {listing.amenities.length > 0 && (
         <div>
-          <h2 className="mb-3 text-base font-semibold text-gray-900">
+          <h2 className="mb-3 text-base font-semibold text-white">
             Amenities
           </h2>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
             {listing.amenities.map((a) => (
               <li
                 key={a.id}
-                className="flex items-center gap-2 text-sm text-gray-700"
+                className="flex items-center gap-2 text-sm text-text-secondary"
               >
                 <span
-                  className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                  className="h-1.5 w-1.5 rounded-full bg-accent-400"
                   aria-hidden="true"
                 />
                 {a.label}

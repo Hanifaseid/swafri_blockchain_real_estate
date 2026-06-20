@@ -42,11 +42,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-16 pt-8 lg:px-6">
-      {/* Light "paper" card on the dark marketplace shell — the account pages
-          are styled light (dark-green headings, white sub-cards). */}
-      <section className="min-w-0 rounded-2xl border border-[#e3d9c6] bg-[#fbf8f1] p-5 text-[#1c1a16] shadow-2xl md:p-7">
-        {children}
-      </section>
+      {children}
     </div>
   );
 }

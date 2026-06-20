@@ -14,8 +14,8 @@ export default function AccountListingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8a6f3c]">Property owner</p>
-          <h1 className="mt-2 font-display text-3xl font-semibold text-[#153828]">My listings</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent-400">Property owner</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold text-white">My listings</h1>
         </div>
         <Button asChild>
           <Link href="/account/listings/new">
@@ -34,10 +34,10 @@ export default function AccountListingsPage() {
         ))}
       </div>
       {!isLoading && data.length === 0 && (
-        <div className="rounded-lg border border-[#d5c8b3] bg-white p-8 text-center">
-          <Wrench className="mx-auto h-8 w-8 text-[#8a6f3c]" />
-          <p className="mt-3 font-medium">No property listings yet</p>
-          <p className="mt-1 text-sm text-[#5f6b61]">Create a draft, upload photos and documents, then submit it for review.</p>
+        <div className="rounded-lg border border-border-primary bg-surface-card p-8 text-center">
+          <Wrench className="mx-auto h-8 w-8 text-accent-400" />
+          <p className="mt-3 font-medium text-white">No property listings yet</p>
+          <p className="mt-1 text-sm text-text-muted">Create a draft, upload photos and documents, then submit it for review.</p>
         </div>
       )}
     </div>

@@ -80,6 +80,13 @@ export function PropertyMap({
       map.invalidateSize();
     }, 100);
 
+    // Keep Leaflet's internal size in sync whenever the pane resizes or
+    // becomes visible (flex/grid layouts settle after mount; toggling
+    // list/map changes the container size). Without this the map can render
+    // at the wrong size and feel non-interactive.
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    resizeObserver.observe(container);
+
     // Handle viewport changes
     const handleMoveEnd = () => {
       if (mode === 'viewport' && onViewportChange) {
@@ -161,6 +168,7 @@ export function PropertyMap({
     });
 
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
     };
@@ -360,8 +368,8 @@ export function PropertyMap({
   };
 
   return (
-    <div className="relative">
-      <div ref={mapContainerRef} className="w-full h-full min-h-[400px] rounded-xl" />
+    <div className="relative h-full w-full">
+      <div ref={mapContainerRef} className="absolute inset-0 h-full w-full" />
 
       {/* Mode-specific instructions */}
       <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 z-[1000] max-w-xs">
