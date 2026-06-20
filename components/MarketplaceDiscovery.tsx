@@ -429,6 +429,11 @@ export function MarketplaceDiscovery() {
                     listing={listingToSummary(listing)}
                     href={`/discovery/${listing.id}`}
                     variant="compact"
+                    onLocate={(coords) => {
+                      setRadiusCenter(coords);
+                      setAutoZoom(16);
+                      setView('map');
+                    }}
                   />
                 ))}
               </div>

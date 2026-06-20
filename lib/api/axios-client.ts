@@ -1,38 +1,125 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { getSession, setSession, clearSession } from '@/lib/auth/session';
-import { ENDPOINTS } from '@/lib/api/endpoints';
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  type InternalAxiosRequestConfig,
+} from "axios";
+
+import { getSession, setSession, clearSession } from "@/lib/auth/session";
+import { ENDPOINTS } from "@/lib/api/endpoints";
+
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    skipAuth?: boolean;
+    _retry?: boolean;
+  }
+}
+
+type RetryRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+  skipAuth?: boolean;
+};
+
+type RefreshResponse = {
+  data?: {
+    tokens?: {
+      accessToken?: string;
+      refreshToken?: string;
+    };
+    accessToken?: string;
+    refreshToken?: string;
+  };
+  accessToken?: string;
+  refreshToken?: string;
+};
+
+const REFRESH_TOKEN_KEY = "vex_refresh_token";
 
 // ─── Axios Instance ───────────────────────────────────────────────────────────
-// Base URL is injected from NEXT_PUBLIC_API_URL in .env.local
-// Confirmed: https://real-estate-management-backend-grl9.onrender.com/api/v1
 
 export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 20_000, // 20s — Render free tier can be slow on cold start
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 20_000,
 });
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getStoredRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+function setStoredRefreshToken(token: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(REFRESH_TOKEN_KEY, token);
+}
+
+function clearStoredRefreshToken(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+function isRefreshEndpoint(url?: string): boolean {
+  return Boolean(url && url.includes(ENDPOINTS.AUTH.REFRESH));
+}
+
+function forceLogout(): void {
+  if (typeof window === "undefined") return;
+
+  clearStoredRefreshToken();
+  clearSession();
+
+  document.cookie = "vex_authed=; path=/; max-age=0";
+  document.cookie = "vex_user_role=; path=/; max-age=0";
+
+  if (!window.location.pathname.includes("/auth/login")) {
+    window.location.href = "/auth/login";
+  }
+}
+
+function extractTokens(data: RefreshResponse) {
+  const accessToken =
+    data?.data?.tokens?.accessToken ??
+    data?.data?.accessToken ??
+    data?.accessToken;
+
+  const refreshToken =
+    data?.data?.tokens?.refreshToken ??
+    data?.data?.refreshToken ??
+    data?.refreshToken;
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+}
+
 // ─── Request Interceptor ──────────────────────────────────────────────────────
-// Attaches the Bearer token on every outgoing request.
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const session = getSession();
-    if (session?.token) {
-      config.headers.Authorization = `Bearer ${session.token}`;
-    } else {
-      console.warn('No token found in session for request:', config.url);
+    if (config.skipAuth) {
+      return config;
     }
+
+    const session = getSession();
+
+    if (session?.token) {
+      config.headers = AxiosHeaders.from(config.headers);
+      config.headers.set("Authorization", `Bearer ${session.token}`);
+    }
+
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
-// ─── Silent Token Refresh ─────────────────────────────────────────────────────
-// On 401, attempt to refresh the access token using the stored refresh token.
-// Queues concurrent 401s so only one refresh request fires at a time.
+// ─── Refresh Queue ────────────────────────────────────────────────────────────
 
 let isRefreshing = false;
+
 let failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
@@ -42,57 +129,61 @@ function processQueue(error: unknown, token: string | null = null): void {
   failedQueue.forEach((pending) => {
     if (error) {
       pending.reject(error);
+    } else if (token) {
+      pending.resolve(token);
     } else {
-      pending.resolve(token!);
+      pending.reject(new Error("Token refresh failed without an error."));
     }
   });
-  failedQueue = [];
-}
 
-function forceLogout(): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem('vex_refresh_token');
-  clearSession();
-  document.cookie = 'vex_authed=; path=/; max-age=0';
-  document.cookie = 'vex_user_role=; path=/; max-age=0';
-  window.location.href = '/auth/login';
+  failedQueue = [];
 }
 
 // ─── Response Interceptor ─────────────────────────────────────────────────────
 
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    // Only handle 401 on client side, and skip if already retried or is the refresh call itself
-    if (
-      error.response?.status !== 401 ||
-      typeof window === 'undefined' ||
-      originalRequest._retry ||
-      originalRequest.url === ENDPOINTS.AUTH.REFRESH
-    ) {
-      // Non-401 or server-side or refresh endpoint itself failed → reject immediately
-      if (error.response?.status === 401 && typeof window !== 'undefined' && originalRequest.url === ENDPOINTS.AUTH.REFRESH) {
-        forceLogout();
-      }
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryRequestConfig | undefined;
+
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    // Check if we have a refresh token to use
-    const refreshToken = localStorage.getItem('vex_refresh_token');
+    const status = error.response?.status;
+
+    const shouldAttemptRefresh =
+      status === 401 &&
+      typeof window !== "undefined" &&
+      !originalRequest._retry &&
+      !originalRequest.skipAuth &&
+      !isRefreshEndpoint(originalRequest.url);
+
+    if (!shouldAttemptRefresh) {
+      return Promise.reject(error);
+    }
+
+    const refreshToken = getStoredRefreshToken();
+
     if (!refreshToken) {
       forceLogout();
       return Promise.reject(error);
     }
 
-    // If already refreshing, queue this request
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({
-          resolve: (newToken: string) => {
+          resolve: (newAccessToken: string) => {
             originalRequest._retry = true;
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            originalRequest.headers = AxiosHeaders.from(
+              originalRequest.headers,
+            );
+            originalRequest.headers.set(
+              "Authorization",
+              `Bearer ${newAccessToken}`,
+            );
+
             resolve(apiClient(originalRequest));
           },
           reject,
@@ -100,41 +191,44 @@ apiClient.interceptors.response.use(
       });
     }
 
-    // Mark as refreshing and attempt token refresh
     isRefreshing = true;
     originalRequest._retry = true;
 
     try {
-      const { data } = await apiClient.post(ENDPOINTS.AUTH.REFRESH, { refreshToken });
+      const { data } = await apiClient.post<RefreshResponse>(
+        ENDPOINTS.AUTH.REFRESH,
+        { refreshToken },
+        {
+          skipAuth: true,
+        },
+      );
 
-      const newAccessToken: string = data?.data?.tokens?.accessToken ?? data?.data?.accessToken ?? data?.accessToken;
-      const newRefreshToken: string = data?.data?.tokens?.refreshToken ?? data?.data?.refreshToken ?? data?.refreshToken;
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
+        extractTokens(data);
 
       if (!newAccessToken) {
-        throw new Error('No access token in refresh response');
+        throw new Error("No access token in refresh response.");
       }
-      // Persist the refreshed access token only. User profile data stays in memory.
+
       setSession(newAccessToken);
+
       if (newRefreshToken) {
-        localStorage.setItem('vex_refresh_token', newRefreshToken);
+        setStoredRefreshToken(newRefreshToken);
       }
 
-      // Update auth header for the original request
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      originalRequest.headers = AxiosHeaders.from(originalRequest.headers);
+      originalRequest.headers.set("Authorization", `Bearer ${newAccessToken}`);
 
-      // Process queued requests with the new token
       processQueue(null, newAccessToken);
 
-      // Retry the original request
       return apiClient(originalRequest);
-
     } catch (refreshError) {
-      // Refresh failed — flush queue, force logout
       processQueue(refreshError, null);
       forceLogout();
+
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
     }
-  }
+  },
 );
