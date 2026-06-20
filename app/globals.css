@@ -1,79 +1,181 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens ──────────────────────────────────────────────────────────
-   All brand colors, spacing, and font decisions live here.
-   Components reference these variables — never hardcode hex values.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — "Terra" · Warm Premium Real-Estate
+   ───────────────────────────────────────────────────────────────────────────
+   Direction: editorial, aspirational, credible. Deep forest green as the
+   trust/primary color, warm gold as the premium accent, sand/stone neutrals,
+   and a serif display face for headings.
+
+   IMPORTANT (how the reskin works):
+   The component layer historically used Tailwind's built-in `emerald-*`,
+   `gray-*`, and `amber-*` utilities. Rather than edit ~100 files, we REMAP
+   those built-in scales here:
+       emerald  →  Verdant (forest green)   — primary actions, active, success
+       gray     →  Stone (warm neutral)     — text, borders, surfaces
+       amber    →  Gold (premium accent)    — featured, highlights, premium CTAs
+   So every existing `bg-emerald-600`, `text-gray-500`, `bg-amber-500` now
+   renders in the warm-premium palette automatically.
+
+   New semantic tokens (brand-*, accent-*, etc.) are provided for new work.
+   Components should prefer semantic tokens; never hardcode hex.
+   ═════════════════════════════════════════════════════════════════════════ */
 
 @theme {
-  /* Fonts */
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  /* ─── Fonts ─────────────────────────────────────────────────────────────── */
+  --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', 'Playfair Display', Georgia, serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Brand — Emerald (primary action, highlights, KYC approved) */
-  --color-brand-50:  #ecfdf5;
-  --color-brand-100: #d1fae5;
-  --color-brand-400: #34d399;
-  --color-brand-500: #10b981;
-  --color-brand-600: #059669;
-  --color-brand-700: #047857;
-  --color-brand-900: #064e3b;
-  --color-brand-950: #022c22;
+  /* ─── REMAP: emerald → Verdant (forest green) ───────────────────────────── */
+  /* Sophisticated, slightly desaturated green. NOT neon. */
+  --color-emerald-50:  #f0f6f1;
+  --color-emerald-100: #dcebe0;
+  --color-emerald-200: #bbd7c5;
+  --color-emerald-300: #8fbb9f;
+  --color-emerald-400: #5e9a76;
+  --color-emerald-500: #3d7d58;
+  --color-emerald-600: #2f6b4f;   /* primary action */
+  --color-emerald-700: #245540;
+  --color-emerald-800: #1f4435;
+  --color-emerald-900: #19372b;
+  --color-emerald-950: #0c1f18;
 
-  /* Surface — dark backgrounds used on public/auth pages */
-  --color-surface-base:    #000000;
-  --color-surface-raised:  #0a0a0a;
-  --color-surface-overlay: rgba(0,0,0,0.6);
+  /* Mirror onto `green` (used by sidebar logo, a few spots) */
+  --color-green-50:  #f0f6f1;
+  --color-green-100: #dcebe0;
+  --color-green-200: #bbd7c5;
+  --color-green-300: #8fbb9f;
+  --color-green-400: #5e9a76;
+  --color-green-500: #3d7d58;
+  --color-green-600: #2f6b4f;
+  --color-green-700: #245540;
+  --color-green-800: #1f4435;
+  --color-green-900: #19372b;
+  --color-green-950: #0c1f18;
 
-  /* Dashboard surfaces — slightly lighter than pure black */
-  --color-dash-bg:       #F8FAFC;
-  --color-dash-sidebar:  #0f172a;
-  --color-dash-topbar:   #FFFFFF;
-  --color-dash-card:     #FFFFFF;
+  /* ─── REMAP: amber → Gold (premium accent) ──────────────────────────────── */
+  /* Warm, refined gold. Used for Featured, premium highlights, accent CTAs. */
+  --color-amber-50:  #faf5e9;
+  --color-amber-100: #f3e7c6;
+  --color-amber-200: #e8cf8c;
+  --color-amber-300: #dcb456;
+  --color-amber-400: #cf9f33;
+  --color-amber-500: #bd8b27;   /* signature gold */
+  --color-amber-600: #9c6f22;
+  --color-amber-700: #7d561f;
+  --color-amber-800: #674620;
+  --color-amber-900: #583c20;
+  --color-amber-950: #331f0e;
+
+  /* ─── REMAP: gray → Stone (warm neutral) ────────────────────────────────── */
+  /* Slightly warm grays give the "premium paper" feel. */
+  --color-gray-50:  #faf8f5;
+  --color-gray-100: #f4f2ec;
+  --color-gray-200: #e8e4da;
+  --color-gray-300: #d7d0c2;
+  --color-gray-400: #aaa191;
+  --color-gray-500: #7d7568;   /* secondary text */
+  --color-gray-600: #57514a;   /* body text */
+  --color-gray-700: #423d37;
+  --color-gray-800: #2b2823;
+  --color-gray-900: #1c1a16;   /* headings */
+  --color-gray-950: #100e0b;
+
+  /* ─── REMAP: slate → warm charcoal (dashboard chrome, 'sold' badge) ─────── */
+  --color-slate-50:  #f7f6f3;
+  --color-slate-100: #efece6;
+  --color-slate-200: #e0dcd3;
+  --color-slate-300: #cbc5b8;
+  --color-slate-400: #9c9486;
+  --color-slate-500: #736c60;
+  --color-slate-600: #524d45;
+  --color-slate-700: #3c3832;
+  --color-slate-800: #262320;
+  --color-slate-900: #1a1713;
+  --color-slate-950: #0f0d0a;
+
+  /* ─── Semantic brand (forest green) ─────────────────────────────────────── */
+  --color-brand-50:  #f0f6f1;
+  --color-brand-100: #dcebe0;
+  --color-brand-400: #5e9a76;
+  --color-brand-500: #3d7d58;
+  --color-brand-600: #2f6b4f;
+  --color-brand-700: #245540;
+  --color-brand-900: #19372b;
+  --color-brand-950: #0c1f18;
+
+  /* ─── Semantic accent (gold) ────────────────────────────────────────────── */
+  --color-accent-50:  #faf5e9;
+  --color-accent-100: #f3e7c6;
+  --color-accent-300: #dcb456;
+  --color-accent-400: #cf9f33;
+  --color-accent-500: #bd8b27;
+  --color-accent-600: #9c6f22;
+  --color-accent-700: #7d561f;
+
+  /* ─── Surfaces — warm espresso for dark public/auth pages ───────────────── */
+  --color-surface-base:    #14110c;
+  --color-surface-raised:  #1d1812;
+  --color-surface-overlay: rgba(20,17,12,0.6);
+
+  /* ─── Dashboard surfaces — warm paper + espresso sidebar ────────────────── */
+  --color-dash-bg:       #faf8f5;
+  --color-dash-sidebar:  #1c1813;   /* warm charcoal, not cool slate */
+  --color-dash-topbar:   #ffffff;
+  --color-dash-card:     #ffffff;
   --color-dash-border:   rgba(255,255,255,0.08);
   --color-dash-hover:    rgba(255,255,255,0.05);
+  --color-dash-divider:  #e8e4da;   /* light borders on the content area */
 
-  /* Text */
+  /* ─── Text (on dark surfaces; light-surface text uses gray-* tokens) ────── */
   --color-text-primary:   #ffffff;
-  --color-text-secondary: rgba(255,255,255,0.6);
-  --color-text-muted:     rgba(255,255,255,0.35);
-  --color-text-inverse:   #000000;
+  --color-text-secondary: rgba(255,255,255,0.65);
+  --color-text-muted:     rgba(255,255,255,0.4);
+  --color-text-inverse:   #1c1a16;
 
-  /* Status colors */
-  --color-status-active:    #10b981;  /* emerald */
-  --color-status-pending:   #f59e0b;  /* amber */
-  --color-status-suspended: #f97316;  /* orange */
-  --color-status-blocked:   #ef4444;  /* red */
-  --color-status-rejected:  #ef4444;
-  --color-status-approved:  #10b981;
+  /* ─── Status colors (warm-tuned) ────────────────────────────────────────── */
+  --color-status-active:    #2f6b4f;  /* verdant */
+  --color-status-pending:   #bd8b27;  /* gold */
+  --color-status-suspended: #c2702c;  /* terracotta */
+  --color-status-blocked:   #b4452f;  /* clay red */
+  --color-status-rejected:  #b4452f;
+  --color-status-approved:  #2f6b4f;
 
-  /* KYC status */
+  /* ─── KYC status ────────────────────────────────────────────────────────── */
   --color-kyc-not-started:  rgba(255,255,255,0.3);
-  --color-kyc-pending:      #f59e0b;
-  --color-kyc-review:       #3b82f6;
-  --color-kyc-approved:     #10b981;
-  --color-kyc-rejected:     #ef4444;
-  --color-kyc-expired:      #6b7280;
+  --color-kyc-pending:      #bd8b27;
+  --color-kyc-review:       #3f6f96;
+  --color-kyc-approved:     #2f6b4f;
+  --color-kyc-rejected:     #b4452f;
+  --color-kyc-expired:      #8c8378;
 
-  /* Role colors */
-  --color-role-super-admin: #f59e0b;  /* amber */
-  --color-role-admin:       #3b82f6;  /* blue */
-  --color-role-owner:       #a855f7;  /* purple */
-  --color-role-tenant:      #10b981;  /* emerald */
+  /* ─── Role colors (warm-tuned) ──────────────────────────────────────────── */
+  --color-role-super-admin: #bd8b27;  /* gold */
+  --color-role-admin:       #3f6f96;  /* slate blue */
+  --color-role-owner:       #8a5a3c;  /* walnut */
+  --color-role-tenant:      #2f6b4f;  /* verdant */
 
-  /* Radius */
+  /* ─── Radius (slightly softer for warmth) ───────────────────────────────── */
   --radius-sm:  6px;
   --radius-md:  10px;
   --radius-lg:  14px;
   --radius-xl:  18px;
   --radius-2xl: 24px;
 
-  /* Sidebar */
-  --sidebar-width: 240px;
+  /* ─── Elevation — warm, low shadows (premium = subtle) ──────────────────── */
+  --shadow-soft:   0 1px 2px rgba(28,26,22,0.06), 0 1px 3px rgba(28,26,22,0.04);
+  --shadow-raised: 0 4px 12px rgba(28,26,22,0.08), 0 2px 4px rgba(28,26,22,0.04);
+  --shadow-float:  0 12px 32px rgba(28,26,22,0.12), 0 4px 8px rgba(28,26,22,0.06);
+
+  /* ─── Layout ────────────────────────────────────────────────────────────── */
+  --sidebar-width: 244px;
   --topbar-height: 60px;
 }
 
-/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE
+   ═════════════════════════════════════════════════════════════════════════ */
 
 html, body {
   margin: 0;
@@ -87,12 +189,23 @@ html, body {
   color: var(--color-text-primary);
 }
 
+/* Display serif — opt-in via .font-display, applied to hero/editorial headings */
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+}
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILITIES & COMPONENTS
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Liquid Glass (public/auth dark pages) — warmed ────────────────────── */
 .liquid-glass {
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(20, 17, 12, 0.4);
   background-blend-mode: luminosity;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: none;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
   position: relative;
@@ -106,78 +219,24 @@ html, body {
   border-radius: inherit;
   padding: 1.4px;
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 20%,
+    rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.1) 20%,
     rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
-    rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.3) 100%);
+    rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.28) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
 }
 
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-.animate-marquee {
-  display: flex;
-  width: max-content;
-  animation: marquee 25s linear infinite;
-}
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
-
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
-
-/* ─── Liquid Glass (public/auth pages) ──────────────────────────────────── */
-
-.liquid-glass {
-  background: rgba(0, 0, 0, 0.4);
-  background-blend-mode: luminosity;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: none;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.liquid-glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.4px;
-  background: linear-gradient(180deg,
-    rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 20%,
-    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
-    rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.3) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* ─── Dashboard Card ─────────────────────────────────────────────────────── */
-
+/* ─── Dashboard Card ────────────────────────────────────────────────────── */
 .dash-card {
   background: var(--color-dash-card);
-  border: 1px solid var(--color-dash-border);
+  border: 1px solid var(--color-dash-divider);
   border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
 }
 
-/* ─── Sidebar Nav Item ───────────────────────────────────────────────────── */
-
+/* ─── Sidebar Nav Item ──────────────────────────────────────────────────── */
 .nav-item {
   display: flex;
   align-items: center;
@@ -187,7 +246,7 @@ html, body {
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-secondary);
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   cursor: pointer;
   text-decoration: none;
 }
@@ -197,13 +256,14 @@ html, body {
   color: var(--color-text-primary);
 }
 
+/* Active = warm gold left-rail accent on espresso */
 .nav-item.active {
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--color-brand-400);
+  background: rgba(189, 139, 39, 0.14);
+  color: #e8cf8c;
+  box-shadow: inset 2px 0 0 var(--color-accent-500);
 }
 
-/* ─── Status Badge Utilities ─────────────────────────────────────────────── */
-
+/* ─── Status / role text helpers (kept for back-compat) ─────────────────── */
 .status-active    { color: var(--color-status-active);    }
 .status-pending   { color: var(--color-status-pending);   }
 .status-suspended { color: var(--color-status-suspended); }
@@ -215,68 +275,149 @@ html, body {
 .role-owner       { color: var(--color-role-owner);       }
 .role-tenant      { color: var(--color-role-tenant);      }
 
-/* ─── Animations ─────────────────────────────────────────────────────────── */
-
+/* ─── Animations ────────────────────────────────────────────────────────── */
 @keyframes marquee {
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-
 .animate-marquee {
   display: flex;
   width: max-content;
   animation: marquee 25s linear infinite;
 }
-
-.animate-marquee:hover {
-  animation-play-state: paused;
-}
+.animate-marquee:hover { animation-play-state: paused; }
 
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.animate-fade-in { animation: fade-in 0.3s ease forwards; }
 
-.animate-fade-in {
-  animation: fade-in 0.3s ease forwards;
-}
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+.animate-spin-slow { animation: spin-slow 2s linear infinite; }
 
-@keyframes spin-slow {
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 2s linear infinite;
-}
-
-/* ─── Scrollbar ──────────────────────────────────────────────────────────── */
-
+/* ─── Scrollbars ────────────────────────────────────────────────────────── */
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
 }
-.scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
-}
+.scrollbar-thin::-webkit-scrollbar { width: 4px; }
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.12);
   border-radius: 4px;
 }
 
-/* ─── Focus ring ─────────────────────────────────────────────────────────── */
-
-.focus-ring {
-  outline: none;
-}
+/* ─── Focus ring (verdant) ──────────────────────────────────────────────── */
+.focus-ring { outline: none; }
 .focus-ring:focus-visible {
-  outline: 2px solid var(--color-brand-400);
+  outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LANDING — "The Property Register" editorial atmosphere
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* Warm editorial canvas — espresso → walnut, the backdrop for the hero. */
+.canvas-warm {
+  background:
+    radial-gradient(120% 90% at 80% -10%, rgba(189,139,39,0.16) 0%, transparent 45%),
+    radial-gradient(90% 80% at 0% 100%, rgba(47,107,79,0.14) 0%, transparent 50%),
+    linear-gradient(180deg, #1a140d 0%, #14110c 55%, #100d09 100%);
+}
+
+/* Fine film grain — sits over everything for analogue warmth. */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Engraved ledger grid — faint registry lines. */
+.ledger-grid {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 44px);
+}
+
+/* Hairline divider in warm gold, for ledger strips. */
+.rule-gold { background: linear-gradient(90deg, transparent, rgba(189,139,39,0.5), transparent); }
+
+/* Duotone treatment for the hero photograph — warm sepia + green shadows. */
+.duotone-warm {
+  filter: sepia(0.55) saturate(1.1) contrast(1.04) brightness(0.82) hue-rotate(-8deg);
+}
+
+/* ── Certificate of Authenticity (the signature artifact) ──────────────── */
+.cert {
+  position: relative;
+  background:
+    radial-gradient(140% 120% at 50% 0%, #fbf6ea 0%, #f4ead2 60%, #ecdcbb 100%);
+  color: #3a2f1c;
+  border-radius: 6px;
+  box-shadow:
+    0 30px 70px -20px rgba(0,0,0,0.55),
+    0 2px 0 rgba(255,255,255,0.4) inset;
+}
+/* Double engraved border in gold */
+.cert::before {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1.5px solid rgba(157,111,34,0.55);
+  border-radius: 3px;
+  pointer-events: none;
+}
+.cert::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border: 0.75px solid rgba(157,111,34,0.3);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.cert-guilloche {
+  background-image: repeating-radial-gradient(
+    circle at 50% 50%,
+    rgba(157,111,34,0.12) 0 1px, transparent 1px 7px
+  );
+}
+
+/* Wax-seal style emblem */
+.wax-seal {
+  background: radial-gradient(circle at 35% 30%, #d8b14e 0%, #bd8b27 45%, #8a6014 100%);
+  box-shadow: 0 6px 14px -4px rgba(138,96,20,0.7), inset 0 1px 2px rgba(255,255,255,0.35);
+}
+
+/* "Verified on-chain" rubber stamp */
+@keyframes stamp {
+  0%   { opacity: 0; transform: scale(2.1) rotate(-20deg); }
+  55%  { opacity: 1; }
+  100% { opacity: 0.92; transform: scale(1) rotate(-11deg); }
+}
+.animate-stamp { animation: stamp 0.5s cubic-bezier(0.2, 0.85, 0.25, 1) 1.5s both; }
+
+/* Slow ambient float for the certificate */
+@keyframes cert-float {
+  0%, 100% { transform: translateY(0) rotate(2deg); }
+  50%      { transform: translateY(-10px) rotate(2deg); }
+}
+.animate-cert-float { animation: cert-float 7s ease-in-out infinite; }
+
+/* Ticker/measured reveal used by ledger figures */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-rise { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }

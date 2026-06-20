@@ -163,7 +163,7 @@ export function DashboardSidebar({
                 >
                   <NavIcon
                     name={item.icon}
-                    className={isActive ? 'text-emerald-400' : 'text-white/30'}
+                    className={isActive ? 'text-amber-300' : 'text-white/30'}
                   />
                   {item.label}
                 </Link>

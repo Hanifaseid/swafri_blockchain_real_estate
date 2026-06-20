@@ -19,17 +19,20 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          'bg-emerald-600 text-white shadow hover:bg-emerald-700 active:bg-emerald-800',
+          'bg-emerald-700 text-white shadow-sm hover:bg-emerald-600 active:bg-emerald-800',
+        // Gold premium CTA — use sparingly for the single most important action
+        accent:
+          'bg-amber-500 text-emerald-950 shadow-sm hover:bg-amber-400 active:bg-amber-600',
         destructive:
-          'bg-red-600 text-white shadow hover:bg-red-700',
+          'bg-red-700 text-white shadow-sm hover:bg-red-600',
         outline:
-          'border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900',
+          'border border-gray-300 bg-white text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900',
         secondary:
           'bg-gray-100 text-gray-700 hover:bg-gray-200',
         ghost:
           'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
         link:
-          'text-emerald-600 underline-offset-4 hover:underline p-0 h-auto',
+          'text-emerald-700 underline-offset-4 hover:underline p-0 h-auto',
       },
       size: {
         sm:   'h-8 px-3 text-xs',

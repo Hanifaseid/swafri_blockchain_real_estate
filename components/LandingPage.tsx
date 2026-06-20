@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ShieldCheck, CheckCircle2, X } from 'lucide-react';
-import FadeIn from './FadeIn';
+import { BadgeCheck, CheckCircle2, ShieldCheck, X } from 'lucide-react';
+import Reveal from './Reveal';
 
 import HeroBackground from './landing/HeroBackground';
 import LandingNavbar from './landing/LandingNavbar';
@@ -16,25 +16,32 @@ import Testimonials from './landing/Testimonials';
 import LandingCTA from './landing/LandingCTA';
 import AiChat from './landing/AiChat';
 
-import { FEATURED_PROPERTIES, Property, generateMockTxnData } from './landing/data';
+import { FEATURED_PROPERTIES, Property, generateVerificationReceipt } from './landing/data';
+
+interface Receipt {
+  hash: string;
+  action: string;
+  titleId: string;
+  block: number;
+  registrar: string;
+  status: 'mining' | 'success';
+}
+
+const TRUST_POINTS = [
+  'Ownership documents reviewed before any listing goes live',
+  'Deposits & purchase funds held in audited on-chain escrow',
+  'KYC identity verification for every counterparty',
+  'Every mint, release, and dispute written to an auditable record',
+];
 
 export default function LandingPage() {
-  const [properties, setProperties] = useState<Property[]>(FEATURED_PROPERTIES);
+  const [properties] = useState<Property[]>(FEATURED_PROPERTIES);
   const [heroImgLoaded, setHeroImgLoaded] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
 
-  // Txn receipt
-  const [txnReceipt, setTxnReceipt] = useState<{
-    hash: string;
-    action: string;
-    gas: string;
-    block: number;
-    proof: string;
-    status: 'success' | 'mining';
-  } | null>(null);
-
-  // Preload hero image so it shows instantly
+  // Preload hero image
   useEffect(() => {
     const img = new Image();
     img.src =
@@ -42,8 +49,7 @@ export default function LandingPage() {
     img.onload = () => setHeroImgLoaded(true);
   }, []);
 
-  // Start loading the video in the background as soon as component mounts.
-  // We do NOT autoplay until canplaythrough fires so there is zero flicker.
+  // Background-load the hero video, only show once buffered
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -53,223 +59,244 @@ export default function LandingPage() {
     return () => vid.removeEventListener('canplaythrough', onReady);
   }, []);
 
-  // Once video is ready, start playing it (muted, so browser always allows it)
   useEffect(() => {
     if (videoReady && videoRef.current) {
-      videoRef.current.play().catch(() => {
-        /* silently ignore autoplay policy errors */
-      });
+      videoRef.current.play().catch(() => {});
     }
   }, [videoReady]);
 
-  const triggerMockTxn = (actionText: string) => {
-    const data = generateMockTxnData(actionText);
-    setTxnReceipt({ ...data, status: 'mining' });
+  const handleVerify = (prop: Property) => {
+    setReceipt({ ...generateVerificationReceipt(prop.titleId, `Title — ${prop.name}`), status: 'mining' });
     setTimeout(
-      () => setTxnReceipt((prev) => (prev ? { ...prev, status: 'success' } : null)),
-      1800,
+      () => setReceipt((prev) => (prev ? { ...prev, status: 'success' } : null)),
+      1700,
     );
-  };
-
-  const handleBuyTokens = (propId: string, qty: number) => {
-    const target = properties.find((p) => p.id === propId);
-    if (!target || target.tokensAvailable < qty) return;
-    setProperties((cur) =>
-      cur.map((p) => (p.id === propId ? { ...p, tokensAvailable: p.tokensAvailable - qty } : p)),
-    );
-    triggerMockTxn(`fractional buy of ${qty} token(s) — ${target.name}`);
   };
 
   return (
-    <div className="min-h-screen text-white relative font-sans selection:bg-white selection:text-black">
+    <div className="relative min-h-screen font-sans text-white selection:bg-amber-300 selection:text-emerald-950">
+      <HeroBackground videoReady={videoReady} heroImgLoaded={heroImgLoaded} videoRef={videoRef} />
 
-      {/* ── HERO BACKGROUND ── */}
-      <HeroBackground
-        videoReady={videoReady}
-        heroImgLoaded={heroImgLoaded}
-        videoRef={videoRef}
-      />
-
-      {/* ── NAVBAR ── */}
       <LandingNavbar />
-
-      {/* ── HERO SECTION ── */}
       <HeroSection />
-
-      {/* ── PARTNER MARQUEE ── */}
       <PartnerMarquee />
-
-      {/* ── FEATURED PROPERTIES ── */}
-      <FeaturedProperties properties={properties} onBuyTokens={handleBuyTokens} />
-
-      {/* ── PLATFORM FEATURES ── */}
+      <FeaturedProperties properties={properties} onVerify={handleVerify} />
       <PlatformFeatures />
-
-      {/* ── HOW IT WORKS ── */}
       <HowItWorks />
 
-      {/* ── TRUST SECTION WITH REAL ESTATE IMAGE ── */}
-      <section className="py-24 border-y border-white/10 relative z-20 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <FadeIn delay={0} duration={600}>
-              <div>
-                <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 mb-3 block">
-                  Why VEX
+      {/* ── TRUST SPOTLIGHT ───────────────────────────────────────────────── */}
+      <section className="relative z-20 overflow-hidden border-y border-white/10 py-24">
+        <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-16">
+          <div className="grid items-center gap-12 md:grid-cols-2">
+            <Reveal>
+              <div className="mb-5 flex items-center gap-3">
+                <span className="font-mono text-[11px] tracking-[0.28em] text-amber-300/85">✦</span>
+                <span className="h-px w-8 rule-gold" />
+                <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/45">
+                  The Trust Layer
                 </span>
-                <h2 className="text-3xl md:text-4xl font-light text-white tracking-tight mb-6">
-                  The Trust Layer for Global Real Estate
-                </h2>
-                <div className="space-y-4 text-white/60 font-light leading-relaxed text-sm">
-                  <p>
-                    VEX tokenizes premium real estate into ERC-1155 fractional assets, allowing
-                    anyone to own a slice of a Zurich penthouse, a Singapore tower, or a Tokyo loft
-                    — no brokers, no borders, no minimums.
-                  </p>
-                  <p>
-                    Every property is cross-referenced with physical land registries. Deed hashes are
-                    anchored on-chain and smart escrow contracts distribute rental yields to token
-                    holders every 30 days — verified, auditable, unstoppable.
-                  </p>
-                </div>
-                <div className="mt-8 space-y-3">
-                  {[
-                    'Deed documents verified before any listing goes live',
-                    'Smart contract escrow — no manual payment processing',
-                    'KYC & AML compliance built into every transaction',
-                    'Rental yields stream directly to your wallet monthly',
-                  ].map((item) => (
-                    <div key={item} className="flex items-start gap-3 text-sm text-white/70">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </FadeIn>
+              <h2 className="font-display text-3xl font-medium leading-[1.06] tracking-tight text-white md:text-5xl">
+                Proof first.<br className="hidden md:block" /> Then the keys.
+              </h2>
+              <div className="mt-6 max-w-xl space-y-4 text-sm font-light leading-relaxed text-white/60">
+                <p>
+                  Most platforms ask you to trust a listing. VEX asks you to verify it. Each property
+                  is identity-checked and its ownership document is hashed and minted as a certificate
+                  of title you can inspect on-chain.
+                </p>
+                <p>
+                  Money never moves blindly: deposits and purchase funds sit in audited escrow and are
+                  released only when both sides hit the agreed milestone.
+                </p>
+              </div>
+              <ul className="mt-8 space-y-3">
+                {TRUST_POINTS.map((point, i) => (
+                  <Reveal as="li" key={point} delay={i * 80} className="flex items-start gap-3 text-sm text-white/75">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                    <span>{point}</span>
+                  </Reveal>
+                ))}
+              </ul>
+            </Reveal>
 
-            <FadeIn delay={200} duration={600}>
+            <Reveal delay={150}>
               <div className="relative">
-                <div className="rounded-2xl overflow-hidden border border-white/15 shadow-2xl aspect-[4/3]">
+                <div className="aspect-[4/3] overflow-hidden rounded-2xl border border-white/15 shadow-2xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=900&q=70"
-                    alt="Luxury real estate property"
+                    alt="Verified property"
                     loading="lazy"
-                    className="w-full h-full object-cover"
+                    className="h-full w-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-surface-base/70 to-transparent" />
                 </div>
-                {/* Floating stats card */}
-                <div className="absolute -bottom-5 -left-5 liquid-glass border border-white/20 rounded-xl p-4 shadow-2xl">
-                  <div className="text-[9px] font-mono text-white/40 uppercase tracking-widest mb-1">
-                    Live Blockchain Tx
+
+                {/* Floating: title minted */}
+                <div className="absolute -bottom-5 -left-5 rounded-xl border border-emerald-400/30 bg-[#1d1812]/90 p-4 shadow-2xl backdrop-blur">
+                  <div className="mb-1 font-mono text-[9px] uppercase tracking-widest text-white/40">
+                    On-Chain Event
                   </div>
-                  <div className="text-sm font-mono text-emerald-400 font-bold">+$22,400 USDC</div>
-                  <div className="text-[10px] text-white/50 font-mono">
-                    Rental yield distributed · 2 min ago
-                  </div>
+                  <div className="font-mono text-sm font-bold text-emerald-300">Title Minted</div>
+                  <div className="font-mono text-[10px] text-white/50">VEX-2026-0481 · 2 min ago</div>
                 </div>
-                {/* Top right verified badge */}
-                <div className="absolute -top-4 -right-4 liquid-glass border border-emerald-800/40 rounded-xl p-3 shadow-xl flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+
+                {/* Floating: verified */}
+                <div className="absolute -right-4 -top-4 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-[#1d1812]/90 p-3 shadow-xl backdrop-blur">
+                  <ShieldCheck className="h-4 w-4 text-amber-300" />
                   <div>
-                    <div className="text-[9px] font-mono text-white/40 uppercase">Deed Verified</div>
-                    <div className="text-[10px] font-mono text-white font-bold">
-                      ERC-1155 Certified
-                    </div>
+                    <div className="font-mono text-[9px] uppercase text-white/40">Deed Verified</div>
+                    <div className="font-mono text-[10px] font-bold text-white">Certificate of Title</div>
                   </div>
                 </div>
               </div>
-            </FadeIn>
+            </Reveal>
           </div>
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
       <Testimonials />
-
-      {/* ── CTA SECTION ── */}
       <LandingCTA />
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-white/10 py-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded bg-white flex items-center justify-center text-black font-extrabold text-xs">
-                V
+      {/* ── FOOTER ────────────────────────────────────────────────────────── */}
+      <footer className="relative z-10 border-t border-white/10 bg-black/20">
+        <div className="mx-auto max-w-7xl px-6 py-16 md:px-12 lg:px-16">
+          <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="grid h-8 w-8 place-items-center rounded-[7px] bg-gradient-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950">
+                  V
+                </span>
+                <span className="font-display text-xl font-semibold tracking-tight text-white">VEX</span>
               </div>
-              <span className="font-mono text-xs text-white/40 uppercase tracking-widest">
-                VEX Real Estate Ledger Inc.
-              </span>
+              <p className="mt-4 max-w-xs text-sm font-light leading-relaxed text-white/50">
+                The property register — verified listings, on-chain titles, and escrow-protected
+                rent and sale, in one place.
+              </p>
+              <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-medium text-emerald-200">
+                <BadgeCheck className="h-3.5 w-3.5" /> Every listing title-verified
+              </div>
             </div>
-            <div className="flex items-center gap-6 font-mono text-[11px] text-white/35">
-              <span>ERC-1155 Tokenization</span>
-              <span>zkSync Layer-2</span>
-              <span>Smart Escrow</span>
-            </div>
-            <div className="font-mono text-[11px] text-white/30">
-              © 2026 VEX // Blockchain Real Estate Platform
+
+            <FooterCol
+              title="Explore"
+              links={[
+                ['Properties', '#listings-section'],
+                ['The Register', '#features-section'],
+                ['How It Works', '#how-it-works-section'],
+                ['Reviews', '#testimonials-section'],
+              ]}
+            />
+            <FooterCol
+              title="Company"
+              links={[
+                ['About', '/about'],
+                ['Contact', '/contact'],
+                ['Get Started', '/auth'],
+              ]}
+            />
+            <FooterCol
+              title="Legal"
+              links={[
+                ['Terms', '#'],
+                ['Privacy', '#'],
+                ['Compliance', '#'],
+              ]}
+            />
+          </div>
+
+          <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 md:flex-row">
+            <span className="font-mono text-[11px] uppercase tracking-widest text-white/30">
+              © 2026 VEX Property Register
+            </span>
+            <div className="flex items-center gap-6 font-mono text-[10px] uppercase tracking-wider text-white/30">
+              <span>ERC-721 Titles</span>
+              <span>On-Chain Escrow</span>
+              <span>KYC Verified</span>
             </div>
           </div>
         </div>
       </footer>
 
-      {/* ── AI CHAT ── */}
       <AiChat />
 
-      {/* ── TXN RECEIPT ── */}
-      {txnReceipt && (
-        <div className="fixed bottom-6 left-6 z-50 max-w-xs bg-black/95 border border-white/15 rounded-xl p-4 shadow-2xl font-mono text-xs backdrop-blur">
-          <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/10">
-            <span className="text-white/50 flex items-center gap-1.5">
+      {/* ── VERIFICATION RECEIPT ──────────────────────────────────────────── */}
+      {receipt && (
+        <div className="fixed bottom-6 left-6 z-50 max-w-xs rounded-xl border border-amber-400/20 bg-[#14110c]/95 p-4 font-mono text-xs shadow-2xl backdrop-blur animate-fade-in">
+          <div className="mb-2 flex items-center justify-between border-b border-white/10 pb-2">
+            <span className="flex items-center gap-1.5 text-white/50">
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  txnReceipt.status === 'success'
-                    ? 'bg-emerald-400'
-                    : 'bg-yellow-400 animate-pulse'
+                className={`h-1.5 w-1.5 rounded-full ${
+                  receipt.status === 'success' ? 'bg-emerald-400' : 'animate-pulse bg-amber-400'
                 }`}
               />
-              BLOCKCHAIN TX
+              TITLE REGISTRY
             </span>
-            <button
-              onClick={() => setTxnReceipt(null)}
-              className="text-white/30 hover:text-white"
-            >
-              <X className="w-3 h-3" />
+            <button onClick={() => setReceipt(null)} className="text-white/30 hover:text-white" aria-label="Dismiss">
+              <X className="h-3 w-3" />
             </button>
           </div>
           <div className="space-y-1.5">
-            <div className="flex justify-between gap-2">
-              <span className="text-white/40">ACTION</span>
-              <span className="text-white truncate max-w-[160px] text-right">
-                {txnReceipt.action}
-              </span>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="text-white/40">HASH</span>
-              <span className="text-emerald-400 truncate max-w-[160px]">{txnReceipt.hash}</span>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="text-white/40">BLOCK</span>
-              <span className="text-white">#{txnReceipt.block}</span>
-            </div>
-            <div className="flex justify-between gap-2">
-              <span className="text-white/40">STATUS</span>
-              <span
-                className={
-                  txnReceipt.status === 'success'
-                    ? 'text-emerald-400 font-bold'
-                    : 'text-yellow-400 animate-pulse'
-                }
-              >
-                {txnReceipt.status.toUpperCase()}
-              </span>
-            </div>
+            <Row label="REF" value={receipt.action} truncate />
+            <Row label="HASH" value={receipt.hash} valueClass="text-amber-300" truncate />
+            <Row label="BLOCK" value={`#${receipt.block.toLocaleString()}`} />
+            <Row label="REGISTRAR" value={receipt.registrar} truncate />
+            <Row
+              label="STATUS"
+              value={receipt.status === 'success' ? 'VERIFIED ✓' : 'VERIFYING…'}
+              valueClass={
+                receipt.status === 'success'
+                  ? 'text-emerald-400 font-bold'
+                  : 'text-amber-400 animate-pulse'
+              }
+            />
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function FooterCol({ title, links }: { title: string; links: [string, string][] }) {
+  return (
+    <div>
+      <div className="mb-4 font-mono text-[10px] uppercase tracking-[0.22em] text-amber-300/70">
+        {title}
+      </div>
+      <ul className="space-y-2.5">
+        {links.map(([label, href]) => (
+          <li key={label}>
+            <Link
+              href={href}
+              className="text-sm text-white/55 transition-colors hover:text-white"
+            >
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function Row({
+  label,
+  value,
+  valueClass = 'text-white',
+  truncate,
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+  truncate?: boolean;
+}) {
+  return (
+    <div className="flex justify-between gap-2">
+      <span className="text-white/40">{label}</span>
+      <span className={`${valueClass} ${truncate ? 'max-w-[160px] truncate text-right' : ''}`}>
+        {value}
+      </span>
     </div>
   );
 }
