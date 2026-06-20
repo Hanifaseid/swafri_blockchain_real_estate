@@ -19,7 +19,7 @@ import { queryKeys } from '@/lib/query/query-keys';
 
 export function useUsers(filters?: UserFilters) {
   return useQuery({
-    queryKey: queryKeys.users.list(filters ?? {}),
+    queryKey: queryKeys.users.list((filters ?? {}) as Record<string, unknown>),
     queryFn: () => getUsers(filters),
   });
 }
