@@ -20,7 +20,7 @@ import type { CreateAdminPayload } from '@/features/users/types/user.types';
 import { useAuthStore } from '@/stores/auth.store';
 import { queryKeys } from '@/lib/query/query-keys';
 import { appConfig } from '@/config/app.config';
-import { getDefaultRouteForRole } from '@/lib/auth/routes';
+import { getDefaultRouteForRole, isAdminRole } from '@/lib/auth/routes';
 
 // ─── useCurrentUser ───────────────────────────────────────────────────────────
 // Reads the active session and returns the current user.
@@ -54,13 +54,12 @@ export function useLogin() {
       if (typeof document !== 'undefined') {
         const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `vex_user_role=${data.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
       // If admin assigned a temporary password, force change before dashboard access
       const mustReset = typeof window !== 'undefined' && localStorage.getItem('vex_must_reset_password') === '1';
       if (mustReset) {
-        router.push('/account/profile?mustReset=1');
+        router.push(isAdminRole(data.user.role) ? '/admin/profile?mustReset=1' : '/account/profile?mustReset=1');
       } else {
         router.push(getDefaultRouteForRole(data.user.role));
       }
@@ -87,7 +86,6 @@ export function useRegister() {
       if (typeof document !== 'undefined') {
         const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `vex_user_role=${data.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
       router.push(getDefaultRouteForRole(data.user.role));

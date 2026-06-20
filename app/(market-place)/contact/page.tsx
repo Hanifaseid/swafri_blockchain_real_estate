@@ -60,7 +60,7 @@ export default function ContactPage() {
 
         <div className="text-center">
           <Link
-            href="/properties"
+            href="/discovery"
             className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors"
           >
             Browse Properties

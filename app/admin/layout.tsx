@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCurrentUser, clearSession } from '@/lib/auth/session';
+import { getCurrentUser, logout } from '@/features/auth/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { DashboardSidebar } from '@/components/layout/dashboard/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/dashboard/DashboardTopbar';
 import { getNavItems } from '@/config/dashboard-nav.config';
 import { isAdminRole } from '@/lib/auth/routes';
 
-// ─── Admin layout ─────────────────────────────────────────────────────────────
 // All admin pages live under /admin/*. Only ADMIN and SUPER_ADMIN can access.
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -20,20 +19,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    queueMicrotask(() => {
-      const user = getCurrentUser();
+    let active = true;
+
+    async function verifyUser() {
+      const user = await getCurrentUser();
+      if (!active) return;
+
       if (!user) {
+        setLoading(false);
         router.replace('/auth/login');
         return;
       }
       if (!isAdminRole(user.role)) {
+        setLoading(false);
         router.replace('/');
         return;
       }
       setUser(user);
       setLoading(false);
       setMounted(true);
-    });
+    }
+
+    void verifyUser();
+
+    return () => {
+      active = false;
+    };
   }, [pathname, router, setUser, setLoading]);
 
   useEffect(() => {
@@ -41,10 +52,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname]);
 
   const handleSignOut = () => {
-    clearSession();
-    document.cookie = 'vex_authed=; path=/; max-age=0';
-    document.cookie = 'vex_user_role=; path=/; max-age=0';
-    window.location.href = '/auth/login';
+    void logout().finally(() => {
+      document.cookie = 'vex_authed=; path=/; max-age=0';
+      document.cookie = 'vex_user_role=; path=/; max-age=0';
+      window.location.href = '/auth/login';
+    });
   };
 
   const getPageTitle = (): string => {

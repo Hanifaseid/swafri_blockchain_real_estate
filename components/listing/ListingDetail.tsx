@@ -10,7 +10,7 @@ import {
   MessageSquare,
   ArrowLeft,
 } from "lucide-react";
-import { SESSION_KEYS, getCurrentUser } from "@/lib/auth/session";
+import { SESSION_KEYS } from "@/lib/auth/session";
 import { apiClient } from "@/lib/api/axios-client";
 import { ENDPOINTS } from "@/lib/api/endpoints";
 import Link from "next/link";
@@ -20,6 +20,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
 import type { PropertyPhoto } from "./types";
 import { TitleCertificatePanel } from "./TitleCertificatePanel";
+import { useAuthStore } from "@/stores/auth.store";
 
 type ListingAddress = {
   street?: string;
@@ -52,7 +53,7 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
   const placeholderImage = "/placeholder-property.jpg";
 
   const { mutate: submitOffer, isPending: creatingOffer } = useSubmitOffer();
-  const currentUser = getCurrentUser();
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const [showOfferModal, setShowOfferModal] = React.useState(false);
   const [offerAmount, setOfferAmount] = React.useState<number>(
@@ -105,7 +106,7 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
     <div className="max-w-6xl mx-auto px-4">
       <div className="mb-4">
         <Link
-          href="/properties"
+          href="/discovery"
           aria-label="Browse properties"
           className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-card border border-border-primary text-sm font-medium text-text-secondary hover:bg-surface-highlight hover:text-white transition-colors"
         >
@@ -301,33 +302,34 @@ function VerificationBadge({
 }
 
 function FavoriteButton({ listingId }: { listingId: string }) {
-  const [fav, setFav] = React.useState(() => {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const favoriteKey = currentUser ? SESSION_KEYS.FAVORITES(currentUser.id) : "vex_favorites_guest";
+  const optimisticKey = `${favoriteKey}:${listingId}`;
+  const [optimisticFavs, setOptimisticFavs] = React.useState<Record<string, boolean>>({});
+
+  const storedFav = React.useMemo(() => {
     try {
-      const user = getCurrentUser();
-      const key = user
-        ? SESSION_KEYS.FAVORITES(user.id)
-        : "vex_favorites_guest";
-      const raw =
-        typeof window !== "undefined" ? localStorage.getItem(key) : null;
+      const raw = typeof window !== "undefined" ? localStorage.getItem(favoriteKey) : null;
       return raw ? (JSON.parse(raw) as string[]).includes(listingId) : false;
     } catch {
       return false;
     }
-  });
+  }, [favoriteKey, listingId]);
+
+  const fav = optimisticFavs[optimisticKey] ?? storedFav;
 
   const toggle = async () => {
-    const user = getCurrentUser();
-    if (!user) {
+    if (!currentUser) {
       window.location.href = "/auth/login";
       return;
     }
-    const key = SESSION_KEYS.FAVORITES(user.id);
+    const key = SESSION_KEYS.FAVORITES(currentUser.id);
     const arr: string[] = JSON.parse(localStorage.getItem(key) ?? "[]");
     const next = fav
       ? arr.filter((id) => id !== listingId)
       : [...arr, listingId];
     localStorage.setItem(key, JSON.stringify(next));
-    setFav(!fav);
+    setOptimisticFavs((existing) => ({ ...existing, [optimisticKey]: !fav }));
     try {
       if (process.env.NEXT_PUBLIC_API_URL) {
         fav
@@ -356,7 +358,6 @@ function FavoriteButton({ listingId }: { listingId: string }) {
     </button>
   );
 }
-
 function InquiryCard({
   listingId,
   title,
@@ -364,13 +365,13 @@ function InquiryCard({
   listingId: string;
   title?: string;
 }) {
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [open, setOpen] = React.useState(false);
   const [msg, setMsg] = React.useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const user = getCurrentUser();
-    if (!user) {
+    if (!currentUser) {
       window.location.href = "/auth/login";
       return;
     }
@@ -383,8 +384,8 @@ function InquiryCard({
         await apiClient.post(ENDPOINTS.INQUIRIES.SEND, {
           propertyId: listingId,
           message: msg,
-          tenantName: user.name,
-          tenantEmail: user.email,
+          tenantName: currentUser.name,
+          tenantEmail: currentUser.email,
         });
       } else {
         const arr = JSON.parse(localStorage.getItem("vex_inquiries") ?? "[]");
@@ -427,7 +428,7 @@ function InquiryCard({
 
       {open && (
         <div className="mt-4">
-          {!getCurrentUser() ? (
+          {!currentUser ? (
             <div className="space-y-3">
               <p className="text-sm text-text-muted">
                 Please sign in to contact the lister.

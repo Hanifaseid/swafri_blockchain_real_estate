@@ -20,7 +20,6 @@ import toast from 'react-hot-toast';
 
 import { useAuthStore } from '@/stores/auth.store';
 import { updateProfileSchema, type UpdateProfileFormValues } from '@/features/users/schemas/user.schema';
-import { updateSessionUser } from '@/lib/auth/session';
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
 import { adaptUser, type ApiUser } from '@/lib/api/adapters';
@@ -102,14 +101,9 @@ export default function ProfilePage() {
         return;
       }
       const updated = adaptUser(res.data);
-      updateSessionUser({ name: updated.name, phone: updated.phone });
       updateUser({ name: updated.name, phone: updated.phone });
       toast.success("Profile updated.");
     } catch {
-      updateSessionUser({
-        name: data.name.trim(),
-        phone: data.phone || undefined,
-      });
       updateUser({ name: data.name.trim(), phone: data.phone || undefined });
       toast.success("Profile updated.");
     }

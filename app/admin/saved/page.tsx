@@ -95,7 +95,7 @@ function SavedPropertiesTab() {
       <p className="text-sm font-medium text-gray-700 mb-1">No saved properties yet</p>
       <p className="text-xs text-gray-400 mb-5">Tap the heart on any listing to save it here.</p>
       <Link
-        href="/properties"
+        href="/discovery"
         className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition-colors"
       >
         Browse Properties
@@ -227,7 +227,7 @@ function SearchCard({
     q.radius    != null && q.lat != null && `${q.radius}km radius`,
   ].filter(Boolean) as string[];
 
-  // Build a /properties URL from the query so the user can re-run it
+  // Build a /discovery URL from the query so the user can re-run it
   const params = new URLSearchParams();
   if (q.listingType)  params.set('listingType',  q.listingType);
   if (q.category)     params.set('category',     q.category);
@@ -235,7 +235,7 @@ function SearchCard({
   if (q.maxPrice)     params.set('maxPrice',     String(q.maxPrice));
   if (q.minBedrooms)  params.set('minBedrooms',  String(q.minBedrooms));
   if (q.minBathrooms) params.set('minBathrooms', String(q.minBathrooms));
-  const browseHref = `/properties?${params.toString()}`;
+  const browseHref = `/discovery?${params.toString()}`;
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">

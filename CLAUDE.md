@@ -40,7 +40,7 @@ When adding a feature operation, follow this chain: add the route to `lib/api/en
 
 ### Auth & routing
 - **Session** is stored client-side in `localStorage` (`lib/auth/session.ts`, `vex_*` keys). Token is optional. Use `getSession()`/`setSession()`/`clearSession()` — never touch `localStorage` directly.
-- **Zustand store** (`stores/auth.store.ts`) is the React source of truth for the current user. Read from `useAuthStore`, not localStorage. `AuthProvider` (in `components/providers/`) hydrates it on mount and writes two non-sensitive cookies: `vex_authed=1` and `vex_user_role=<ROLE>`.
+- **Zustand store** (`stores/auth.store.ts`) is the React source of truth for the current user. Read from `useAuthStore`, not localStorage. `AuthProvider` (in `components/providers/`) hydrates it on mount from `/auth/me` and writes only the non-profile `vex_authed=1` route hint cookie.
 - **`proxy.ts`** (Next 16 renamed `middleware.ts` → `proxy.ts`, `middleware` → `proxy`) reads those cookies to gate routes. It cannot read localStorage. Logic: public routes pass; auth routes redirect logged-in users home; protected routes redirect to `/login` or block wrong roles.
 - **Roles**: `SUPER_ADMIN | ADMIN | PROPERTY_OWNER | TENANT` (`features/roles/types/role.types.ts`). Only `PROPERTY_OWNER`/`TENANT` can self-register. Route→role rules live in `config/permissions.config.ts` (`canAccessRoute`, `protectedRoutes`, `publicRoutes`, `authRoutes`). Default landing per role is in `lib/auth/routes.ts` (admins → `/dashboard`, others → `/`).
 

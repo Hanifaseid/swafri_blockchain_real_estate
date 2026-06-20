@@ -1,7 +1,7 @@
-import { getListing } from '@/features/listings/services/listing.service';
-import { ListingDetailView } from '@/components/listing/ListingDetailView';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+import { getListing } from "@/features/listings/services/listing.service";
+import { ListingDetailView } from "@/components/listing/ListingDetailView";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -15,7 +15,9 @@ export default async function ListingDetailPage({ params }: Props) {
     return (
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-32">
         <p className="text-6xl font-display font-bold text-white/10">404</p>
-        <p className="mt-4 text-lg font-semibold text-white">Listing not found</p>
+        <p className="mt-4 text-lg font-semibold text-white">
+          Listing not found
+        </p>
         <p className="mt-1 text-sm text-text-muted">
           This listing may have been removed or the URL is incorrect.
         </p>

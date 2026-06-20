@@ -42,7 +42,7 @@ export default function AccountApplicationsPage() {
                 <div className="flex items-center gap-3">
                   {(application.listingId || application.listing?.id) && (
                     <Link
-                      href={`/properties/${application.listingId ?? application.listing.id}`}
+                      href={`/discovery/${application.listingId ?? application.listing.id}`}
                       className="text-sm font-medium text-accent-400"
                     >
                       View listing

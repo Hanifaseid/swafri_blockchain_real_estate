@@ -8,7 +8,7 @@ import {
   useDeleteSavedSearch,
 } from '@/features/listings/queries/listing.queries';
 
-// Turn a saved query object into shareable /properties query params.
+// Turn a saved query object into shareable /discovery query params.
 function toQueryString(query: Record<string, any> | undefined): string {
   if (!query) return '';
   const params = new URLSearchParams();
@@ -51,7 +51,7 @@ export default function AccountSavedPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Link
-                  href={`/properties${toQueryString(search.query)}`}
+                  href={`/discovery${toQueryString(search.query)}`}
                   className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-border-primary px-3 text-sm font-medium text-white hover:bg-surface-highlight"
                 >
                   <Search size={15} />

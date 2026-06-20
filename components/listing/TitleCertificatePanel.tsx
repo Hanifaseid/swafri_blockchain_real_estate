@@ -27,19 +27,28 @@ export function TitleCertificatePanel({
   listingId: string;
   verificationStatus?: string;
 }) {
-  const [title, setTitle] = React.useState<TitleInfo | null>(null);
-  const [loading, setLoading] = React.useState(true);
+  const [titleState, setTitleState] = React.useState<{
+    listingId: string;
+    title: TitleInfo | null;
+    loading: boolean;
+  }>({ listingId, title: null, loading: true });
 
   React.useEffect(() => {
     let alive = true;
-    setLoading(true);
     getListingTitle(listingId)
-      .then((t) => alive && setTitle(t))
-      .finally(() => alive && setLoading(false));
+      .then((title) => {
+        if (alive) setTitleState({ listingId, title, loading: false });
+      })
+      .catch(() => {
+        if (alive) setTitleState({ listingId, title: null, loading: false });
+      });
     return () => {
       alive = false;
     };
   }, [listingId]);
+
+  const loading = titleState.loading || titleState.listingId !== listingId;
+  const title = titleState.listingId === listingId ? titleState.title : null;
 
   if (loading) {
     return (

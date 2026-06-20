@@ -36,10 +36,11 @@ export const KYC_STATUS_LABELS: Record<KycStatus, string> = {
 // Wallet is NOT required for first login.
 // Wallet IS required for blockchain-related actions (escrow, digital title actions, etc.)
 
-export type WalletStatus = 'NOT_LINKED' | 'LINKED' | 'VERIFIED' | 'REVOKED';
+export type WalletStatus = 'NOT_LINKED' | 'PENDING_SIGNATURE' | 'LINKED' | 'VERIFIED' | 'REVOKED';
 
 export const WALLET_STATUS_LABELS: Record<WalletStatus, string> = {
   NOT_LINKED: 'Not Linked',
+  PENDING_SIGNATURE: 'Pending Signature',
   LINKED: 'Linked',
   VERIFIED: 'Verified',
   REVOKED: 'Revoked',

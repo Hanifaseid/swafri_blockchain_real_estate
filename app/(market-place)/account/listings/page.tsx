@@ -29,7 +29,7 @@ export default function AccountListingsPage() {
           <ListingCard
             key={listing.id}
             listing={listingToSummary(listing)}
-            href={`/properties/${listing.id}`}
+            href={`/discovery/${listing.id}`}
           />
         ))}
       </div>

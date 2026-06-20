@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
   Building2,
-  CheckCircle2,
   ChevronDown,
   List,
   LocateFixed,
@@ -72,7 +71,6 @@ export function MarketplaceDiscovery() {
   const [selectedGeocode, setSelectedGeocode] = useState<GeocodeResult | null>(null);
   const [mode, setMode] = useState<SearchMode>('viewport');
   const [listingType, setListingType] = useState<ListingType | ''>('');
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [radiusKm, setRadiusKm] = useState(5);
   const [viewport, setViewport] = useState<Pick<ListingFilters, 'swLng' | 'swLat' | 'neLng' | 'neLat'>>({});
   const [radiusCenter, setRadiusCenter] = useState<[number, number]>(DEFAULT_CENTER);
@@ -121,7 +119,6 @@ export function MarketplaceDiscovery() {
     setMinBaths('');
     setSort('newest');
     setListingType('');
-    setVerifiedOnly(false);
   };
 
   const activeFilterCount =
@@ -136,7 +133,6 @@ export function MarketplaceDiscovery() {
     const next: ListingFilters = {
       q: query || undefined,
       listingType: listingType || undefined,
-      verifiedOnly,
       availabilityStatus: 'available',
       sort,
       limit: 24,
@@ -157,7 +153,7 @@ export function MarketplaceDiscovery() {
     return next;
   }, [
     category, listingType, maxPrice, minBaths, minBeds, minPrice, mode,
-    polygon, propertyType, query, radiusCenter, radiusKm, sort, verifiedOnly, viewport,
+    polygon, propertyType, query, radiusCenter, radiusKm, sort, viewport,
   ]);
 
   const listings = useListings(filters);
@@ -205,8 +201,10 @@ export function MarketplaceDiscovery() {
     <div className="flex h-[calc(100vh-72px)] flex-col bg-[#0d0c0a] text-white">
       {/* ═══ Filter bar ═══ */}
       <div className="z-30 shrink-0 border-b border-white/10 bg-[#11100d]">
+        {/* primary filter row */}
         <div className="flex flex-wrap items-center gap-2 px-4 py-3">
-          {/* Listing search */}
+          {/* search label */}
+          <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-white/30 lg:inline">Search</span>
           <div className="relative min-w-[180px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <input
@@ -251,19 +249,6 @@ export function MarketplaceDiscovery() {
             <option value="sale">For sale</option>
             <option value="rent">For rent</option>
           </select>
-
-          <button
-            onClick={() => setVerifiedOnly((v) => !v)}
-            className={cn(
-              'flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-medium',
-              verifiedOnly
-                ? 'border-amber-300/70 bg-amber-400 text-emerald-950'
-                : 'border-white/10 bg-white/[0.06] text-white/75 hover:bg-white/10',
-            )}
-          >
-            <CheckCircle2 size={15} />
-            Verified
-          </button>
 
           <button
             onClick={() => setShowFilters((v) => !v)}
@@ -344,9 +329,9 @@ export function MarketplaceDiscovery() {
           </div>
         )}
 
-        {/* Result count + neighborhood chips + mobile toggle */}
+        {/* Result count + neighbourhood chips + mobile toggle */}
         <div className="flex items-center gap-3 border-t border-white/5 px-4 py-2">
-          <span className="shrink-0 text-sm text-white/55">
+          <span className="shrink-0 inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] border border-white/8 px-2.5 py-1 text-xs font-medium text-white/70">
             <span className="font-semibold text-white">{total.toLocaleString()}</span> properties
           </span>
           <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto scrollbar-none">
@@ -392,21 +377,21 @@ export function MarketplaceDiscovery() {
             view === 'map' && 'hidden lg:flex',
           )}
         >
-          {/* Neighborhood analytics (when selected) */}
+          {/* Neighbourhood analytics (when selected) */}
           {summary && (
-            <div className="shrink-0 border-b border-white/10 bg-[#11100d] px-4 py-3">
-              <div className="grid grid-cols-3 gap-2 rounded-lg border border-amber-300/20 bg-amber-400/[0.06] p-3 text-xs">
-                <div>
-                  <p className="text-white/45">Listings</p>
-                  <p className="font-display text-base font-semibold text-white">{summary.listingCount ?? 0}</p>
+            <div className="shrink-0 border-b border-white/8 bg-[#11100d] px-4 py-3">
+              <div className="grid grid-cols-3 divide-x divide-white/8 rounded-xl border border-amber-400/20 bg-amber-400/[0.05] overflow-hidden">
+                <div className="px-4 py-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Listings</p>
+                  <p className="font-display text-xl font-semibold text-white mt-0.5">{summary.listingCount ?? 0}</p>
                 </div>
-                <div>
-                  <p className="text-white/45">Avg price</p>
-                  <p className="font-display text-base font-semibold text-white">{money(summary.averagePrice)}</p>
+                <div className="px-4 py-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Avg price</p>
+                  <p className="font-display text-xl font-semibold text-amber-300 mt-0.5">{money(summary.averagePrice)}</p>
                 </div>
-                <div>
-                  <p className="text-white/45">Avg rent</p>
-                  <p className="font-display text-base font-semibold text-white">{money(summary.averageRent)}</p>
+                <div className="px-4 py-3">
+                  <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Avg rent/mo</p>
+                  <p className="font-display text-xl font-semibold text-amber-300 mt-0.5">{money(summary.averageRent)}</p>
                 </div>
               </div>
             </div>
@@ -414,24 +399,35 @@ export function MarketplaceDiscovery() {
 
           <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin p-4">
             {listings.isLoading ? (
-              <div className="grid gap-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="h-24 animate-pulse rounded-xl border border-white/5 bg-white/[0.04]" />
+              <div className="grid grid-cols-1 gap-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-3 animate-pulse">
+                    <div className="h-20 w-24 shrink-0 rounded-lg bg-white/[0.07]" />
+                    <div className="flex flex-1 flex-col justify-between py-1 gap-2">
+                      <div className="h-3.5 w-3/4 rounded bg-white/[0.07]" />
+                      <div className="h-2.5 w-1/2 rounded bg-white/[0.05]" />
+                      <div className="h-3.5 w-1/3 rounded bg-amber-400/10" />
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : items.length === 0 ? (
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] p-8 text-center">
-                <Building2 className="mx-auto h-8 w-8 text-amber-300" />
-                <p className="mt-3 text-sm font-medium">No properties in this search</p>
-                <p className="mt-1 text-xs text-white/50">Pan the map, widen the radius, or clear a filter.</p>
+              <div className="flex flex-col items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] p-10 text-center gap-3">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-amber-400/10 text-amber-300">
+                  <Building2 size={22} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-white/80">No properties found</p>
+                  <p className="mt-1 text-xs text-white/40">Pan the map, widen the radius, or clear a filter.</p>
+                </div>
               </div>
             ) : (
-              <div className="grid gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {items.map((listing) => (
                   <ListingCard
                     key={listing.id}
                     listing={listingToSummary(listing)}
-                    href={`/properties/${listing.id}`}
+                    href={`/discovery/${listing.id}`}
                     variant="compact"
                   />
                 ))}
@@ -463,7 +459,7 @@ export function MarketplaceDiscovery() {
             }}
             onPolygonChange={setPolygon}
             onListingClick={(id) => {
-              window.location.href = `/properties/${id}`;
+              window.location.href = `/discovery/${id}`;
             }}
           />
 

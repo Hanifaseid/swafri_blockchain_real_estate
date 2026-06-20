@@ -19,7 +19,7 @@ export const publicRoutes: string[] = [
   "/",
   "/about",
   "/contact",
-  "/properties",
+  "/discovery",
   "/listings",
 ];
 

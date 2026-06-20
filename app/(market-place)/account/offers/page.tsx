@@ -50,7 +50,7 @@ function OfferRow({ offer, isOwner }: { offer: Offer; isOwner: boolean }) {
           </p>
         </div>
         {id && (
-          <Link href={`/properties/${id}`} className="text-sm font-medium text-accent-400">
+          <Link href={`/discovery/${id}`} className="text-sm font-medium text-accent-400">
             View listing
           </Link>
         )}

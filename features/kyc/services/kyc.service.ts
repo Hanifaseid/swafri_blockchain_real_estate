@@ -1,6 +1,5 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
-import { updateSessionUser } from '@/lib/auth/session';
 import { useAuthStore } from '@/stores/auth.store';
 
 // ─── KYC Status shape from API ────────────────────────────────────────────────
@@ -49,7 +48,6 @@ export async function getKycStatus(): Promise<KycStatusData | null> {
 
     // Synchronize the global user session whenever KYC status is successfully fetched
     if (typeof window !== 'undefined') {
-      updateSessionUser({ kycStatus: statusResult.kycStatus as any });
       useAuthStore.getState().updateUser({ kycStatus: statusResult.kycStatus as any });
     }
 

@@ -45,6 +45,7 @@ const KYC_MAP: Record<string, KycStatus> = {
 // Wallet status mapping
 const WALLET_MAP: Record<string, WalletStatus> = {
   unlinked: 'NOT_LINKED',
+  pending_signature: 'PENDING_SIGNATURE',
   linked:   'LINKED',
   verified: 'VERIFIED',
   revoked:  'REVOKED',

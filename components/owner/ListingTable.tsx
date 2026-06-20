@@ -94,7 +94,7 @@ export function ListingTable({
           <Tooltip content="View listing">
             <Button variant="ghost" size="icon" asChild>
               <Link
-                href={`/properties/${row.original.id}`}
+                href={`/discovery/${row.original.id}`}
                 aria-label={`View ${row.original.title}`}
               >
                 <Eye size={15} />
@@ -105,7 +105,7 @@ export function ListingTable({
           <Tooltip content="Edit listing">
             <Button variant="ghost" size="icon" asChild>
               <Link
-                href={`/properties/${row.original.id}/edit`}
+                href={`/discovery/${row.original.id}/edit`}
                 aria-label={`Edit ${row.original.title}`}
               >
                 <Edit2 size={15} />

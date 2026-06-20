@@ -1,5 +1,5 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { getSession, setSession, clearSession, getCurrentUser } from '@/lib/auth/session';
+import { getSession, setSession, clearSession } from '@/lib/auth/session';
 import { ENDPOINTS } from '@/lib/api/endpoints';
 
 // ─── Axios Instance ───────────────────────────────────────────────────────────
@@ -111,12 +111,8 @@ apiClient.interceptors.response.use(
       if (!newAccessToken) {
         throw new Error('No access token in refresh response');
       }
-
-      // Persist new tokens
-      const user = getCurrentUser();
-      if (user) {
-        setSession(user, newAccessToken);
-      }
+      // Persist the refreshed access token only. User profile data stays in memory.
+      setSession(newAccessToken);
       if (newRefreshToken) {
         localStorage.setItem('vex_refresh_token', newRefreshToken);
       }

@@ -44,18 +44,23 @@ function mapApiError(message: string): AuthErrorCode {
 
 // ─── Audit logger (client-side only) ─────────────────────────────────────────
 
-function logAudit(user: UserAccount, action: string): void {
+function publishAuthEvent(type: 'login' | 'logout' | 'session-changed'): void {
   if (typeof window === 'undefined') return;
-  const raw = localStorage.getItem(SESSION_KEYS.AUDIT_LOGS);
-  const existing = raw ? JSON.parse(raw) : [];
-  existing.unshift({
-    id: `log-${Date.now()}`,
-    user: user.name,
-    email: user.email,
-    action,
-    timestamp: new Date().toISOString(),
-  });
-  localStorage.setItem(SESSION_KEYS.AUDIT_LOGS, JSON.stringify(existing));
+  if (type === 'logout') {
+    document.cookie = 'vex_authed=; path=/; max-age=0';
+    document.cookie = 'vex_user_role=; path=/; max-age=0';
+    localStorage.removeItem('vex_must_reset_password');
+  }
+  localStorage.setItem('vex_auth_event', JSON.stringify({ type, at: Date.now() }));
+  if (typeof BroadcastChannel !== 'undefined') {
+    const channel = new BroadcastChannel('vex_auth');
+    channel.postMessage({ type });
+    channel.close();
+  }
+}
+
+function logAudit(_user: UserAccount, _action: string): void {
+  // Client-side audit persistence is disabled so user profile data stays memory-only.
 }
 
 // ─── login ────────────────────────────────────────────────────────────────────
@@ -76,7 +81,7 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
     const refreshToken = data.data.tokens.refreshToken;
 
     // Persist session + tokens
-    setSession(user, token);
+    setSession(token);
     if (typeof window !== 'undefined') {
       localStorage.setItem('vex_refresh_token', refreshToken);
       // Store mustResetPassword flag so queries layer can redirect
@@ -87,6 +92,7 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
       }
     }
 
+    publishAuthEvent('login');
     logAudit(user, 'User logged in');
     return { user, token };
 
@@ -125,11 +131,12 @@ export async function register(payload: RegisterRequest): Promise<RegisterRespon
     const token = data.data.tokens.accessToken;
     const refreshToken = data.data.tokens.refreshToken;
 
-    setSession(user, token);
+    setSession(token);
     if (typeof window !== 'undefined') {
       localStorage.setItem('vex_refresh_token', refreshToken);
     }
 
+    publishAuthEvent('login');
     logAudit(user, `User registered as ${user.role}`);
     return { user, token };
 
@@ -147,22 +154,14 @@ export async function register(payload: RegisterRequest): Promise<RegisterRespon
 export async function logout(): Promise<void> {
   if (typeof window === 'undefined') return;
 
-  const raw = localStorage.getItem(SESSION_KEYS.ACTIVE_USER);
-  if (raw) {
-    try {
-      const user = JSON.parse(raw) as UserAccount;
-      logAudit(user, 'User logged out');
-
-      // Send refreshToken in body so backend can revoke this specific session
-      const refreshToken = localStorage.getItem('vex_refresh_token');
-      await apiClient.post(ENDPOINTS.AUTH.LOGOUT, { refreshToken }).catch(() => {});
-    } catch {
-      // ignore
-    }
+  const refreshToken = localStorage.getItem('vex_refresh_token');
+  if (refreshToken) {
+    await apiClient.post(ENDPOINTS.AUTH.LOGOUT, { refreshToken }).catch(() => {});
   }
 
   localStorage.removeItem('vex_refresh_token');
   clearSession();
+  publishAuthEvent('logout');
 }
 // ─── forgotPassword ────────────────────────────────────────────────────────
 export async function forgotPassword(email: string): Promise<void> {
@@ -177,7 +176,7 @@ export async function forgotPassword(email: string): Promise<void> {
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
   const { data } = await apiClient.post<{ success: boolean; message: string }>(
     ENDPOINTS.AUTH.RESET_PASSWORD,
-    { token, password: newPassword }
+    { token, newPassword }
   );
   if (!data.success) throw new AuthServiceError(mapApiError(data.message));
   // Invalidate all sessions – client side only
@@ -190,11 +189,11 @@ export async function logoutAll(): Promise<void> {
   try {
     await apiClient.post(ENDPOINTS.AUTH.LOGOUT_ALL);
   } catch {
-    // ignore errors – best effort
+    // ignore errors - best effort
   }
-  // clear refresh token and session
   localStorage.removeItem('vex_refresh_token');
   clearSession();
+  publishAuthEvent('logout');
 }
 
 
@@ -210,9 +209,9 @@ export async function changePassword(
     { currentPassword, newPassword }
   );
   if (!data.success) throw new AuthServiceError(mapApiError(data.message));
-  // Backend revokes all sessions — clear local session too
   localStorage.removeItem('vex_refresh_token');
   clearSession();
+  publishAuthEvent('logout');
 }
 
 // ─── Wallet ───────────────────────────────────────────────────────────────────
@@ -256,9 +255,10 @@ export async function linkWallet(
   // If the API returns the updated profile, use it. Otherwise, patch locally.
   const updated = data?.data && data.data.id 
     ? adaptUser(data.data) 
-    : { ...currentUser, walletStatus: 'VERIFIED' as const, linkedWalletAddress: walletAddress };
+    : { ...currentUser, walletStatus: 'LINKED' as const, linkedWalletAddress: walletAddress };
 
-  setSession(updated);
+  setSession();
+  publishAuthEvent('session-changed');
   logAudit(currentUser, `Wallet linked: ${walletAddress}`);
   return updated;
 }
@@ -274,7 +274,8 @@ export async function unlinkWallet(currentUser: UserAccount): Promise<UserAccoun
     ? adaptUser(data.data)
     : { ...currentUser, walletStatus: 'NOT_LINKED' as const, linkedWalletAddress: undefined };
 
-  setSession(updated);
+  setSession();
+  publishAuthEvent('session-changed');
   logAudit(currentUser, 'Wallet unlinked');
   return updated;
 }
@@ -284,25 +285,20 @@ export async function unlinkWallet(currentUser: UserAccount): Promise<UserAccoun
 export async function getCurrentUser(): Promise<UserAccount | null> {
   if (typeof window === 'undefined') return null;
 
-  const raw = localStorage.getItem(SESSION_KEYS.ACTIVE_USER);
-  if (!raw) return null;
+  const hasAccessToken = !!localStorage.getItem(SESSION_KEYS.TOKEN);
+  const hasRefreshToken = !!localStorage.getItem('vex_refresh_token');
+  if (!hasAccessToken && !hasRefreshToken) return null;
 
   try {
-    // Fetch fresh profile from API using stored token
     const { data } = await apiClient.get<ApiProfileResponse>(ENDPOINTS.AUTH.ME);
-    if (data.success) {
-      const user = adaptUser(data.data);
-      // Update cached session with latest data
-      setSession(user);
-      return user;
+    return data.success ? adaptUser(data.data) : null;
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status;
+    if (status === 401 || status === 403) {
+      localStorage.removeItem('vex_refresh_token');
+      clearSession();
+      publishAuthEvent('logout');
     }
-  } catch {
-    // Network error — fall back to cached session
-  }
-
-  try {
-    return JSON.parse(raw) as UserAccount;
-  } catch {
     return null;
   }
 }
@@ -320,7 +316,8 @@ export async function updateProfile(payload: {
   );
   if (!data.success) throw new AuthServiceError(mapApiError(data.message ?? ''));
   const user = adaptUser(data.data);
-  setSession(user);
+  setSession();
+  publishAuthEvent('session-changed');
   return user;
 }
 

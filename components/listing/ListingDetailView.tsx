@@ -206,7 +206,7 @@ export function ListingDetailView({ listing }: Props) {
                 <p className="text-xs text-text-muted">+ {formatCurrency(listing.serviceCharge, cur)} service charge</p>
               )}
               <div className="mt-4 flex gap-2">
-                <Link href={`/properties/${listing.id}`} className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-500 transition-colors">
+                <Link href={`/discovery/${listing.id}`} className="flex-1 rounded-lg bg-emerald-600 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-500 transition-colors">
                   Inquire Now
                 </Link>
                 <button onClick={handleShare} className="rounded-lg border border-border-primary bg-surface-input px-3 py-2.5 text-text-secondary hover:bg-surface-highlight transition-colors">

@@ -26,7 +26,7 @@ export function Footer() {
           <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-3">Platform</p>
           <ul className="space-y-2">
             {[
-              { label: 'Browse Properties', href: '/properties' },
+              { label: 'Discover Properties', href: '/discovery' },
               { label: 'List a Property', href: '/auth/register' },
               { label: 'How It Works', href: '/#how-it-works-section' },
               { label: 'About', href: '/about' },

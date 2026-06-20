@@ -39,7 +39,7 @@ type NavItem = NavLinkItem | NavScrollItem;
 
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', href: '/' },
-  { label: 'Browse', href: '/properties' },
+  { label: 'Discover', href: '/discovery' },
   { label: 'Listings', href: '/listings' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
@@ -94,7 +94,6 @@ export default function LandingNavbar() {
 
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
   const isOwner = currentUser?.role === 'PROPERTY_OWNER';
-  const isTenant = currentUser?.role === 'TENANT';
 
   // ── Account dropdown links (role-specific) ──────────────────────────────────
   const accountLinks = useMemo(() => {
@@ -145,17 +144,11 @@ export default function LandingNavbar() {
   };
 
   // ── Primary CTA button logic ────────────────────────────────────────────────
-  // Unauthenticated → Get Started (login)
-  // Admin → Dashboard link
-  // Owner → List Property link
-  // Tenant → no link CTA (shows WalletConnectButton instead)
+  // Unauthenticated → "Get Started" link
+  // Any authenticated user → WalletConnectButton (always shown next to profile)
   const primaryAction = !currentUser
     ? { href: '/auth/login', label: 'Get Started', icon: ArrowRight }
-    : isAdmin
-      ? { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard }
-      : isOwner
-        ? { href: '/account/listings/new', label: 'List Property', icon: Plus }
-        : null;
+    : null;
   const PrimaryIcon = primaryAction?.icon ?? null;
 
   return (

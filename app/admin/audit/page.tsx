@@ -3,27 +3,26 @@
 import { useEffect, useState } from 'react';
 import { History, ShieldAlert } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { SESSION_KEYS } from '@/lib/auth/session';
+import { getAuditLogs, type AuditLog } from '@/features/audit/services/audit.service';
 import { SearchInput } from '@/components/ui/SearchInput';
-
-interface AuditEntry {
-  id: string;
-  user: string;
-  email: string;
-  action: string;
-  timestamp: string;
-}
 
 export default function AuditPage() {
   const { currentUser } = useAuthStore();
-  const [logs, setLogs] = useState<AuditEntry[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    queueMicrotask(() => {
-      const raw = localStorage.getItem(SESSION_KEYS.AUDIT_LOGS);
-      if (raw) setLogs(JSON.parse(raw));
-    });
+    let active = true;
+    getAuditLogs()
+      .then((items) => {
+        if (active) setLogs(items);
+      })
+      .catch(() => {
+        if (active) setLogs([]);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (!currentUser) return null;

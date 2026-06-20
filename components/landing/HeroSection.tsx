@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, BadgeCheck, Hash, Home, KeyRound, MapPin } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Hash, Home, KeyRound, LayoutDashboard, MapPin, Plus } from 'lucide-react';
 import AnimatedHeading from '@/components/AnimatedHeading';
 import FadeIn from '@/components/FadeIn';
+import { useAuthStore } from '@/stores/auth.store';
 
 /* Ledger figures — the real product story (verified listings + escrow + titles). */
 const LEDGER = [
@@ -15,6 +16,18 @@ const LEDGER = [
 ];
 
 export default function HeroSection() {
+  const { currentUser } = useAuthStore();
+  const role = currentUser?.role;
+  const isAdmin  = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const isOwner  = role === 'PROPERTY_OWNER';
+  const isTenant = role === 'TENANT';
+
+  // Secondary CTA — null means hidden (tenants)
+  const secondaryCta = isTenant ? null
+    : isOwner  ? { href: '/account/listings/new', label: 'List Your Property', icon: Plus }
+    : isAdmin  ? { href: '/admin/dashboard',      label: 'Go to Dashboard',    icon: LayoutDashboard }
+    :            { href: '/auth/login',            label: 'List Your Property', icon: KeyRound };
+
   return (
     <section className="relative z-10 min-h-[92vh] flex items-center px-6 md:px-12 lg:px-16 pt-28 md:pt-24 pb-16">
       <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 lg:gap-8 items-center">
@@ -46,20 +59,25 @@ export default function HeroSection() {
           <FadeIn delay={900} duration={700}>
             <div className="flex flex-wrap items-center gap-4 mb-12">
               <Link
-                href="/auth"
+                href="/listings"
                 className="group inline-flex items-center gap-2 bg-amber-500 text-emerald-950 px-7 py-3.5 rounded-xl font-semibold hover:bg-amber-400 transition-colors shadow-[0_8px_24px_-8px_rgba(189,139,39,0.7)]"
               >
                 <Home className="w-4 h-4" />
                 Explore Properties
                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link
-                href="/auth"
-                className="inline-flex items-center gap-2 border border-white/20 text-white px-7 py-3.5 rounded-xl font-medium hover:bg-white/5 hover:border-white/35 transition-colors"
-              >
-                <KeyRound className="w-4 h-4 text-amber-300" />
-                List Your Property
-              </Link>
+              {secondaryCta && (() => {
+                const Icon = secondaryCta.icon;
+                return (
+                  <Link
+                    href={secondaryCta.href}
+                    className="inline-flex items-center gap-2 border border-white/20 text-white px-7 py-3.5 rounded-xl font-medium hover:bg-white/5 hover:border-white/35 transition-colors"
+                  >
+                    <Icon className="w-4 h-4 text-amber-300" />
+                    {secondaryCta.label}
+                  </Link>
+                );
+              })()}
             </div>
           </FadeIn>
 
