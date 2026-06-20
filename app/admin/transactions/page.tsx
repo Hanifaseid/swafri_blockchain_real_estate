@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { CreditCard, Search, SlidersHorizontal, X, Loader2, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
-import { usePurchaseTransactions, useUpdatePurchaseTransactionStatus } from '@/features/transactions/queries/transaction.queries';
+import {
+  usePurchaseTransactions,
+  useUpdatePurchaseTransactionStatus,
+  useFundPurchaseEscrow,
+  useReleasePurchaseEscrow,
+  useRefundPurchaseEscrow,
+  useResolvePurchaseDispute,
+} from '@/features/transactions/queries/transaction.queries';
 import type { PurchaseStatus, PurchaseTransaction } from '@/features/transactions/types/transaction.types';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -15,15 +22,14 @@ import type { ColumnDef } from '@tanstack/react-table';
 // ─── Status Display ───────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<PurchaseStatus, { label: string; color: string }> = {
-  pending: { label: 'Pending', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
+  offer_accepted: { label: 'Offer Accepted', color: 'bg-blue-50 text-blue-700 border-blue-200' },
   deposit_pending: { label: 'Deposit Pending', color: 'bg-orange-50 text-orange-700 border-orange-200' },
-  processing: { label: 'Processing', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  under_inspection: { label: 'Under Inspection', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  approved: { label: 'Approved', color: 'bg-green-50 text-green-700 border-green-200' },
+  deposit_received: { label: 'Funds in Escrow', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  closing_review: { label: 'Closing Review', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  title_transfer_pending: { label: 'Title Transfer', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
   completed: { label: 'Completed', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  rejected: { label: 'Rejected', color: 'bg-red-50 text-red-700 border-red-200' },
   cancelled: { label: 'Cancelled', color: 'bg-gray-50 text-gray-700 border-gray-200' },
-  failed: { label: 'Failed', color: 'bg-red-100 text-red-800 border-red-300' },
+  disputed: { label: 'Disputed', color: 'bg-red-50 text-red-700 border-red-200' },
 };
 
 // ─── Transactions Page ────────────────────────────────────────────────────────
@@ -268,41 +274,88 @@ function ActionButtons({
   transaction: PurchaseTransaction;
   mutation: ReturnType<typeof useUpdatePurchaseTransactionStatus>;
 }) {
-  const canApprove = transaction.status === 'deposit_pending' || transaction.status === 'pending';
-  const canReject = transaction.status !== 'completed' && transaction.status !== 'rejected';
+  const fund = useFundPurchaseEscrow();
+  const release = useReleasePurchaseEscrow();
+  const refund = useRefundPurchaseEscrow();
+  const resolve = useResolvePurchaseDispute();
+
+  const id = transaction.id;
+  const s = transaction.status;
+  const busy =
+    fund.isPending || release.isPending || refund.isPending || resolve.isPending || mutation.isPending;
+
+  const canFund = s === 'offer_accepted' || s === 'deposit_pending';
+  const canSettle = s === 'deposit_received';
+  const isDisputed = s === 'disputed';
+
+  if (!canFund && !canSettle && !isDisputed) {
+    return <span className="text-xs text-black/30">—</span>;
+  }
 
   return (
-    <div className="flex items-center gap-2">
-      {canApprove && (
-        <Button
-          size="sm"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-          disabled={mutation.isPending}
-          onClick={() =>
-            mutation.mutate({
-              id: transaction.id,
-              payload: { status: 'approved' },
-            })
-          }
-        >
-          Approve
-        </Button>
+    <div className="flex flex-wrap items-center gap-2">
+      {canFund && (
+        <>
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+            loading={busy}
+            onClick={() => fund.mutate({ id })}
+          >
+            Fund escrow
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-red-600 text-xs"
+            loading={busy}
+            onClick={() => mutation.mutate({ id, payload: { status: 'cancelled' } })}
+          >
+            Cancel
+          </Button>
+        </>
       )}
-      {canReject && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
-          disabled={mutation.isPending}
-          onClick={() =>
-            mutation.mutate({
-              id: transaction.id,
-              payload: { status: 'rejected' },
-            })
-          }
-        >
-          Reject
-        </Button>
+      {canSettle && (
+        <>
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+            loading={busy}
+            onClick={() => release.mutate({ id })}
+          >
+            Release to seller
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs"
+            loading={busy}
+            onClick={() => refund.mutate({ id })}
+          >
+            Refund buyer
+          </Button>
+        </>
+      )}
+      {isDisputed && (
+        <>
+          <Button
+            size="sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+            loading={busy}
+            onClick={() => resolve.mutate({ id, payload: { decision: 'release' } })}
+          >
+            Resolve · release
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-xs"
+            loading={busy}
+            onClick={() => resolve.mutate({ id, payload: { decision: 'refund' } })}
+          >
+            Resolve · refund
+          </Button>
+        </>
       )}
     </div>
   );

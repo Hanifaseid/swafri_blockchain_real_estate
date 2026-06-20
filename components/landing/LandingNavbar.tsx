@@ -40,6 +40,8 @@ type NavItem = NavLinkItem | NavScrollItem;
 const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Browse', href: '/properties' },
+  { label: 'Listings', href: '/listings' },
+  { label: 'List Property', href: '/account/listings/new' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ] as const;

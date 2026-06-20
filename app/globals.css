@@ -23,26 +23,26 @@
 
 @theme {
   /* ─── Fonts ─────────────────────────────────────────────────────────────── */
-  --font-sans:    'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Fraunces', 'Playfair Display', Georgia, serif;
-  --font-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", "Playfair Display", Georgia, serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
 
   /* ─── REMAP: emerald → Verdant (forest green) ───────────────────────────── */
   /* Sophisticated, slightly desaturated green. NOT neon. */
-  --color-emerald-50:  #f0f6f1;
+  --color-emerald-50: #f0f6f1;
   --color-emerald-100: #dcebe0;
   --color-emerald-200: #bbd7c5;
   --color-emerald-300: #8fbb9f;
   --color-emerald-400: #5e9a76;
   --color-emerald-500: #3d7d58;
-  --color-emerald-600: #2f6b4f;   /* primary action */
+  --color-emerald-600: #2f6b4f; /* primary action */
   --color-emerald-700: #245540;
   --color-emerald-800: #1f4435;
   --color-emerald-900: #19372b;
   --color-emerald-950: #0c1f18;
 
   /* Mirror onto `green` (used by sidebar logo, a few spots) */
-  --color-green-50:  #f0f6f1;
+  --color-green-50: #f0f6f1;
   --color-green-100: #dcebe0;
   --color-green-200: #bbd7c5;
   --color-green-300: #8fbb9f;
@@ -56,12 +56,12 @@
 
   /* ─── REMAP: amber → Gold (premium accent) ──────────────────────────────── */
   /* Warm, refined gold. Used for Featured, premium highlights, accent CTAs. */
-  --color-amber-50:  #faf5e9;
+  --color-amber-50: #faf5e9;
   --color-amber-100: #f3e7c6;
   --color-amber-200: #e8cf8c;
   --color-amber-300: #dcb456;
   --color-amber-400: #cf9f33;
-  --color-amber-500: #bd8b27;   /* signature gold */
+  --color-amber-500: #bd8b27; /* signature gold */
   --color-amber-600: #9c6f22;
   --color-amber-700: #7d561f;
   --color-amber-800: #674620;
@@ -70,20 +70,20 @@
 
   /* ─── REMAP: gray → Stone (warm neutral) ────────────────────────────────── */
   /* Slightly warm grays give the "premium paper" feel. */
-  --color-gray-50:  #faf8f5;
+  --color-gray-50: #faf8f5;
   --color-gray-100: #f4f2ec;
   --color-gray-200: #e8e4da;
   --color-gray-300: #d7d0c2;
   --color-gray-400: #aaa191;
-  --color-gray-500: #7d7568;   /* secondary text */
-  --color-gray-600: #57514a;   /* body text */
+  --color-gray-500: #7d7568; /* secondary text */
+  --color-gray-600: #57514a; /* body text */
   --color-gray-700: #423d37;
   --color-gray-800: #2b2823;
-  --color-gray-900: #1c1a16;   /* headings */
+  --color-gray-900: #1c1a16; /* headings */
   --color-gray-950: #100e0b;
 
   /* ─── REMAP: slate → warm charcoal (dashboard chrome, 'sold' badge) ─────── */
-  --color-slate-50:  #f7f6f3;
+  --color-slate-50: #f7f6f3;
   --color-slate-100: #efece6;
   --color-slate-200: #e0dcd3;
   --color-slate-300: #cbc5b8;
@@ -96,7 +96,7 @@
   --color-slate-950: #0f0d0a;
 
   /* ─── Semantic brand (forest green) ─────────────────────────────────────── */
-  --color-brand-50:  #f0f6f1;
+  --color-brand-50: #f0f6f1;
   --color-brand-100: #dcebe0;
   --color-brand-400: #5e9a76;
   --color-brand-500: #3d7d58;
@@ -106,7 +106,7 @@
   --color-brand-950: #0c1f18;
 
   /* ─── Semantic accent (gold) ────────────────────────────────────────────── */
-  --color-accent-50:  #faf5e9;
+  --color-accent-50: #faf5e9;
   --color-accent-100: #f3e7c6;
   --color-accent-300: #dcb456;
   --color-accent-400: #cf9f33;
@@ -115,74 +115,92 @@
   --color-accent-700: #7d561f;
 
   /* ─── Surfaces — warm espresso for dark public/auth pages ───────────────── */
-  --color-surface-base:    #14110c;
-  --color-surface-raised:  #1d1812;
-  --color-surface-overlay: rgba(20,17,12,0.6);
+  --color-surface-base: #14110c;
+  --color-surface-raised: #1d1812;
+  --color-surface-overlay: rgba(20, 17, 12, 0.6);
 
   /* ─── Dashboard surfaces — warm paper + espresso sidebar ────────────────── */
-  --color-dash-bg:       #faf8f5;
-  --color-dash-sidebar:  #1c1813;   /* warm charcoal, not cool slate */
-  --color-dash-topbar:   #ffffff;
-  --color-dash-card:     #ffffff;
-  --color-dash-border:   rgba(255,255,255,0.08);
-  --color-dash-hover:    rgba(255,255,255,0.05);
-  --color-dash-divider:  #e8e4da;   /* light borders on the content area */
+  --color-dash-bg: #faf8f5;
+  --color-dash-sidebar: #1c1813; /* warm charcoal, not cool slate */
+  --color-dash-topbar: #ffffff;
+  --color-dash-card: #ffffff;
+  --color-dash-border: rgba(255, 255, 255, 0.08);
+  --color-dash-hover: rgba(255, 255, 255, 0.05);
+  --color-dash-divider: #e8e4da; /* light borders on the content area */
 
   /* ─── Component surfaces (dark contexts) ─────────────────────────────── */
-  --color-surface-card:      rgba(255,255,255,0.04);   /* glass card on dark bg */
-  --color-surface-input:     rgba(255,255,255,0.06);   /* form inputs on dark bg */
-  --color-surface-highlight: rgba(255,255,255,0.06);   /* callouts, info blocks */
-  --color-surface-success:   rgba(47,107,79,0.15);     /* success badge/tag bg */
-  --color-surface-danger:    rgba(180,69,47,0.15);     /* error badge/tag bg */
-  --color-surface-warning:   rgba(189,139,39,0.15);    /* warning badge/tag bg */
+  --color-surface-card: rgba(255, 255, 255, 0.04); /* glass card on dark bg */
+  --color-surface-input: rgba(255, 255, 255, 0.06); /* form inputs on dark bg */
+  --color-surface-highlight: rgba(
+    255,
+    255,
+    255,
+    0.06
+  ); /* callouts, info blocks */
+  --color-surface-success: rgba(47, 107, 79, 0.15); /* success badge/tag bg */
+  --color-surface-danger: rgba(180, 69, 47, 0.15); /* error badge/tag bg */
+  --color-surface-warning: rgba(189, 139, 39, 0.15); /* warning badge/tag bg */
 
   /* ─── Borders & dividers ────────────────────────────────────────────── */
-  --color-border-primary:    rgba(255,255,255,0.08);   /* card, input borders */
-  --color-border-secondary:  rgba(255,255,255,0.06);   /* dividers, separators */
+  --color-border-primary: rgba(255, 255, 255, 0.08); /* card, input borders */
+  --color-border-secondary: rgba(
+    255,
+    255,
+    255,
+    0.06
+  ); /* dividers, separators */
 
   /* ─── Additional text ───────────────────────────────────────────────── */
-  --color-text-placeholder:  rgba(255,255,255,0.3);    /* form placeholder text */
-  --color-text-danger:       #ef4444;                  /* inline error text */
+  --color-text-placeholder: rgba(
+    255,
+    255,
+    255,
+    0.3
+  ); /* form placeholder text */
+  --color-text-danger: #ef4444; /* inline error text */
 
   /* ─── Text (on dark surfaces; light-surface text uses gray-* tokens) ────── */
-  --color-text-primary:   #ffffff;
-  --color-text-secondary: rgba(255,255,255,0.65);
-  --color-text-muted:     rgba(255,255,255,0.4);
-  --color-text-inverse:   #1c1a16;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.65);
+  --color-text-muted: rgba(255, 255, 255, 0.4);
+  --color-text-inverse: #1c1a16;
 
   /* ─── Status colors (warm-tuned) ────────────────────────────────────────── */
-  --color-status-active:    #2f6b4f;  /* verdant */
-  --color-status-pending:   #bd8b27;  /* gold */
-  --color-status-suspended: #c2702c;  /* terracotta */
-  --color-status-blocked:   #b4452f;  /* clay red */
-  --color-status-rejected:  #b4452f;
-  --color-status-approved:  #2f6b4f;
+  --color-status-active: #2f6b4f; /* verdant */
+  --color-status-pending: #bd8b27; /* gold */
+  --color-status-suspended: #c2702c; /* terracotta */
+  --color-status-blocked: #b4452f; /* clay red */
+  --color-status-rejected: #b4452f;
+  --color-status-approved: #2f6b4f;
 
   /* ─── KYC status ────────────────────────────────────────────────────────── */
-  --color-kyc-not-started:  rgba(255,255,255,0.3);
-  --color-kyc-pending:      #bd8b27;
-  --color-kyc-review:       #3f6f96;
-  --color-kyc-approved:     #2f6b4f;
-  --color-kyc-rejected:     #b4452f;
-  --color-kyc-expired:      #8c8378;
+  --color-kyc-not-started: rgba(255, 255, 255, 0.3);
+  --color-kyc-pending: #bd8b27;
+  --color-kyc-review: #3f6f96;
+  --color-kyc-approved: #2f6b4f;
+  --color-kyc-rejected: #b4452f;
+  --color-kyc-expired: #8c8378;
 
   /* ─── Role colors (warm-tuned) ──────────────────────────────────────────── */
-  --color-role-super-admin: #bd8b27;  /* gold */
-  --color-role-admin:       #3f6f96;  /* slate blue */
-  --color-role-owner:       #8a5a3c;  /* walnut */
-  --color-role-tenant:      #2f6b4f;  /* verdant */
+  --color-role-super-admin: #bd8b27; /* gold */
+  --color-role-admin: #3f6f96; /* slate blue */
+  --color-role-owner: #8a5a3c; /* walnut */
+  --color-role-tenant: #2f6b4f; /* verdant */
 
   /* ─── Radius (slightly softer for warmth) ───────────────────────────────── */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
-  --radius-xl:  18px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
   --radius-2xl: 24px;
 
   /* ─── Elevation — warm, low shadows (premium = subtle) ──────────────────── */
-  --shadow-soft:   0 1px 2px rgba(28,26,22,0.06), 0 1px 3px rgba(28,26,22,0.04);
-  --shadow-raised: 0 4px 12px rgba(28,26,22,0.08), 0 2px 4px rgba(28,26,22,0.04);
-  --shadow-float:  0 12px 32px rgba(28,26,22,0.12), 0 4px 8px rgba(28,26,22,0.06);
+  --shadow-soft:
+    0 1px 2px rgba(28, 26, 22, 0.06), 0 1px 3px rgba(28, 26, 22, 0.04);
+  --shadow-raised:
+    0 4px 12px rgba(28, 26, 22, 0.08), 0 2px 4px rgba(28, 26, 22, 0.04);
+  --shadow-float:
+    0 12px 32px rgba(28, 26, 22, 0.12), 0 4px 8px rgba(28, 26, 22, 0.06);
 
   /* ─── Layout ────────────────────────────────────────────────────────────── */
   --sidebar-width: 244px;
@@ -193,12 +211,11 @@
    BASE
    ═════════════════════════════════════════════════════════════════════════ */
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -229,16 +246,23 @@ html, body {
 }
 
 .liquid-glass::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   padding: 1.4px;
-  background: linear-gradient(180deg,
-    rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.1) 20%,
-    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
-    rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.28) 100%);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.1) 80%,
+    rgba(255, 255, 255, 0.28) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -262,7 +286,10 @@ html, body {
   font-size: 13px;
   font-weight: 500;
   color: var(--color-text-secondary);
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   cursor: pointer;
   text-decoration: none;
 }
@@ -280,57 +307,101 @@ html, body {
 }
 
 /* ─── Status / role text helpers (kept for back-compat) ─────────────────── */
-.status-active    { color: var(--color-status-active);    }
-.status-pending   { color: var(--color-status-pending);   }
-.status-suspended { color: var(--color-status-suspended); }
-.status-blocked   { color: var(--color-status-blocked);   }
-.status-rejected  { color: var(--color-status-rejected);  }
+.status-active {
+  color: var(--color-status-active);
+}
+.status-pending {
+  color: var(--color-status-pending);
+}
+.status-suspended {
+  color: var(--color-status-suspended);
+}
+.status-blocked {
+  color: var(--color-status-blocked);
+}
+.status-rejected {
+  color: var(--color-status-rejected);
+}
 
-.role-super-admin { color: var(--color-role-super-admin); }
-.role-admin       { color: var(--color-role-admin);       }
-.role-owner       { color: var(--color-role-owner);       }
-.role-tenant      { color: var(--color-role-tenant);      }
+.role-super-admin {
+  color: var(--color-role-super-admin);
+}
+.role-admin {
+  color: var(--color-role-admin);
+}
+.role-owner {
+  color: var(--color-role-owner);
+}
+.role-tenant {
+  color: var(--color-role-tenant);
+}
 
 /* ─── Animations ────────────────────────────────────────────────────────── */
 @keyframes marquee {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 .animate-marquee {
   display: flex;
   width: max-content;
   animation: marquee 25s linear infinite;
 }
-.animate-marquee:hover { animation-play-state: paused; }
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
 
 @keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-fade-in { animation: fade-in 0.3s ease forwards; }
+.animate-fade-in {
+  animation: fade-in 0.3s ease forwards;
+}
 
-@keyframes spin-slow { to { transform: rotate(360deg); } }
-.animate-spin-slow { animation: spin-slow 2s linear infinite; }
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 2s linear infinite;
+}
 
 /* ─── Scrollbars ────────────────────────────────────────────────────────── */
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
 
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.12) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
-.scrollbar-thin::-webkit-scrollbar { width: 4px; }
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 4px;
 }
 
 /* ─── Focus ring (verdant) ──────────────────────────────────────────────── */
-.focus-ring { outline: none; }
+.focus-ring {
+  outline: none;
+}
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
@@ -343,14 +414,22 @@ html, body {
 /* Warm editorial canvas — espresso → walnut, the backdrop for the hero. */
 .canvas-warm {
   background:
-    radial-gradient(120% 90% at 80% -10%, rgba(189,139,39,0.16) 0%, transparent 45%),
-    radial-gradient(90% 80% at 0% 100%, rgba(47,107,79,0.14) 0%, transparent 50%),
+    radial-gradient(
+      120% 90% at 80% -10%,
+      rgba(189, 139, 39, 0.16) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      90% 80% at 0% 100%,
+      rgba(47, 107, 79, 0.14) 0%,
+      transparent 50%
+    ),
     linear-gradient(180deg, #1a140d 0%, #14110c 55%, #100d09 100%);
 }
 
 /* Fine film grain — sits over everything for analogue warmth. */
 .grain::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -363,77 +442,142 @@ html, body {
 /* Engraved ledger grid — faint registry lines. */
 .ledger-grid {
   background-image:
-    repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 44px),
-    repeating-linear-gradient(90deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 44px);
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.025) 0 1px,
+      transparent 1px 44px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.025) 0 1px,
+      transparent 1px 44px
+    );
 }
 
 /* Hairline divider in warm gold, for ledger strips. */
-.rule-gold { background: linear-gradient(90deg, transparent, rgba(189,139,39,0.5), transparent); }
+.rule-gold {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(189, 139, 39, 0.5),
+    transparent
+  );
+}
 
 /* Duotone treatment for the hero photograph — warm sepia + green shadows. */
 .duotone-warm {
-  filter: sepia(0.55) saturate(1.1) contrast(1.04) brightness(0.82) hue-rotate(-8deg);
+  filter: sepia(0.55) saturate(1.1) contrast(1.04) brightness(0.82)
+    hue-rotate(-8deg);
 }
 
 /* ── Certificate of Authenticity (the signature artifact) ──────────────── */
 .cert {
   position: relative;
-  background:
-    radial-gradient(140% 120% at 50% 0%, #fbf6ea 0%, #f4ead2 60%, #ecdcbb 100%);
+  background: radial-gradient(
+    140% 120% at 50% 0%,
+    #fbf6ea 0%,
+    #f4ead2 60%,
+    #ecdcbb 100%
+  );
   color: #3a2f1c;
   border-radius: 6px;
   box-shadow:
-    0 30px 70px -20px rgba(0,0,0,0.55),
-    0 2px 0 rgba(255,255,255,0.4) inset;
+    0 30px 70px -20px rgba(0, 0, 0, 0.55),
+    0 2px 0 rgba(255, 255, 255, 0.4) inset;
 }
 /* Double engraved border in gold */
 .cert::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 10px;
-  border: 1.5px solid rgba(157,111,34,0.55);
+  border: 1.5px solid rgba(157, 111, 34, 0.55);
   border-radius: 3px;
   pointer-events: none;
 }
 .cert::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 14px;
-  border: 0.75px solid rgba(157,111,34,0.3);
+  border: 0.75px solid rgba(157, 111, 34, 0.3);
   border-radius: 2px;
   pointer-events: none;
 }
 .cert-guilloche {
   background-image: repeating-radial-gradient(
     circle at 50% 50%,
-    rgba(157,111,34,0.12) 0 1px, transparent 1px 7px
+    rgba(157, 111, 34, 0.12) 0 1px,
+    transparent 1px 7px
   );
 }
 
 /* Wax-seal style emblem */
 .wax-seal {
-  background: radial-gradient(circle at 35% 30%, #d8b14e 0%, #bd8b27 45%, #8a6014 100%);
-  box-shadow: 0 6px 14px -4px rgba(138,96,20,0.7), inset 0 1px 2px rgba(255,255,255,0.35);
+  background: radial-gradient(
+    circle at 35% 30%,
+    #d8b14e 0%,
+    #bd8b27 45%,
+    #8a6014 100%
+  );
+  box-shadow:
+    0 6px 14px -4px rgba(138, 96, 20, 0.7),
+    inset 0 1px 2px rgba(255, 255, 255, 0.35);
 }
 
 /* "Verified on-chain" rubber stamp */
 @keyframes stamp {
-  0%   { opacity: 0; transform: scale(2.1) rotate(-20deg); }
-  55%  { opacity: 1; }
-  100% { opacity: 0.92; transform: scale(1) rotate(-11deg); }
+  0% {
+    opacity: 0;
+    transform: scale(2.1) rotate(-20deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.92;
+    transform: scale(1) rotate(-11deg);
+  }
 }
-.animate-stamp { animation: stamp 0.5s cubic-bezier(0.2, 0.85, 0.25, 1) 1.5s both; }
+.animate-stamp {
+  animation: stamp 0.5s cubic-bezier(0.2, 0.85, 0.25, 1) 1.5s both;
+}
 
 /* Slow ambient float for the certificate */
 @keyframes cert-float {
-  0%, 100% { transform: translateY(0) rotate(2deg); }
-  50%      { transform: translateY(-10px) rotate(2deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
 }
-.animate-cert-float { animation: cert-float 7s ease-in-out infinite; }
+.animate-cert-float {
+  animation: cert-float 7s ease-in-out infinite;
+}
 
 /* Ticker/measured reveal used by ledger figures */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-rise { animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-rise {
+  animation: rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Staggered card entrance */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

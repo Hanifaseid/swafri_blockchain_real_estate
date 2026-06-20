@@ -570,6 +570,31 @@ export async function uploadPhotos(
   }
 }
 
+export async function uploadDocuments(
+  listingId: string,
+  files: File[],
+  type: string,
+): Promise<void> {
+  const form = new FormData();
+  files.forEach((f) => form.append("documents", f));
+  form.append("type", type);
+  try {
+    await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(listingId), form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 0,
+    });
+  } catch (error: any) {
+    const errData = error.response?.data;
+    if (errData) {
+      if (errData.stack && errData.stack.includes("MulterError")) {
+        throw new Error(errData.stack.split("\n")[0]);
+      }
+      throw new Error(errData.message || "Document upload failed");
+    }
+    throw error;
+  }
+}
+
 export async function deletePhoto(
   listingId: string,
   publicId: string,

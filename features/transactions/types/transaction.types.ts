@@ -1,15 +1,14 @@
 // ─── Purchase Transaction Types ───────────────────────────────────────────────
 
 export type PurchaseStatus =
-  | 'pending'
+  | 'offer_accepted'
   | 'deposit_pending'
-  | 'processing'
-  | 'under_inspection'
-  | 'approved'
+  | 'deposit_received'
+  | 'closing_review'
+  | 'title_transfer_pending'
   | 'completed'
-  | 'rejected'
   | 'cancelled'
-  | 'failed';
+  | 'disputed';
 
 export interface ClosingChecklist {
   purchaseAgreement?: boolean;
@@ -67,4 +66,6 @@ export interface PurchaseEscrowActionPayload {
   note?: string;
   reason?: string;
   txHash?: string;
+  /** For dispute resolution: release funds to seller or refund the buyer. */
+  decision?: 'release' | 'refund';
 }
