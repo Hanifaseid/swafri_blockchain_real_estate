@@ -4,14 +4,16 @@ import { useEffect } from 'react';
 import { getCurrentUser } from '@/features/auth/services/auth.service';
 import { clearSession } from '@/lib/auth/session';
 import { useAuthStore } from '@/stores/auth.store';
+import type { UserAccount } from '@/features/users/types/user.types';
 
 const AUTH_CHANNEL = 'vex_auth';
 
-function writeAuthCookies(isAuthed?: boolean): void {
+function writeAuthCookies(user?: UserAccount | null): void {
   if (typeof document === 'undefined') return;
-  if (isAuthed) {
+  if (user) {
     const maxAge = 60 * 60 * 24 * 7;
     document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
+    document.cookie = `vex_user_role=${user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
     return;
   }
   document.cookie = 'vex_authed=; path=/; max-age=0';
@@ -32,11 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (user) {
         setUser(user);
-        writeAuthCookies(true);
+        writeAuthCookies(user);
       } else {
         clearSession();
         clearUser();
-        writeAuthCookies();
+        writeAuthCookies(null);
       }
 
       setLoading(false);
