@@ -33,8 +33,8 @@ const editSchema = z.object({
   region:           z.string().optional(),
   country:          z.string().min(1, 'Required'),
   postalCode:       z.string().optional(),
-  longitude:        z.number({ invalid_type_error: 'Enter valid longitude' }),
-  latitude:         z.number({ invalid_type_error: 'Enter valid latitude' }),
+  longitude:        z.number().refine((v) => !Number.isNaN(v), { message: 'Enter valid longitude' }),
+  latitude:         z.number().refine((v) => !Number.isNaN(v), { message: 'Enter valid latitude' }),
   amenities:        z.string().optional(),
   neighborhoodInfo: z.string().optional(),
   utilityDetails:   z.string().optional(),
@@ -51,16 +51,21 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const { currentUser } = useAuthStore();
   const { data: listing, isLoading } = useListing(id);
   const { mutate: update, isPending } = useUpdateListing(id);
-  const [listingType, setListingType] = useState<'sale' | 'rent'>('rent');
 
-  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setValue, reset, watch, formState: { errors } } = useForm({
     resolver: zodResolver(editSchema),
+    defaultValues: {
+      listingType: 'rent' as const,
+    },
   });
 
-  // Populate form once listing loads
+  // Watch listingType from form state instead of using a separate state
+  const listingType = watch('listingType');
+
+  // Populate form once listing loads - only call reset, no setState
   useEffect(() => {
     if (!listing) return;
-    setListingType(listing.listingType);
+    
     reset({
       title:            listing.title,
       description:      listing.description ?? '',
@@ -169,7 +174,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
           <div className="grid grid-cols-2 gap-3">
             {(['rent', 'sale'] as const).map((type) => (
               <button key={type} type="button"
-                onClick={() => { setListingType(type); setValue('listingType', type); }}
+                onClick={() => setValue('listingType', type)}
                 className={cn('py-3 rounded-xl border text-sm font-medium transition-all capitalize',
                   listingType === type ? 'border-emerald-400 bg-emerald-50 text-emerald-700' : 'border-gray-200 text-black/50 hover:border-gray-300')}>
                 For {type === 'rent' ? 'Rent' : 'Sale'}
