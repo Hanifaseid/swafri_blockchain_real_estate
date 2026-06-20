@@ -10,6 +10,7 @@ import {
   useReleasePurchaseEscrow,
   useRefundPurchaseEscrow,
   useResolvePurchaseDispute,
+  useUpdateClosingChecklist,
 } from '@/features/transactions/queries/transaction.queries';
 import type { PurchaseStatus, PurchaseTransaction } from '@/features/transactions/types/transaction.types';
 import { Button } from '@/components/ui/Button';
@@ -278,17 +279,20 @@ function ActionButtons({
   const release = useReleasePurchaseEscrow();
   const refund = useRefundPurchaseEscrow();
   const resolve = useResolvePurchaseDispute();
+  const checklist = useUpdateClosingChecklist();
 
   const id = transaction.id;
   const s = transaction.status;
   const busy =
-    fund.isPending || release.isPending || refund.isPending || resolve.isPending || mutation.isPending;
+    fund.isPending || release.isPending || refund.isPending ||
+    resolve.isPending || mutation.isPending || checklist.isPending;
 
   const canFund = s === 'offer_accepted' || s === 'deposit_pending';
   const canSettle = s === 'deposit_received';
+  const isClosingReview = s === 'closing_review';
   const isDisputed = s === 'disputed';
 
-  if (!canFund && !canSettle && !isDisputed) {
+  if (!canFund && !canSettle && !isClosingReview && !isDisputed) {
     return <span className="text-xs text-black/30">—</span>;
   }
 
@@ -335,6 +339,27 @@ function ActionButtons({
             Refund buyer
           </Button>
         </>
+      )}
+      {isClosingReview && (
+        <Button
+          size="sm"
+          className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+          loading={busy}
+          onClick={() =>
+            checklist.mutate({
+              id,
+              payload: {
+                items: {
+                  title_transferred: true,
+                  funds_disbursed: true,
+                  documents_verified: true,
+                },
+              },
+            })
+          }
+        >
+          Complete Checklist
+        </Button>
       )}
       {isDisputed && (
         <>
