@@ -69,11 +69,11 @@ export function RegisterForm() {
     <div className="space-y-5 p-6 md:p-8">
       {/* Heading */}
       <div className="text-center space-y-1">
-        <h2 className="text-xl font-light text-white tracking-tight uppercase">
-          Create Account
+        <h2 className="text-lg font-medium text-white tracking-tight">
+          Create your account
         </h2>
-        <p className="text-xs text-white/35 font-mono">
-          Join the Swafir marketplace
+        <p className="text-xs text-white/35">
+          Join the TerraChain marketplace
         </p>
       </div>
 
@@ -266,7 +266,7 @@ export function RegisterForm() {
           type="submit"
           disabled={isPending || isSuccess}
           loading={isPending}
-          className="w-full bg-white hover:bg-neutral-100 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest font-mono uppercase shadow-xl"
+          className="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest uppercase shadow-lg shadow-amber-500/20"
           size="lg"
         >
           {isSuccess ? 'Redirecting…' : 'Create Account'}

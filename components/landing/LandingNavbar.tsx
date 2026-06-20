@@ -212,14 +212,6 @@ export default function LandingNavbar() {
 
         {/* ── Right side: CTA + profile ────────────────────────────────────── */}
         <div className="flex items-center gap-2">
-          {!currentUser && (
-            <Link
-              href="/auth/login"
-              className="hidden px-4 py-2 text-sm font-medium text-white/75 transition-colors hover:text-white sm:inline-flex"
-            >
-              Sign in
-            </Link>
-          )}
 
           {/* CTA: link for unauthenticated / admin / owner — wallet for tenant */}
           {primaryAction && PrimaryIcon ? (
@@ -352,15 +344,7 @@ export default function LandingNavbar() {
                 className="rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950 justify-center"
               />
             ) : null}
-            {!currentUser && (
-              <Link
-                href="/auth/login"
-                onClick={closeMenus}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-medium text-white"
-              >
-                Sign in
-              </Link>
-            )}
+
           </div>
 
           {currentUser && (

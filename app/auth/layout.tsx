@@ -1,29 +1,32 @@
-// Auth layout — login and register pages.
-// Dark centered card layout. No sidebar. No topbar.
-// Background matches the existing auth/page.tsx design (black + ambient glows).
+// ─── Auth Layout ──────────────────────────────────────────────────────────────
+// Full-screen dark backdrop with centered modal-style form. No chrome.
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-black text-white relative flex flex-col selection:bg-white selection:text-black overflow-x-hidden">
-      {/* Ambient glows — same as existing auth/page.tsx */}
+    <div className="min-h-screen bg-[#060606] text-white selection:bg-amber-400 selection:text-black flex items-center justify-center px-6 py-10">
+      {/* Ambient glows */}
       <div
-        className="absolute top-[-30%] left-[-20%] w-[80%] h-[80%] rounded-full bg-blue-900/10 blur-[150px] pointer-events-none"
+        className="fixed top-[-30%] left-[-20%] w-[70%] h-[70%] rounded-full bg-amber-900/5 blur-[180px] pointer-events-none"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[70%] rounded-full bg-emerald-900/10 blur-[130px] pointer-events-none"
+        className="fixed bottom-[-20%] right-[-15%] w-[60%] h-[60%] rounded-full bg-emerald-900/4 blur-[150px] pointer-events-none"
         aria-hidden="true"
       />
-      {/* Background architectural image — same as existing auth/page.tsx */}
+
+      {/* Background architectural image */}
       <div
-        className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-luminosity pointer-events-none"
+        className="fixed inset-0 bg-cover bg-center opacity-[0.15] mix-blend-luminosity pointer-events-none"
         style={{
           backgroundImage:
             "url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1600')",
         }}
         aria-hidden="true"
       />
-      {children}
+
+      <div className="relative z-10 w-full flex justify-center">
+        {children}
+      </div>
     </div>
   );
 }
