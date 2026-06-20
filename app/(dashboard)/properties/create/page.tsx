@@ -197,7 +197,7 @@ export default function CreateListingPage() {
   };
 
   if (!currentUser || (currentUser.role !== 'PROPERTY_OWNER' && currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPER_ADMIN')) {
-    return <div className="p-8 text-sm text-black/50">You don't have permission to create listings.</div>;
+    return <div className="p-8 text-sm text-black/50">You don&apos;t have permission to create listings.</div>;
   }
 
   if (currentUser && currentUser.role === 'PROPERTY_OWNER' && currentUser.kycStatus !== 'verified') {

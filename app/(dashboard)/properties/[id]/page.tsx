@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useRef, useState, useEffect, useCallback } from 'react';
+import { use, useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, Upload, CheckCircle2, XCircle, Clock, AlertCircle,
@@ -87,6 +87,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [dragIdx, setDragIdx]                   = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx]           = useState<number | null>(null);
 
+  // FIX 1: Use useMemo to create a stable photos array reference
+  const photos = useMemo(() => listing?.photos ?? [], [listing?.photos]);
+
   const handleDragStart = useCallback((idx: number) => {
     setDragIdx(idx);
   }, []);
@@ -96,25 +99,31 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     setDragOverIdx(idx);
   }, []);
 
+  // FIX 1: Update handleDrop dependencies to use the stable photos array
   const handleDrop = useCallback((idx: number) => {
-    if (dragIdx === null || dragIdx === idx || !listing?.photos) return;
-    const photos = [...listing.photos];
-    const [moved] = photos.splice(dragIdx, 1);
-    photos.splice(idx, 0, moved);
-    const order = photos.map(p => p.publicId);
+    if (dragIdx === null || dragIdx === idx || !photos.length) return;
+    const photosCopy = [...photos];
+    const [moved] = photosCopy.splice(dragIdx, 1);
+    photosCopy.splice(idx, 0, moved);
+    const order = photosCopy.map(p => p.publicId);
     doReorderPhotos(order);
     setDragIdx(null);
     setDragOverIdx(null);
-  }, [dragIdx, listing?.photos, doReorderPhotos]);
+  }, [dragIdx, photos, doReorderPhotos]);
 
   const handleDragEnd = useCallback(() => {
     setDragIdx(null);
     setDragOverIdx(null);
   }, []);
 
-  useEffect(() => {
-    if (listing?.price) setOfferAmount(listing.price);
-  }, [listing?.price]);
+  // FIX 2: Move the state update out of the effect - use a reset function or initialize differently
+  // Instead of using an effect to set the offer amount, initialize it when the modal opens
+  const handleOpenOfferModal = useCallback(() => {
+    if (listing?.price) {
+      setOfferAmount(listing.price);
+    }
+    setShowOfferModal(true);
+  }, [listing]);
 
   if (!currentUser) return null;
   const role    = currentUser.role;
@@ -124,7 +133,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   if (isLoading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
   if (!listing)  return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
 
-  const coverPhoto = listing.photos?.find((p) => p.isCover) ?? listing.photos?.[0];
+  const coverPhoto = photos.find((p) => p.isCover) ?? photos[0];
   const price = listing.listingType === 'rent' ? `$${listing.monthlyRent?.toLocaleString()}/mo` : `$${listing.price?.toLocaleString()}`;
 
   const ownerActions: { action: TransitionAction; label: string; style: string }[] = [];
@@ -229,7 +238,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   </button>
                 )}
                 {listing.listingType === 'sale' && (
-                  <button type="button" onClick={() => setShowOfferModal(true)}
+                  <button type="button" onClick={handleOpenOfferModal}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
                     Make Offer
                   </button>
@@ -389,12 +398,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 if (photoInputRef.current) photoInputRef.current.value = ''; 
               }} />
           </div>
-          {isOwner && listing.photos && listing.photos.length > 1 && (
+          {isOwner && photos.length > 1 && (
             <p className="text-[9px] text-black/30 font-mono mb-2">Drag photos to reorder</p>
           )}
-          {(listing.photos?.length > 0) || previewPhotos.length > 0 ? (
+          {photos.length > 0 || previewPhotos.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {(listing.photos || []).map((photo, idx) => (
+              {photos.map((photo, idx) => (
                 <div
                   key={photo.publicId}
                   draggable={isOwner}
