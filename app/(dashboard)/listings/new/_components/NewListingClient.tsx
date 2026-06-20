@@ -18,7 +18,7 @@ export function NewListingClient() {
         ...values,
         amenities: values.amenityIds,
         address: {
-          address: values.address,
+          street: values.address,
           city: values.city,
           country: values.country,
         },
