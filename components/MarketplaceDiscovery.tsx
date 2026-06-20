@@ -44,7 +44,7 @@ const PropertyMap = dynamic(
 );
 
 type SearchMode = 'viewport' | 'radius' | 'polygon';
-const DEFAULT_CENTER: [number, number] = [38.7578, 8.9806];
+const DEFAULT_CENTER: [number, number] = [8.9806, 38.7578]; // Addis Ababa [lat, lng]
 
 const MODES: { value: SearchMode; label: string; icon: typeof MousePointer2 }[] = [
   { value: 'viewport', label: 'Area', icon: MousePointer2 },
@@ -94,14 +94,13 @@ export function MarketplaceDiscovery() {
   // Mobile: which pane is visible (map never covers the list)
   const [view, setView] = useState<'list' | 'map'>('list');
 
-  // On first load, center the map on the user's current location (falls back
-  // to the default center if permission is denied or geolocation is unavailable).
   useEffect(() => {
     if (locatedRef.current || typeof navigator === 'undefined' || !navigator.geolocation) return;
     locatedRef.current = true;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setRadiusCenter([pos.coords.longitude, pos.coords.latitude]);
+        // PropertyMap.center is [lat, lng]
+        setRadiusCenter([pos.coords.latitude, pos.coords.longitude]);
         setAutoZoom(13);
       },
       () => {
@@ -146,8 +145,8 @@ export function MarketplaceDiscovery() {
     if (minBaths) next.minBathrooms = Number(minBaths);
     if (mode === 'viewport') Object.assign(next, viewport);
     if (mode === 'radius') {
-      next.lng = radiusCenter[0];
-      next.lat = radiusCenter[1];
+      next.lat = radiusCenter[0];
+      next.lng = radiusCenter[1];
       next.radius = radiusKm * 1000;
     }
     if (mode === 'polygon' && polygon.length >= 3) next.polygon = polygon;
@@ -181,7 +180,7 @@ export function MarketplaceDiscovery() {
   );
 
   const handleGeocodePick = (result: GeocodeResult) => {
-    const nextCenter: [number, number] = [result.lng, result.lat];
+    const nextCenter: [number, number] = [result.lat, result.lng];
     setSelectedGeocode(result);
     setRadiusCenter(nextCenter);
     setReversePoint(nextCenter);
