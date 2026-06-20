@@ -29,6 +29,7 @@ import {
   useSaveSearch,
 } from '@/features/listings/queries/listing.queries';
 import type {
+  Listing,
   GeocodeResult,
   ListingFilters,
   ListingType,
@@ -164,7 +165,7 @@ export function MarketplaceDiscovery() {
   const reverse = useReverseGeocode(reversePoint?.[1], reversePoint?.[0]);
   const saveSearch = useSaveSearch();
 
-  const items = listings.data?.items ?? [];
+  const items: Listing[] = listings.data?.items ?? [];
   const total = listings.data?.total ?? 0;
 
   const mapListings = useMemo(
@@ -192,7 +193,7 @@ export function MarketplaceDiscovery() {
     saveSearch.mutate({
       name: query || selectedGeocode?.label || 'Property search',
       alertEnabled: true,
-      query: filters,
+      query: filters as unknown as Record<string, unknown>,
     });
 
   const summary = neighborhoodAnalytics.data;

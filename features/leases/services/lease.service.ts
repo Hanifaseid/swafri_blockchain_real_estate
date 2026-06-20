@@ -165,9 +165,11 @@ export async function getLeaseTimeline(id: string): Promise<LeaseTimeline> {
   const { data } = await apiClient.get<any>(API_ENDPOINTS.LEASES.TIMELINE(id));
   if (data?.success === false) throw new Error(data.message || 'Failed to fetch lease timeline');
   const value = data?.data ?? data;
-  if (Array.isArray(value)) return { leaseId: id, events: value };
+  if (Array.isArray(value)) return { leaseId: id, currentStatus: 'unknown', escrowState: 'unknown', events: value };
   return {
     leaseId: value?.leaseId ?? id,
+    currentStatus: value?.currentStatus ?? value?.status ?? 'unknown',
+    escrowState: value?.escrowState ?? 'unknown',
     events: Array.isArray(value?.events) ? value.events : [],
   };
 }

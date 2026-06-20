@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { PropertyListingCard } from '@/components/listing/PropertyListingCard';
 import { useListings } from '@/features/listings/queries/listing.queries';
-import type { ListingFilters, ListingType } from '@/features/listings/types/listing.types';
+import type { Listing, ListingFilters, ListingType } from '@/features/listings/types/listing.types';
 import { cn } from '@/lib/utils';
 
 const PROPERTY_TYPES = [
@@ -88,7 +88,7 @@ export default function ListingsPage() {
   }, [category, listingType, maxPrice, minBaths, minBeds, minPrice, page, propertyType, query, sort]);
 
   const { data, isLoading } = useListings(filters);
-  const items = data?.items ?? [];
+  const items: Listing[] = data?.items ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 

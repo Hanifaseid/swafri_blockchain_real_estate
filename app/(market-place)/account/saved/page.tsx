@@ -37,7 +37,7 @@ export default function AccountSavedPage() {
               <div>
                 <h2 className="font-semibold text-white">{search.name}</h2>
                 <p className="mt-1 flex items-center gap-1.5 text-sm text-text-muted">
-                  {search.query?.listingType ?? 'Sale and rent'} search
+                  {(search.query?.listingType as string | undefined) ?? 'Sale and rent'} search
                   {search.alertEnabled ? (
                     <span className="inline-flex items-center gap-1 text-emerald-400">
                       <Bell size={13} /> alerts on

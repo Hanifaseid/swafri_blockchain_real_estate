@@ -44,10 +44,11 @@ import {
   revokeTitle,
   getListingRentalYield,
   getYieldDashboard,
-  createMaintenanceRecord,
-  getMaintenanceRecords,
-  getNeighborhoodAnalytics,
   executeBulkActions,
+  getSavedSearches,
+  saveSearch,
+  deleteSavedSearch,
+  getGeoNeighborhoodStats,
 } from "@/features/listings/services/listing.service";
 
 const KEYS = {
@@ -58,6 +59,10 @@ const KEYS = {
   adminList: (p: object) => ["listings", "admin", p] as const,
   clusters: (f: object) => ["listings", "clusters", f] as const,
   savedSearches: () => ["saved-searches"] as const,
+  rentalYield: (id: string) => ["listings", "rental-yield", id] as const,
+  yieldDashboard: () => ["listings", "yield-dashboard"] as const,
+  maintenance: (id: string, p?: object) => ["listings", "maintenance", id, p ?? {}] as const,
+  neighborhoodAnalytics: (p?: object) => ["listings", "neighborhood-analytics", p ?? {}] as const,
 };
 
 export function useListings(filters?: ListingFilters) {
@@ -106,7 +111,7 @@ export function useNeighborhoods(params?: {
 export function useNeighborhoodAnalytics(id?: string) {
   return useQuery({
     queryKey: ["geo", "neighborhoods", id, "analytics"],
-    queryFn: () => getNeighborhoodAnalytics(id as string),
+    queryFn: () => getNeighborhoodAnalytics(id),
     enabled: !!id,
   });
 }
@@ -211,22 +216,21 @@ export function useListingYield(id: string) {
   });
 }
 
-export function useMaintenanceRecords(id: string) {
+export function useMaintenanceRecords(listingId: string, params?: { type?: string; from?: string; to?: string; page?: number; limit?: number }) {
   return useQuery({
-    queryKey: ["listings", "maintenance", id],
-    queryFn: () => getMaintenanceRecords(id),
-    enabled: !!id,
+    queryKey: KEYS.maintenance(listingId, params),
+    queryFn: () => getMaintenanceRecords(listingId, params),
+    enabled: !!listingId,
   });
 }
 
-export function useCreateMaintenanceRecord(id: string) {
+export function useCreateMaintenanceRecord() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateMaintenanceRecordInput) =>
-      createMaintenanceRecord(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["listings", "maintenance", id] });
-      qc.invalidateQueries({ queryKey: ["listings", "yield", id] });
+    mutationFn: ({ listingId, input }: { listingId: string; input: CreateMaintenanceRecordInput }) =>
+      createMaintenanceRecord(listingId, input),
+    onSuccess: (_data, { listingId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.maintenance(listingId) });
       toast.success("Maintenance record added.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -424,45 +428,36 @@ export function useYieldDashboard() {
   });
 }
 
-// ─── Maintenance Records ───────────────────────────────────────────────────────
+// ─── Saved Searches ───────────────────────────────────────────────────────────
 
-export function useMaintenanceRecords(listingId: string, params?: {
-  type?: string;
-  from?: string;
-  to?: string;
-  page?: number;
-  limit?: number;
-}) {
+export function useSavedSearches() {
   return useQuery({
-    queryKey: KEYS.maintenance(listingId, params),
-    queryFn: () => getMaintenanceRecords(listingId, params),
-    enabled: !!listingId,
+    queryKey: KEYS.savedSearches(),
+    queryFn: getSavedSearches,
   });
 }
 
-export function useCreateMaintenanceRecord() {
+export function useSaveSearch() {
   const qc = useQueryClient();
-
   return useMutation({
-    mutationFn: ({ listingId, input }: { listingId: string; input: any }) =>
-      createMaintenanceRecord(listingId, input),
-    onSuccess: (data, { listingId }) => {
-      qc.invalidateQueries({ queryKey: KEYS.maintenance(listingId) });
-      toast.success('Maintenance record created successfully');
+    mutationFn: (input: Parameters<typeof saveSearch>[0]) => saveSearch(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
+      toast.success("Search saved.");
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to create maintenance record';
-      toast.error(message);
-    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
-// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
-
-export function useNeighborhoodAnalytics(params?: { region?: string }) {
-  return useQuery({
-    queryKey: KEYS.neighborhoodAnalytics(params),
-    queryFn: () => getNeighborhoodAnalytics(params),
+export function useDeleteSavedSearch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteSavedSearch(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
+      toast.success("Saved search removed.");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
@@ -470,16 +465,21 @@ export function useNeighborhoodAnalytics(params?: { region?: string }) {
 
 export function useExecuteBulkActions() {
   const qc = useQueryClient();
-
   return useMutation({
-    mutationFn: (actions: any[]) => executeBulkActions(actions),
+    mutationFn: (actions: Parameters<typeof executeBulkActions>[0]) => executeBulkActions(actions),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.all });
-      toast.success('Bulk actions completed successfully');
+      toast.success('Bulk actions completed.');
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to execute bulk actions';
-      toast.error(message);
-    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ─── Geo Neighbourhood Stats (grid component) ────────────────────────────────
+
+export function useGeoNeighborhoodStats(params?: { region?: string }) {
+  return useQuery({
+    queryKey: ['geo', 'neighborhood-stats', params],
+    queryFn: () => getGeoNeighborhoodStats(params),
   });
 }

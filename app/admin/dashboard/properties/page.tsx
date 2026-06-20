@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Building2, ShieldCheck } from 'lucide-react';
 import { useAdminListings, useAdminListingsStats } from '@/features/listings/queries/listing.queries';
+import type { Listing } from '@/features/listings/types/listing.types';
 
 export default function AdminPropertiesPage() {
   const { data, isLoading } = useAdminListings({ limit: 25 });
@@ -41,7 +42,7 @@ export default function AdminPropertiesPage() {
           <span>Verification</span>
           <span>Action</span>
         </div>
-        {(data?.items ?? []).map((listing) => (
+        {(data?.items as Listing[] ?? []).map((listing) => (
           <div
             key={listing.id}
             className="grid grid-cols-[minmax(0,1fr)_140px_140px_130px] items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0"

@@ -4,33 +4,29 @@ import * as React from "react";
 import { Activity, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useLiveness, useReadiness } from "@/features/health/queries/health.queries";
 
-export default function HealthPanel() {
-  const { data: livenessData, isLoading: livenessLoading } = useLiveness();
-  const { data: readinessData, isLoading: readinessLoading } = useReadiness();
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case 'ok':
+      return <CheckCircle className="h-6 w-6 text-green-600" />;
+    case 'error':
+      return <XCircle className="h-6 w-6 text-red-600" />;
+    default:
+      return <Clock className="h-6 w-6 text-gray-400" />;
+  }
+};
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'ok':
-        return <CheckCircle className="h-6 w-6 text-green-600" />;
-      case 'error':
-        return <XCircle className="h-6 w-6 text-red-600" />;
-      default:
-        return <Clock className="h-6 w-6 text-gray-400" />;
-    }
-  };
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'ok':
+      return 'bg-green-100 border-green-300 text-green-800';
+    case 'error':
+      return 'bg-red-100 border-red-300 text-red-800';
+    default:
+      return 'bg-gray-100 border-gray-300 text-gray-800';
+  }
+};
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ok':
-        return 'bg-green-100 border-green-300 text-green-800';
-      case 'error':
-        return 'bg-red-100 border-red-300 text-red-800';
-      default:
-        return 'bg-gray-100 border-gray-300 text-gray-800';
-    }
-  };
-
-  const HealthCard = ({ title, data, isLoading }: { title: string; data: any; isLoading: boolean }) => (
+const HealthCard = ({ title, data, isLoading }: { title: string; data: any; isLoading: boolean }) => (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
@@ -75,6 +71,10 @@ export default function HealthPanel() {
       )}
     </div>
   );
+
+export default function HealthPanel() {
+  const { data: livenessData, isLoading: livenessLoading } = useLiveness();
+  const { data: readinessData, isLoading: readinessLoading } = useReadiness();
 
   return (
     <div className="space-y-6">

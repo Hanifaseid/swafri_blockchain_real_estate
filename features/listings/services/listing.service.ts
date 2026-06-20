@@ -10,17 +10,21 @@ import type {
   TransitionInput,
   CreateSavedSearchInput,
   SavedSearch,
-  ListingCluster,
   GeocodeResult,
   ReverseGeocodeResult,
   Neighborhood,
   NeighborhoodAnalytics,
+  GeoNeighborhoodStat,
   MaintenanceRecord,
-  CreateMaintenanceRecordInput,
+  MaintenanceRecordsResponse,
+  CreateMaintenanceInput,
   YieldSummary,
+  YieldDashboard,
+  BulkActionItem,
+  BulkActionResult,
 } from "@/features/listings/types/listing.types";
 
-// ─── Response helpers ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Response helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface ApiResp<T> {
   success: boolean;
@@ -46,7 +50,7 @@ function extractList<T>(data: ApiPaginatedResp<T>): {
 } {
   const d = data as unknown as Record<string, unknown>;
 
-  // Shape: { data: { items: [...], total, page, limit } } — what the real API returns
+  // Shape: { data: { items: [...], total, page, limit } } â€” what the real API returns
   if (d.data && typeof d.data === "object" && !Array.isArray(d.data)) {
     const nested = d.data as Record<string, unknown>;
     if (Array.isArray(nested.items)) {
@@ -97,8 +101,86 @@ function unwrapData<T>(payload: unknown, fallback: T): T {
   return (payload as T) ?? fallback;
 }
 
-// ─── getListings (public discovery) ──────────────────────────────────────────
-// GET /listings — published listings with filters
+// â”€â”€â”€ Geo coordinate helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// The backend returns GeoJSON ([lng, lat] under a `coordinates` array). The UI
+// (PropertyMap, geocode pickers) works in flat lat/lng. These helpers normalise
+// whatever coordinate shape the API hands back into a flat { lat, lng } pair.
+
+function coordsOf(value: unknown): [number, number] | null {
+  if (!value) return null;
+  // GeoJSON object: { type: "Point", coordinates: [lng, lat] }
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const c = (value as { coordinates?: unknown }).coordinates;
+    if (Array.isArray(c) && c.length >= 2) return [Number(c[0]), Number(c[1])];
+    return null;
+  }
+  // Raw [lng, lat] array
+  if (Array.isArray(value) && value.length >= 2) {
+    return [Number(value[0]), Number(value[1])];
+  }
+  return null;
+}
+
+function mapGeocode(raw: unknown): GeocodeResult | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const coords = coordsOf(r.location) ?? coordsOf(r.coordinates);
+  const lng = coords ? coords[0] : (r.lng as number);
+  const lat = coords ? coords[1] : (r.lat as number);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return {
+    label: (r.label as string) ?? "",
+    lat,
+    lng,
+    address: r.address as GeocodeResult["address"],
+    source: (r.provider as string) ?? (r.source as string),
+    confidence: r.confidence as number | undefined,
+  };
+}
+
+function mapNeighborhood(raw: unknown): Neighborhood {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const center = coordsOf(r.centroid) ?? coordsOf(r.center);
+  const boundary = (r.boundary as { coordinates?: unknown })?.coordinates;
+  return {
+    id: (r.id as string) ?? (r._id as string) ?? "",
+    name: (r.name as string) ?? "",
+    city: r.city as string | undefined,
+    region: r.region as string | undefined,
+    country: r.country as string | undefined,
+    center: center ?? undefined,
+    // GeoJSON Polygon coordinates are number[][][]; expose the outer ring.
+    boundary: Array.isArray(boundary)
+      ? (boundary[0] as [number, number][] | undefined)
+      : undefined,
+  };
+}
+
+function mapCluster(raw: unknown): ListingCluster | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const coords =
+    coordsOf(r.center) ??
+    (Number.isFinite(r.lng) && Number.isFinite(r.lat)
+      ? [Number(r.lng), Number(r.lat)]
+      : Number.isFinite(r.longitude) && Number.isFinite(r.latitude)
+        ? [Number(r.longitude), Number(r.latitude)]
+        : null);
+  if (!coords) return null;
+  return {
+    id: r.id as string | undefined,
+    count: Number(r.count) || 0,
+    center: coords,
+    lng: coords[0],
+    lat: coords[1],
+    listingIds: r.listingIds as string[] | undefined,
+    minPrice: r.minPrice as number | undefined,
+    maxPrice: r.maxPrice as number | undefined,
+  };
+}
+
+// â”€â”€â”€ getListings (public discovery) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// GET /listings â€” published listings with filters
 
 function serializeDiscoveryParams(
   filters?: ListingFilters | ListingClusterFilters,
@@ -161,11 +243,9 @@ export async function getListingClusters(
     const { data } = await apiClient.get<unknown>(ENDPOINTS.LISTINGS.CLUSTERS, {
       params,
     });
-    const unwrapped = unwrapData<ListingCluster[] | { items?: ListingCluster[] }>(
-      data,
-      [],
-    );
-    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+    const unwrapped = unwrapData<unknown[] | { items?: unknown[] }>(data, []);
+    const list = Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+    return list.map(mapCluster).filter((c): c is ListingCluster => c !== null);
   } catch {
     return [];
   }
@@ -177,11 +257,9 @@ export async function geocode(query: string): Promise<GeocodeResult[]> {
     const { data } = await apiClient.get<unknown>(ENDPOINTS.GEO.GEOCODE, {
       params: { q: query },
     });
-    const unwrapped = unwrapData<GeocodeResult[] | { items?: GeocodeResult[] }>(
-      data,
-      [],
-    );
-    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+    const unwrapped = unwrapData<unknown[] | { items?: unknown[] }>(data, []);
+    const list = Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+    return list.map(mapGeocode).filter((r): r is GeocodeResult => r !== null);
   } catch {
     return [];
   }
@@ -195,7 +273,15 @@ export async function reverseGeocode(
     const { data } = await apiClient.get<unknown>(ENDPOINTS.GEO.REVERSE, {
       params: { lat, lng },
     });
-    return unwrapData<ReverseGeocodeResult | null>(data, null);
+    const raw = unwrapData<unknown>(data, null);
+    const mapped = mapGeocode(raw);
+    if (!mapped) return null;
+    const r = raw as Record<string, unknown>;
+    return {
+      ...mapped,
+      neighborhoodId: r.neighborhoodId as string | undefined,
+      neighborhoodName: r.neighborhoodName as string | undefined,
+    };
   } catch {
     return null;
   }
@@ -212,28 +298,14 @@ export async function getNeighborhoods(params?: {
     const { data } = await apiClient.get<unknown>(ENDPOINTS.GEO.NEIGHBORHOODS, {
       params,
     });
-    const unwrapped = unwrapData<Neighborhood[] | { items?: Neighborhood[] }>(
-      data,
-      [],
-    );
-    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+    const unwrapped = unwrapData<unknown[] | { items?: unknown[] }>(data, []);
+    const list = Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+    return list.map(mapNeighborhood);
   } catch {
     return [];
   }
 }
 
-export async function getNeighborhoodAnalytics(
-  id: string,
-): Promise<NeighborhoodAnalytics | null> {
-  try {
-    const { data } = await apiClient.get<unknown>(
-      ENDPOINTS.GEO.NEIGHBORHOOD_ANALYTICS(id),
-    );
-    return unwrapData<NeighborhoodAnalytics | null>(data, null);
-  } catch {
-    return null;
-  }
-}
 
 export async function createSavedSearch(
   input: CreateSavedSearchInput,
@@ -242,8 +314,8 @@ export async function createSavedSearch(
     name: input.name,
     alertEnabled: input.alertEnabled ?? false,
     query: {
-      ...(input.query.listingType && { listingType: input.query.listingType }),
-      ...(input.query.category && { category: input.query.category }),
+      ...(input.query.listingType ? { listingType: input.query.listingType } : {}),
+      ...(input.query.category ? { category: input.query.category } : {}),
       ...(input.query.minPrice != null && { minPrice: input.query.minPrice }),
       ...(input.query.maxPrice != null && { maxPrice: input.query.maxPrice }),
       ...(input.query.minBedrooms != null && {
@@ -269,22 +341,11 @@ export async function createSavedSearch(
   return data.data;
 }
 
-export async function getSavedSearches(): Promise<SavedSearch[]> {
-  try {
-    const { data } = await apiClient.get<ApiResp<ListingCluster[]>>(
-      ENDPOINTS.LISTINGS.CLUSTERS,
-      { params: serializeDiscoveryParams(filters) },
-    );
-    return data.success && Array.isArray(data.data) ? data.data : [];
-  } catch {
-    return [];
-  }
-}
 
 
 
-// ─── getMyListings ────────────────────────────────────────────────────────────
-// GET /listings/mine — owner's own listings
+// â”€â”€â”€ getMyListings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// GET /listings/mine â€” owner's own listings
 
 export async function getMyListings(): Promise<Listing[]> {
   try {
@@ -299,7 +360,7 @@ export async function getMyListings(): Promise<Listing[]> {
   }
 }
 
-// ─── getListing ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ getListing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getListing(id: string): Promise<Listing | null> {
   try {
@@ -312,7 +373,7 @@ export async function getListing(id: string): Promise<Listing | null> {
   }
 }
 
-// ─── createListing ────────────────────────────────────────────────────────────
+// â”€â”€â”€ createListing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createListing(
   input: CreateListingInput,
@@ -325,7 +386,7 @@ export async function createListing(
   return data.data;
 }
 
-// ─── updateListing ────────────────────────────────────────────────────────────
+// â”€â”€â”€ updateListing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function updateListing(
   id: string,
@@ -339,13 +400,13 @@ export async function updateListing(
   return data.data;
 }
 
-// ─── deleteListing ────────────────────────────────────────────────────────────
+// â”€â”€â”€ deleteListing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function deleteListing(id: string): Promise<void> {
   await apiClient.delete(ENDPOINTS.LISTINGS.DELETE(id));
 }
 
-// ─── transitionListing ───────────────────────────────────────────────────────
+// â”€â”€â”€ transitionListing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function transitionListing(
   id: string,
@@ -359,7 +420,7 @@ export async function transitionListing(
   return data.data;
 }
 
-// ─── Admin: getAdminListings ──────────────────────────────────────────────────
+// â”€â”€â”€ Admin: getAdminListings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getAdminListings(
   params?: Record<string, string | number>,
@@ -375,7 +436,7 @@ export async function getAdminListings(
   }
 }
 
-// ─── Admin: getAdminListingsStats ───────────────────────────────────────────────
+// â”€â”€â”€ Admin: getAdminListingsStats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getAdminListingsStats(): Promise<Record<string, unknown> | null> {
   try {
@@ -388,7 +449,7 @@ export async function getAdminListingsStats(): Promise<Record<string, unknown> |
   }
 }
 
-// ─── Duplicate Detection ───────────────────────────────────────────────────────
+// â”€â”€â”€ Duplicate Detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface DuplicateHint {
   id: string;
@@ -408,7 +469,7 @@ export async function getListingDuplicates(id: string): Promise<DuplicateHint[]>
   }
 }
 
-// ─── Analytics ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Analytics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ListingAnalytics {
   listingId: string;
@@ -447,36 +508,8 @@ export async function getListingYield(id: string): Promise<YieldSummary | null> 
   }
 }
 
-export async function getMaintenanceRecords(
-  id: string,
-): Promise<MaintenanceRecord[]> {
-  try {
-    const { data } = await apiClient.get<unknown>(
-      ENDPOINTS.LISTINGS.MAINTENANCE(id),
-    );
-    const unwrapped = unwrapData<
-      MaintenanceRecord[] | { items?: MaintenanceRecord[] }
-    >(data, []);
-    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
-  } catch {
-    return [];
-  }
-}
 
-export async function createMaintenanceRecord(
-  id: string,
-  input: CreateMaintenanceRecordInput,
-): Promise<MaintenanceRecord> {
-  const { data } = await apiClient.post<unknown>(
-    ENDPOINTS.LISTINGS.MAINTENANCE(id),
-    input,
-  );
-  const record = unwrapData<MaintenanceRecord | null>(data, null);
-  if (!record) throw new Error("Failed to create maintenance record.");
-  return record;
-}
-
-// ─── Owner dashboard stats ────────────────────────────────────────────────────
+// â”€â”€â”€ Owner dashboard stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getListingDashboard(): Promise<Record<
   string,
@@ -492,7 +525,7 @@ export async function getListingDashboard(): Promise<Record<
   }
 }
 
-// ─── Documents ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Documents â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type ListingDocumentType =
   | "title_deed"
@@ -579,7 +612,7 @@ export async function reviewDocument(
   );
 }
 
-// ─── Photos ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Photos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function uploadPhotos(
   listingId: string,
@@ -654,7 +687,7 @@ export async function reorderPhotos(
   });
 }
 
-// ─── On-chain title ───────────────────────────────────────────────────────────
+// â”€â”€â”€ On-chain title â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface TitleInfo {
   tokenId: string;
@@ -700,7 +733,7 @@ export async function revokeTitle(id: string, reason: string): Promise<void> {
   await apiClient.post(ENDPOINTS.LISTINGS.REVOKE_TITLE(id), { reason });
 }
 
-// ─── Rental Yield ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Rental Yield â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getListingRentalYield(id: string): Promise<YieldSummary | null> {
   try {
@@ -724,7 +757,7 @@ export async function getYieldDashboard(): Promise<YieldDashboard | null> {
   }
 }
 
-// ─── Maintenance Records ───────────────────────────────────────────────────────
+// â”€â”€â”€ Maintenance Records â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function createMaintenanceRecord(
   listingId: string,
@@ -759,13 +792,67 @@ export async function getMaintenanceRecords(
   }
 }
 
-// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
+// ——————————————————————————————————————————————————————————————————————————————
 
-export async function getNeighborhoodAnalytics(params?: { region?: string }): Promise<NeighborhoodAnalytics[]> {
+// Returns a single analytics summary for one neighbourhood (discovery detail panel).
+// Backend: GET /geo/neighborhoods/{id}/analytics returns a grouped aggregation
+// ({ neighborhood, listings[], availability[], leads[], poiCount, pois[] }) which
+// we flatten into the NeighborhoodAnalytics shape the UI consumes.
+export async function getNeighborhoodAnalytics(
+  id?: string,
+): Promise<NeighborhoodAnalytics | null> {
+  if (!id) return null;
   try {
-    const { data } = await apiClient.get<ApiResp<NeighborhoodAnalytics[]>>(
+    const { data } = await apiClient.get<unknown>(
+      ENDPOINTS.GEO.NEIGHBORHOOD_ANALYTICS(id),
+    );
+    const raw = unwrapData<Record<string, unknown> | null>(data, null);
+    if (!raw) return null;
+
+    const byKey = (arr: unknown, key: string) =>
+      (Array.isArray(arr) ? arr : []).find(
+        (e) => (e as { _id?: string })?._id === key,
+      ) as Record<string, number> | undefined;
+
+    const listings = Array.isArray(raw.listings) ? raw.listings : [];
+    const sale = byKey(listings, "sale");
+    const rent = byKey(listings, "rent");
+    const leads = raw.leads;
+
+    const listingCount = listings.reduce(
+      (sum: number, e: unknown) => sum + (Number((e as { count?: number })?.count) || 0),
+      0,
+    );
+    const leadCount = (Array.isArray(leads) ? leads : []).reduce(
+      (sum: number, e: unknown) => sum + (Number((e as { count?: number })?.count) || 0),
+      0,
+    );
+
+    return {
+      neighborhoodId: id,
+      listingCount,
+      availableCount: byKey(raw.availability, "available")?.count,
+      averagePrice: sale?.avgPrice,
+      averageRent: rent?.avgRent,
+      leadCount,
+      inquiryCount: byKey(leads, "inquiry")?.count,
+      offerCount: byKey(leads, "offer")?.count,
+      rentalApplicationCount: byKey(leads, "rental_application")?.count,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Returns an array of city/region geo stats used by the NeighborhoodAnalytics grid.
+// Backend: GET /listings/analytics/neighborhood?region= returns the array directly.
+export async function getGeoNeighborhoodStats(
+  params?: { region?: string },
+): Promise<GeoNeighborhoodStat[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<GeoNeighborhoodStat[]>>(
       ENDPOINTS.LISTINGS.NEIGHBORHOOD_ANALYTICS,
-      { params }
+      { params },
     );
     return data.success && Array.isArray(data.data) ? data.data : [];
   } catch {
@@ -773,7 +860,7 @@ export async function getNeighborhoodAnalytics(params?: { region?: string }): Pr
   }
 }
 
-// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+// ——————————————————————————————————————————————————————————————————————————————
 
 export async function executeBulkActions(actions: BulkActionItem[]): Promise<BulkActionResult> {
   const { data } = await apiClient.post<ApiResp<BulkActionResult>>(
@@ -782,4 +869,30 @@ export async function executeBulkActions(actions: BulkActionItem[]): Promise<Bul
   );
   if (!data.success) throw new Error(data.message);
   return data.data;
+}
+
+// â”€â”€â”€ Saved Searches â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+export async function getSavedSearches(): Promise<SavedSearch[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<SavedSearch[]>>(
+      ENDPOINTS.SAVED_SEARCHES.LIST
+    );
+    return data.success && Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveSearch(input: CreateSavedSearchInput): Promise<SavedSearch> {
+  const { data } = await apiClient.post<ApiResp<SavedSearch>>(
+    ENDPOINTS.SAVED_SEARCHES.CREATE,
+    input
+  );
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function deleteSavedSearch(id: string): Promise<void> {
+  await apiClient.delete(ENDPOINTS.SAVED_SEARCHES.DELETE(id));
 }

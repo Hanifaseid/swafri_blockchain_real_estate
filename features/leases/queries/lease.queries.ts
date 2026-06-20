@@ -13,7 +13,6 @@ import {
   completeLease,
   terminateLease,
   disputeLease,
-  respondToDispute,
   resolveDispute,
   getEscrowVerification,
   getLeaseTimeline,
@@ -187,22 +186,6 @@ export function useEscrowVerification(id: string, enabled = true) {
   });
 }
 
-// ─── Lease Sub-features ───────────────────────────────────────────────────────
-
-export function useSignLease() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload?: { tenantSignature?: string } }) =>
-      signLease(id, payload),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
-      toast.success('Lease signed successfully');
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-}
 
 export function useLeaseTimeline(id: string) {
   return useQuery({
@@ -211,32 +194,17 @@ export function useLeaseTimeline(id: string) {
     enabled: !!id,
   });
 }
+
 
 export function useRespondToDispute() {
   const qc = useQueryClient();
-
   return useMutation({
-    mutationFn: ({ id, response }: { id: string; response: string }) =>
-      respondToDispute(id, { response }),
+    mutationFn: ({ id, payload }: { id: string; payload: ResolveDisputePayload }) =>
+      resolveDispute(id, payload),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      toast.success('Dispute response submitted');
+      toast.success('Dispute resolved.');
     },
     onError: (err: Error) => toast.error(err.message),
-  });
-}
-
-export function useTenantRoster(params?: { ownerId?: string }) {
-  return useQuery({
-    queryKey: [...leaseKeys.tenants(), params],
-    queryFn: () => getTenantRoster(params),
-  });
-}
-
-export function useLeaseTimeline(id: string) {
-  return useQuery({
-    queryKey: leaseKeys.timeline(id),
-    queryFn: () => getLeaseTimeline(id),
-    enabled: !!id,
   });
 }

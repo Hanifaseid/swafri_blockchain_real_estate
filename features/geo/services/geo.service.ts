@@ -234,7 +234,7 @@ export async function getNeighborhoods(params?: {
 
 export async function getNeighborhoodDetail(id: string): Promise<Neighborhood | null> {
   try {
-    const { data } = await apiClient.get<ApiResp<Neighborhood>>(ENDPOINTS.GEO.NEIGHBORHOOD_DETAIL(id));
+    const { data } = await apiClient.get<ApiResp<Neighborhood>>(`${ENDPOINTS.GEO.NEIGHBORHOODS}/${id}`);
     return data.success ? (data.data ?? null) : null;
   } catch {
     return null;

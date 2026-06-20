@@ -114,35 +114,25 @@ export function resolvePurchaseDispute(
 
 export async function fundPurchaseTransaction(id: string): Promise<PurchaseTransaction> {
   const response = await apiClient.post<PurchaseTransaction>(
-    ENDPOINTS.PURCHASES.FUND(id)
+    ENDPOINTS.PURCHASES.FUND_ESCROW(id)
   );
   return response.data;
 }
 
 export async function releasePurchaseTransaction(id: string): Promise<PurchaseTransaction> {
   const response = await apiClient.post<PurchaseTransaction>(
-    ENDPOINTS.PURCHASES.RELEASE(id)
+    ENDPOINTS.PURCHASES.RELEASE_ESCROW(id)
   );
   return response.data;
 }
 
 export async function refundPurchaseTransaction(id: string): Promise<PurchaseTransaction> {
   const response = await apiClient.post<PurchaseTransaction>(
-    ENDPOINTS.PURCHASES.REFUND(id)
+    ENDPOINTS.PURCHASES.REFUND_ESCROW(id)
   );
   return response.data;
 }
 
-export async function disputePurchaseTransaction(
-  id: string,
-  payload: { reason?: string }
-): Promise<PurchaseTransaction> {
-  const response = await apiClient.post<PurchaseTransaction>(
-    ENDPOINTS.PURCHASES.DISPUTE(id),
-    payload
-  );
-  return response.data;
-}
 
 export async function resolvePurchaseTransactionDispute(
   id: string,
