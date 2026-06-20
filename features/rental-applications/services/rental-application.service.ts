@@ -153,6 +153,20 @@ export async function getMyRentalApplications(): Promise<RentalApplication[]> {
   return normalizeListPayload(data.data).map((app) => normalizeRentalApplication(app as RawRentalApplication));
 }
 
+// Admin-only — fetches all platform rental applications (GET /rental-applications)
+export async function getAllRentalApplications(params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}): Promise<RentalApplication[]> {
+  const { data } = await apiClient.get<ApiListResponse<RentalApplication>>(
+    ENDPOINTS.RENTAL_APPS.SUBMIT, // same base path: /rental-applications
+    { params: { page: 1, limit: 50, ...params } }
+  );
+  if (!data.success) throw new Error(data.message || 'Failed to get applications');
+  return normalizeListPayload(data.data).map((app) => normalizeRentalApplication(app as RawRentalApplication));
+}
+
 export async function getRentalApplication(id: string): Promise<RentalApplication> {
   const { data } = await apiClient.get<ApiSingleResponse<RentalApplication>>(
     ENDPOINTS.RENTAL_APPS.DETAIL(id)

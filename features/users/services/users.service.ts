@@ -251,3 +251,28 @@ export async function updateUserStatus(
   logAudit(actor.name, actor.email, `Set ${updated.email} status to ${status}`);
   return updated;
 }
+
+// ─── revokeUserWallet ─────────────────────────────────────────────────────────
+// POST /admin/users/:id/wallet/revoke — Admin + Super Admin only
+// Returns the updated user with walletStatus = 'REVOKED'.
+
+export async function revokeUserWallet(
+  userId: string,
+  actor: UserAccount,
+  reason?: string
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN' && actor.role !== 'ADMIN') {
+    throw new Error('Insufficient permissions.');
+  }
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.USER_WALLET_REVOKE(userId),
+    reason ? { reason } : {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to revoke wallet');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Revoked wallet for user ${updated.email}`);
+  return updated;
+}

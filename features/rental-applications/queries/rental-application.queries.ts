@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import {
   submitRentalApplication,
   getMyRentalApplications,
+  getAllRentalApplications,
   getRentalApplication,
   withdrawRentalApplication,
   reviewRentalApplication,
@@ -21,6 +22,7 @@ import type {
 export const rentalAppKeys = {
   all: ['rental-applications'] as const,
   mine: () => [...rentalAppKeys.all, 'mine'] as const,
+  adminAll: (filters?: object) => [...rentalAppKeys.all, 'admin', filters ?? {}] as const,
   detail: (id: string) => [...rentalAppKeys.all, id] as const,
 };
 
@@ -117,5 +119,15 @@ export function useCreateLeaseFromApplication() {
       toast.success('Lease draft created! Redirecting…');
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── Admin-only ───────────────────────────────────────────────────────────────
+// Fetches ALL rental applications across the platform (admin queue)
+
+export function useAllRentalApplications(filters?: { status?: string }) {
+  return useQuery({
+    queryKey: rentalAppKeys.adminAll(filters),
+    queryFn: () => getAllRentalApplications(filters),
   });
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Mail, Phone, Calendar, Wallet, User, Shield, CreditCard, CheckCircle2, AlertCircle, Clock, Link2 } from 'lucide-react';
+import { X, Mail, Phone, Calendar, Wallet, User, Shield, CreditCard, CheckCircle2, AlertCircle, Clock, Link2, WalletMinimal } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
 import type { UserAccount } from '@/features/users/types/user.types';
@@ -10,6 +10,8 @@ import {
   WALLET_STATUS_BADGE,
   ROLE_BADGE,
 } from '@/features/users/constants';
+import { useRevokeUserWallet } from '@/features/users/queries/users.queries';
+import { useAuthStore } from '@/stores/auth.store';
 
 // ─── UserDetailDrawer ─────────────────────────────────────────────────────────
 // Slide-over panel showing full user details including KYC + wallet status.
@@ -21,6 +23,16 @@ interface UserDetailDrawerProps {
 
 export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
   if (!user) return null;
+
+  const { currentUser } = useAuthStore();
+  const { mutate: revokeWallet, isPending: revoking } = useRevokeUserWallet();
+
+  // Admins can revoke wallets for TENANT / PROPERTY_OWNER only
+  const canRevokeWallet =
+    (currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN') &&
+    (user.walletStatus === 'LINKED' || user.walletStatus === 'VERIFIED') &&
+    user.role !== 'SUPER_ADMIN' &&
+    user.role !== 'ADMIN';
 
   const statusBadge = ACCOUNT_STATUS_BADGE[user.status];
   const kycBadge = KYC_STATUS_BADGE[user.kycStatus];
@@ -249,6 +261,17 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
                     <Link2 size={10} />
                     Copy address
                   </button>
+                  {canRevokeWallet && (
+                    <button
+                      type="button"
+                      onClick={() => revokeWallet({ userId: user.id })}
+                      disabled={revoking}
+                      className="text-[9px] font-mono text-red-400/70 hover:text-red-400 transition-colors mt-2 flex items-center gap-1 disabled:opacity-40"
+                    >
+                      <WalletMinimal size={10} />
+                      {revoking ? 'Revoking…' : 'Revoke wallet'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

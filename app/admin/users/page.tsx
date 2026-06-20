@@ -197,6 +197,7 @@ export default function UsersPage() {
                     <UserRow
                       key={user.id}
                       user={user}
+                      currentUserId={currentUser.id}
                       onView={setSelectedUser}
                       onSuspend={(id) =>
                         activeTab === 'admins'

@@ -17,6 +17,8 @@ import {
 
 interface UserRowProps {
   user: UserAccount;
+  /** The ID of the currently logged-in admin — used to block self-action. */
+  currentUserId?: string;
   onView: (user: UserAccount) => void;
   onSuspend: (userId: string) => void;
   onBlock: (userId: string) => void;
@@ -27,6 +29,7 @@ interface UserRowProps {
 
 export function UserRow({
   user,
+  currentUserId,
   onView,
   onSuspend,
   onBlock,
@@ -39,6 +42,9 @@ export function UserRow({
   const statusBadge = ACCOUNT_STATUS_BADGE[user.status];
   const kycBadge = KYC_STATUS_BADGE[user.kycStatus];
   const roleBadge = ROLE_BADGE[user.role];
+
+  // Prevent an admin from acting on their own account
+  const isSelf = !!currentUserId && user.id === currentUserId;
 
   return (
     <tr
@@ -96,7 +102,7 @@ export function UserRow({
             <Eye size={14} />
           </button>
 
-          {canModify && user.role !== 'SUPER_ADMIN' && (
+          {canModify && user.role !== 'SUPER_ADMIN' && !isSelf && (
             <div className="relative">
               <button
                 type="button"

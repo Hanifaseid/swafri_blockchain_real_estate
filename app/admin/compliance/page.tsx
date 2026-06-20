@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ShieldCheck, FileText, Building2 } from 'lucide-react';
+import { ShieldCheck, FileText, Building2, Lock } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth.store';
 import { useComplianceCases, useUpdateComplianceCase } from '@/features/compliance/queries/compliance.queries';
 import { useBrokerLicenses } from '@/features/compliance/queries/compliance.queries';
 import { ComplianceCaseCard } from '@/features/compliance/components/ComplianceCaseCard';
@@ -9,9 +10,13 @@ import { BrokerLicenseCard } from '@/features/compliance/components/BrokerLicens
 import type { ComplianceCaseStatus, ComplianceSeverity, BrokerLicenseStatus } from '@/features/compliance/types/compliance.types';
 
 export default function CompliancePage() {
+  const { currentUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'cases' | 'licenses'>('cases');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [severityFilter, setSeverityFilter] = useState<string>('');
+
+  // Only SUPER_ADMIN can override / update compliance cases
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   const { data: casesData, isLoading: casesLoading } = useComplianceCases({
     status: statusFilter as ComplianceCaseStatus || undefined,
@@ -23,9 +28,11 @@ export default function CompliancePage() {
     status: statusFilter as BrokerLicenseStatus || undefined,
   });
 
-  const handleUpdateCase = (id: string, input: any) => {
-    updateCase.mutate({ id, input });
-  };
+  // Only pass the handler to the card if current user is SUPER_ADMIN.
+  // ADMIN sees cards in read-only mode (no action buttons).
+  const handleUpdateCase = isSuperAdmin
+    ? (id: string, input: any) => updateCase.mutate({ id, input })
+    : undefined;
 
   const handleReviewLicense = (id: string, decision: 'approve' | 'reject' | 'expire', note?: string) => {
     // This would use useReviewBrokerLicense hook
@@ -35,12 +42,21 @@ export default function CompliancePage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <ShieldCheck className="w-6 h-6 text-emerald-500 shrink-0" />
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Admin</p>
-          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Compliance</h1>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="w-6 h-6 text-emerald-500 shrink-0" />
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Admin</p>
+            <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Compliance</h1>
+          </div>
         </div>
+        {/* Badge to clearly indicate view-only mode for ADMIN */}
+        {!isSuperAdmin && (
+          <span className="flex items-center gap-1.5 text-[10px] font-mono uppercase bg-amber-50 border border-amber-200 text-amber-600 px-3 py-1.5 rounded-lg">
+            <Lock size={11} />
+            View only — override requires Super Admin
+          </span>
+        )}
       </div>
 
       {/* Tabs */}

@@ -2,10 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type {
   CreateListingInput,
-  ListingClusterFilters,
   ListingFilters,
   TransitionInput,
-  CreateSavedSearchInput,
   CreateMaintenanceRecordInput,
 } from "@/features/listings/types/listing.types";
 import {
@@ -44,11 +42,10 @@ import {
   revokeTitle,
   getListingRentalYield,
   getYieldDashboard,
-  createMaintenanceRecord,
-  getMaintenanceRecords,
-  getNeighborhoodAnalytics,
   executeBulkActions,
 } from "@/features/listings/services/listing.service";
+
+// ─── Query Keys ───────────────────────────────────────────────────────────────
 
 const KEYS = {
   all: ["listings"] as const,
@@ -58,7 +55,13 @@ const KEYS = {
   adminList: (p: object) => ["listings", "admin", p] as const,
   clusters: (f: object) => ["listings", "clusters", f] as const,
   savedSearches: () => ["saved-searches"] as const,
+  rentalYield: (id: string) => ["listings", "rental-yield", id] as const,
+  yieldDashboard: () => ["listings", "yield-dashboard"] as const,
+  maintenance: (id: string, params?: object) => ["listings", "maintenance", id, params ?? {}] as const,
+  neighborhoodAnalytics: (params?: object) => ["listings", "neighborhood-analytics", params ?? {}] as const,
 };
+
+// ─── Discovery ────────────────────────────────────────────────────────────────
 
 export function useListings(filters?: ListingFilters) {
   return useQuery({
@@ -73,6 +76,8 @@ export function useListingClusters(filters?: ListingFilters & { zoom?: number })
     queryFn: () => getListingClusters(filters),
   });
 }
+
+// ─── Geo ──────────────────────────────────────────────────────────────────────
 
 export function useGeocode(query: string) {
   return useQuery({
@@ -103,13 +108,19 @@ export function useNeighborhoods(params?: {
   });
 }
 
-export function useNeighborhoodAnalytics(id?: string) {
+export function useNeighborhoodAnalytics(idOrParams?: string | { region?: string }) {
+  // Supports both: useNeighborhoodAnalytics(listingId) and useNeighborhoodAnalytics({ region })
+  const isId = typeof idOrParams === "string";
   return useQuery({
-    queryKey: ["geo", "neighborhoods", id, "analytics"],
-    queryFn: () => getNeighborhoodAnalytics(id as string),
-    enabled: !!id,
+    queryKey: isId
+      ? ["geo", "neighborhoods", idOrParams, "analytics"]
+      : KEYS.neighborhoodAnalytics(idOrParams),
+    queryFn: () => getNeighborhoodAnalytics(idOrParams as any),
+    enabled: isId ? !!idOrParams : true,
   });
 }
+
+// ─── Listings CRUD ────────────────────────────────────────────────────────────
 
 export function useMyListings() {
   return useQuery({
@@ -140,8 +151,6 @@ export function useAdminListingsStats() {
   });
 }
 
-
-
 export function useCreateListing() {
   const qc = useQueryClient();
   return useMutation({
@@ -157,8 +166,7 @@ export function useCreateListing() {
 export function useUpdateListing(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: Partial<CreateListingInput>) =>
-      updateListing(id, input),
+    mutationFn: (input: Partial<CreateListingInput>) => updateListing(id, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.mine() });
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
@@ -211,32 +219,42 @@ export function useListingYield(id: string) {
   });
 }
 
-export function useMaintenanceRecords(id: string) {
-  return useQuery({
-    queryKey: ["listings", "maintenance", id],
-    queryFn: () => getMaintenanceRecords(id),
-    enabled: !!id,
-  });
-}
-
-export function useCreateMaintenanceRecord(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateMaintenanceRecordInput) =>
-      createMaintenanceRecord(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["listings", "maintenance", id] });
-      qc.invalidateQueries({ queryKey: ["listings", "yield", id] });
-      toast.success("Maintenance record added.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
-
 export function useListingDashboard() {
   return useQuery({
     queryKey: ["listings", "dashboard"],
     queryFn: getListingDashboard,
+  });
+}
+
+// ─── Maintenance Records ──────────────────────────────────────────────────────
+
+export function useMaintenanceRecords(
+  id: string,
+  params?: { type?: string; from?: string; to?: string; page?: number; limit?: number }
+) {
+  return useQuery({
+    queryKey: KEYS.maintenance(id, params),
+    queryFn: () => getMaintenanceRecords(id, params),
+    enabled: !!id,
+  });
+}
+
+export function useCreateMaintenanceRecord(listingIdOrVoid?: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      listingId,
+      input,
+    }: {
+      listingId: string;
+      input: CreateMaintenanceRecordInput | any;
+    }) => createMaintenanceRecord(listingId, input),
+    onSuccess: (_data, { listingId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.maintenance(listingId) });
+      qc.invalidateQueries({ queryKey: ["listings", "yield", listingId] });
+      toast.success("Maintenance record added.");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
@@ -253,8 +271,13 @@ export function useListingDocuments(id: string) {
 export function useUploadListingDocuments(listingId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ type, files }: { type: Parameters<typeof uploadListingDocuments>[1]; files: File[] }) =>
-      uploadListingDocuments(listingId, type, files),
+    mutationFn: ({
+      type,
+      files,
+    }: {
+      type: Parameters<typeof uploadListingDocuments>[1];
+      files: File[];
+    }) => uploadListingDocuments(listingId, type, files),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["listings", "documents", listingId] });
       qc.invalidateQueries({ queryKey: KEYS.detail(listingId) });
@@ -275,8 +298,13 @@ export function useDocumentSignedUrl() {
 export function useReviewDocument(listingId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ docId, input }: { docId: string; input: { decision: "approve" | "reject"; note?: string } }) =>
-      reviewDocument(listingId, docId, input),
+    mutationFn: ({
+      docId,
+      input,
+    }: {
+      docId: string;
+      input: { decision: "approve" | "reject"; note?: string };
+    }) => reviewDocument(listingId, docId, input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["listings", "documents", listingId] });
       qc.invalidateQueries({ queryKey: KEYS.detail(listingId) });
@@ -305,8 +333,7 @@ export function useUploadPhotos(id: string) {
       toast.success("Photos uploaded.");
     },
     onError: (error: any) => {
-      const msg = error?.message || "Photo upload failed.";
-      toast.error(msg);
+      toast.error(error?.message || "Photo upload failed.");
     },
   });
 }
@@ -347,7 +374,7 @@ export function useReorderPhotos(id: string) {
   });
 }
 
-// ─── On-chain title ───────────────────────────────────────────────────────────
+// ─── On-chain Title ───────────────────────────────────────────────────────────
 
 export function useListingTitle(id: string) {
   return useQuery({
@@ -407,7 +434,7 @@ export function useRevokeTitle(id: string) {
   });
 }
 
-// ─── Rental Yield ───────────────────────────────────────────────────────────────
+// ─── Rental Yield ─────────────────────────────────────────────────────────────
 
 export function useListingRentalYield(id: string) {
   return useQuery({
@@ -424,62 +451,18 @@ export function useYieldDashboard() {
   });
 }
 
-// ─── Maintenance Records ───────────────────────────────────────────────────────
-
-export function useMaintenanceRecords(listingId: string, params?: {
-  type?: string;
-  from?: string;
-  to?: string;
-  page?: number;
-  limit?: number;
-}) {
-  return useQuery({
-    queryKey: KEYS.maintenance(listingId, params),
-    queryFn: () => getMaintenanceRecords(listingId, params),
-    enabled: !!listingId,
-  });
-}
-
-export function useCreateMaintenanceRecord() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ listingId, input }: { listingId: string; input: any }) =>
-      createMaintenanceRecord(listingId, input),
-    onSuccess: (data, { listingId }) => {
-      qc.invalidateQueries({ queryKey: KEYS.maintenance(listingId) });
-      toast.success('Maintenance record created successfully');
-    },
-    onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to create maintenance record';
-      toast.error(message);
-    },
-  });
-}
-
-// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
-
-export function useNeighborhoodAnalytics(params?: { region?: string }) {
-  return useQuery({
-    queryKey: KEYS.neighborhoodAnalytics(params),
-    queryFn: () => getNeighborhoodAnalytics(params),
-  });
-}
-
-// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+// ─── Bulk Actions ─────────────────────────────────────────────────────────────
 
 export function useExecuteBulkActions() {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: (actions: any[]) => executeBulkActions(actions),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.all });
-      toast.success('Bulk actions completed successfully');
+      toast.success("Bulk actions completed successfully");
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || 'Failed to execute bulk actions';
-      toast.error(message);
+      toast.error(error?.response?.data?.message || "Failed to execute bulk actions");
     },
   });
 }

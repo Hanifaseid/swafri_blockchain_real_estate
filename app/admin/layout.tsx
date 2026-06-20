@@ -8,6 +8,7 @@ import { DashboardSidebar } from '@/components/layout/dashboard/DashboardSidebar
 import { DashboardTopbar } from '@/components/layout/dashboard/DashboardTopbar';
 import { getNavItems } from '@/config/dashboard-nav.config';
 import { isAdminRole } from '@/lib/auth/routes';
+import { useWalletListeners } from '@/features/wallet/hooks/useWalletListeners';
 
 // All admin pages live under /admin/*. Only ADMIN and SUPER_ADMIN can access.
 
