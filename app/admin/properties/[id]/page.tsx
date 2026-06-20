@@ -242,12 +242,44 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         label: '⏸️ Suspend',   
         style: 'bg-orange-600 hover:bg-orange-700 text-white' 
       });
+      adminActions.push({
+        action: 'mark_rented',
+        label: '🏠 Mark Rented',
+        style: 'bg-sky-600 hover:bg-sky-700 text-white',
+      });
+      adminActions.push({
+        action: 'mark_sold',
+        label: '💰 Mark Sold',
+        style: 'bg-purple-600 hover:bg-purple-700 text-white',
+      });
     }
     if (listing.status === 'suspended') {
       adminActions.push({ 
         action: 'unsuspend', 
         label: '▶️ Unsuspend', 
         style: 'bg-gray-700 hover:bg-gray-800 text-white' 
+      });
+    }
+    if (listing.status === 'rented') {
+      adminActions.push({
+        action: 'unmark_rented',
+        label: '↩️ Unmark Rented',
+        style: 'border border-gray-300 text-black/60 hover:bg-gray-50',
+      });
+    }
+    if (listing.status === 'sold') {
+      adminActions.push({
+        action: 'unmark_sold',
+        label: '↩️ Unmark Sold',
+        style: 'border border-gray-300 text-black/60 hover:bg-gray-50',
+      });
+    }
+    // Admin can archive any non-archived listing
+    if (listing.status !== 'archived' && listing.status !== 'draft' && listing.status !== 'submitted') {
+      adminActions.push({
+        action: 'archive',
+        label: '📦 Archive',
+        style: 'border border-gray-300 text-red-500 hover:bg-red-50',
       });
     }
   }
