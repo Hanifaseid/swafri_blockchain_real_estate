@@ -305,6 +305,23 @@ export async function getCurrentUser(): Promise<UserAccount | null> {
   }
 }
 
+// ─── updateProfile ────────────────────────────────────────────────────────────
+// PATCH /auth/profile — update own name / phone. Refreshes the cached session.
+
+export async function updateProfile(payload: {
+  name?: string;
+  phone?: string;
+}): Promise<UserAccount> {
+  const { data } = await apiClient.patch<ApiProfileResponse & { message?: string }>(
+    ENDPOINTS.AUTH.PROFILE,
+    payload,
+  );
+  if (!data.success) throw new AuthServiceError(mapApiError(data.message ?? ''));
+  const user = adaptUser(data.data);
+  setSession(user);
+  return user;
+}
+
 // ─── createAdmin ──────────────────────────────────────────────────────────────
 // SUPER_ADMIN only — creates an ADMIN account via POST /admin/admins.
 

@@ -10,6 +10,7 @@ import {
   forgotPassword,
   resetPassword,
   changePassword,
+  updateProfile,
   requestWalletChallenge,
   linkWallet,
   unlinkWallet,
@@ -172,6 +173,21 @@ export function useChangePassword() {
         document.cookie = 'vex_user_role=; path=/; max-age=0';
       }
       router.push('/auth/login');
+    },
+  });
+}
+
+// ─── useUpdateProfile ─────────────────────────────────────────────────────────
+
+export function useUpdateProfile() {
+  const updateUser = useAuthStore((s) => s.updateUser);
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { name?: string; phone?: string }) => updateProfile(payload),
+    onSuccess: (user) => {
+      updateUser({ name: user.name, phone: user.phone });
+      queryClient.setQueryData(queryKeys.auth.me(), user);
     },
   });
 }
