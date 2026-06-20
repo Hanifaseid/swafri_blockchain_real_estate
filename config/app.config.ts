@@ -17,7 +17,7 @@ export const appConfig = {
   // ── Auth Redirects ───────────────────────────────────────────────────────
   auth: {
     // Fallback only. Role-specific redirects live in lib/auth/routes.ts.
-    loginRedirect: "/properties",
+    loginRedirect: "/",
     // Where to send users after logout
     logoutRedirect: "/",
     // Public routes that do NOT require authentication

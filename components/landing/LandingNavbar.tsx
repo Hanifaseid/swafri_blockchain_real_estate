@@ -1,26 +1,43 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Menu, ShieldCheck, X } from 'lucide-react';
+import {
+  ArrowRight,
+  BadgeCheck,
+  Bell,
+  Bookmark,
+  Building2,
+  ChevronDown,
+  ClipboardList,
+  FileCheck2,
+  FileClock,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Plus,
+  ShieldCheck,
+  UserRound,
+  X,
+} from 'lucide-react';
+import { clearSession } from '@/lib/auth/session';
+import { useAuthStore } from '@/stores/auth.store';
 
 const NAV_ITEMS = [
-  { label: 'Properties', id: 'listings-section' },
+  { label: 'Browse', href: '/properties' },
   { label: 'The Register', id: 'features-section' },
   { label: 'How It Works', id: 'how-it-works-section' },
   { label: 'Reviews', id: 'testimonials-section' },
 ] as const;
 
 export default function LandingNavbar() {
+  const { currentUser, clearUser } = useAuthStore();
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
-  // Scroll state: solidify the bar + drive the gold progress hairline.
-  // NOTE: globals.css makes <body> the scroll container (height:100%;
-  // overflow-y:auto), so window.scrollY stays 0. Read from whichever element
-  // actually scrolls, and listen in the capture phase so the body's scroll
-  // event (which doesn't bubble) still reaches us.
   useEffect(() => {
     const onScroll = () => {
       const doc = document.documentElement;
@@ -36,7 +53,6 @@ export default function LandingNavbar() {
     return () => window.removeEventListener('scroll', onScroll, { capture: true });
   }, []);
 
-  // Lock body scroll while the mobile sheet is open.
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => {
@@ -44,14 +60,77 @@ export default function LandingNavbar() {
     };
   }, [mobileOpen]);
 
-  const scrollTo = useCallback((id: string) => {
+  const closeMenus = useCallback(() => {
     setMobileOpen(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setProfileOpen(false);
   }, []);
+
+  const scrollTo = useCallback(
+    (id: string) => {
+      closeMenus();
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.location.href = `/#${id}`;
+      }
+    },
+    [closeMenus],
+  );
+
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
+  const isOwner = currentUser?.role === 'PROPERTY_OWNER';
+  const isTenant = currentUser?.role === 'TENANT';
+
+  const accountLinks = useMemo(() => {
+    if (!currentUser) return [];
+    if (isAdmin) {
+      return [
+        { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/dashboard/properties', label: 'Property Review', icon: Building2 },
+        { href: '/transactions', label: 'Transactions', icon: KeyRound },
+        { href: '/profile', label: 'Profile', icon: UserRound },
+      ];
+    }
+    const shared = [
+      { href: '/account/profile', label: 'Profile', icon: UserRound },
+      { href: '/account/kyc', label: 'KYC & Wallet', icon: FileCheck2 },
+      { href: '/account/applications', label: 'Applications', icon: ClipboardList },
+      { href: '/account/offers', label: 'Offers', icon: KeyRound },
+      { href: '/account/leases', label: 'Leases', icon: FileClock },
+    ];
+    if (isOwner) {
+      return [
+        { href: '/account/listings', label: 'My Listings', icon: Building2 },
+        { href: '/account/listings/new', label: 'New Listing', icon: Plus },
+        ...shared,
+      ];
+    }
+    return [
+      { href: '/account/saved', label: 'Saved Searches', icon: Bookmark },
+      ...shared,
+    ];
+  }, [currentUser, isAdmin, isOwner]);
+
+  const handleSignOut = () => {
+    clearSession();
+    clearUser();
+    document.cookie = 'vex_authed=; path=/; max-age=0';
+    document.cookie = 'vex_user_role=; path=/; max-age=0';
+    window.location.href = '/';
+  };
+
+  const primaryAction = !currentUser
+    ? { href: '/auth', label: 'Get Started', icon: ArrowRight }
+    : isAdmin
+      ? { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }
+      : isOwner
+        ? { href: '/account/listings/new', label: 'List Property', icon: Plus }
+        : { href: '/properties', label: 'Browse Properties', icon: Building2 };
+  const PrimaryIcon = primaryAction.icon;
 
   return (
     <header className="fixed inset-x-0 top-0 z-50">
-      {/* Scroll progress — a thin gold ledger line */}
       <div
         className="absolute inset-x-0 top-0 h-0.5 origin-left bg-linear-to-r from-amber-400 to-amber-600"
         style={{ transform: `scaleX(${progress})`, transition: 'transform 0.1s linear' }}
@@ -63,11 +142,10 @@ export default function LandingNavbar() {
           'flex items-center justify-between gap-4 px-5 transition-all duration-300 md:px-12 lg:px-16',
           scrolled
             ? 'border-b border-white/10 bg-black py-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.7)]'
-            : 'border-b border-transparent py-5',
+            : 'border-b border-transparent bg-black/15 py-5 backdrop-blur-[2px]',
         ].join(' ')}
       >
-        {/* Wordmark */}
-        <Link href="/" className="group flex select-none items-center gap-3" aria-label="VEX — home">
+        <Link href="/" className="group flex select-none items-center gap-3" aria-label="VEX home">
           <span className="relative grid h-9 w-9 place-items-center rounded-[8px] bg-linear-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-transform group-hover:scale-105">
             V
           </span>
@@ -79,36 +157,101 @@ export default function LandingNavbar() {
           </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-9 text-sm md:flex" aria-label="Primary">
-          {NAV_ITEMS.map(({ label, id }) => (
-            <button
-              key={id}
-              onClick={() => scrollTo(id)}
-              className="relative cursor-pointer font-medium text-white/70 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
-            >
-              {label}
-            </button>
-          ))}
+        <nav className="hidden items-center gap-8 text-sm md:flex" aria-label="Primary">
+          {NAV_ITEMS.map((item) =>
+            'href' in item ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="relative font-medium text-white/72 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.id}
+                onClick={() => scrollTo(item.id)}
+                className="relative cursor-pointer font-medium text-white/72 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
+              >
+                {item.label}
+              </button>
+            ),
+          )}
         </nav>
 
-        {/* Actions */}
         <div className="flex items-center gap-2">
+          {!currentUser && (
+            <Link
+              href="/auth"
+              className="hidden px-4 py-2 text-sm font-medium text-white/75 transition-colors hover:text-white sm:inline-flex"
+            >
+              Sign in
+            </Link>
+          )}
+
           <Link
-            href="/auth"
-            className="hidden px-4 py-2 text-sm font-medium text-white/75 transition-colors hover:text-white sm:inline-flex"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/auth"
+            href={primaryAction.href}
             className="group hidden items-center gap-2 rounded-lg bg-amber-500 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-colors hover:bg-amber-400 sm:inline-flex"
           >
-            Get Started
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            {primaryAction.label}
+            <PrimaryIcon className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
           </Link>
 
-          {/* Mobile toggle */}
+          {currentUser && (
+            <div className="relative hidden sm:block">
+              <button
+                type="button"
+                onClick={() => setProfileOpen((value) => !value)}
+                className="flex h-10 items-center gap-2 rounded-lg border border-white/15 bg-white/5 pl-2 pr-3 text-white transition-colors hover:bg-white/10"
+                aria-expanded={profileOpen}
+              >
+                <span className="grid h-7 w-7 place-items-center rounded-md bg-white text-xs font-semibold text-emerald-950">
+                  {(currentUser.name || currentUser.email || 'U').slice(0, 1).toUpperCase()}
+                </span>
+                <span className="hidden max-w-[120px] truncate text-sm font-medium lg:inline">
+                  {currentUser.name || currentUser.email}
+                </span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl border border-white/10 bg-[#11100d]/95 shadow-2xl backdrop-blur">
+                  <div className="border-b border-white/10 px-4 py-3">
+                    <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
+                    <p className="truncate text-xs text-white/45">{currentUser.email}</p>
+                    <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-amber-300/70">
+                      {currentUser.role}
+                    </p>
+                  </div>
+                  <div className="p-2">
+                    {accountLinks.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeMenus}
+                          className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-white/75 transition-colors hover:bg-white/8 hover:text-white"
+                        >
+                          <Icon className="h-4 w-4 text-amber-300/80" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="mt-1 flex w-full items-center gap-2.5 rounded-lg border-t border-white/10 px-3 py-2 pt-3 text-left text-sm text-white/65 transition-colors hover:text-white"
+                    >
+                      <LogOut className="h-4 w-4 text-white/45" />
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
@@ -121,41 +264,85 @@ export default function LandingNavbar() {
         </div>
       </div>
 
-      {/* Mobile sheet */}
       <div
         className={[
-          'md:hidden overflow-hidden border-b border-white/10 bg-black transition-[max-height,opacity] duration-300 ease-out',
-          mobileOpen ? 'max-h-[80vh] opacity-100' : 'max-h-0 opacity-0',
+          'overflow-hidden border-b border-white/10 bg-black transition-[max-height,opacity] duration-300 ease-out md:hidden',
+          mobileOpen ? 'max-h-[90vh] opacity-100' : 'max-h-0 opacity-0',
         ].join(' ')}
       >
         <nav className="flex flex-col px-5 py-4" aria-label="Mobile">
-          {NAV_ITEMS.map(({ label, id }, i) => (
-            <button
-              key={id}
-              onClick={() => scrollTo(id)}
-              className="flex items-center justify-between border-b border-white/5 py-3.5 text-left font-display text-lg text-white/85 transition-colors hover:text-white"
-            >
-              <span>{label}</span>
-              <span className="font-mono text-[11px] text-amber-300/60">§ 0{i + 1}</span>
-            </button>
-          ))}
+          {NAV_ITEMS.map((item, i) =>
+            'href' in item ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={closeMenus}
+                className="flex items-center justify-between border-b border-white/5 py-3.5 text-left font-display text-lg text-white/85 transition-colors hover:text-white"
+              >
+                <span>{item.label}</span>
+                <span className="font-mono text-[11px] text-amber-300/60">0{i + 1}</span>
+              </Link>
+            ) : (
+              <button
+                key={item.id}
+                onClick={() => scrollTo(item.id)}
+                className="flex items-center justify-between border-b border-white/5 py-3.5 text-left font-display text-lg text-white/85 transition-colors hover:text-white"
+              >
+                <span>{item.label}</span>
+                <span className="font-mono text-[11px] text-amber-300/60">0{i + 1}</span>
+              </button>
+            ),
+          )}
 
           <div className="mt-4 flex flex-col gap-2.5">
             <Link
-              href="/auth"
-              onClick={() => setMobileOpen(false)}
+              href={primaryAction.href}
+              onClick={closeMenus}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950"
             >
-              Get Started <ArrowRight className="h-4 w-4" />
+              {primaryAction.label} <PrimaryIcon className="h-4 w-4" />
             </Link>
-            <Link
-              href="/auth"
-              onClick={() => setMobileOpen(false)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-medium text-white"
-            >
-              Sign in
-            </Link>
+            {!currentUser && (
+              <Link
+                href="/auth"
+                onClick={closeMenus}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 py-3 text-sm font-medium text-white"
+              >
+                Sign in
+              </Link>
+            )}
           </div>
+
+          {currentUser && (
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-2">
+              <div className="px-3 py-2">
+                <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
+                <p className="truncate text-xs text-white/45">{currentUser.email}</p>
+              </div>
+              {accountLinks.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenus}
+                    className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-white/75 transition-colors hover:bg-white/8 hover:text-white"
+                  >
+                    <Icon className="h-4 w-4 text-amber-300/80" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-white/65 transition-colors hover:text-white"
+              >
+                <LogOut className="h-4 w-4 text-white/45" />
+                Sign out
+              </button>
+            </div>
+          )}
 
           <div className="mt-4 flex items-center justify-center gap-2 py-2 font-mono text-[10px] uppercase tracking-widest text-white/35">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />

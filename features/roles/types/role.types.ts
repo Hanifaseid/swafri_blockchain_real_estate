@@ -27,6 +27,6 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
 export const ROLE_DEFAULT_ROUTES: Record<UserRole, string> = {
   SUPER_ADMIN: '/dashboard',
   ADMIN: '/dashboard',
-  PROPERTY_OWNER: '/account/listings',
-  TENANT: '/properties',
+  PROPERTY_OWNER: '/',
+  TENANT: '/',
 };

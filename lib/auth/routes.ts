@@ -8,8 +8,7 @@ export function isAdminRole(role?: UserRole | null): boolean {
 
 export function getDefaultRouteForRole(role: UserRole): string {
   if (role === "SUPER_ADMIN" || role === "ADMIN") return "/dashboard";
-  if (role === "PROPERTY_OWNER") return "/account/listings";
-  return "/properties";
+  return "/";
 }
 
 export function isAdminShellPath(pathname: string): boolean {

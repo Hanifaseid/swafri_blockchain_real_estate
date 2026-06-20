@@ -49,7 +49,7 @@ export function proxy(request: NextRequest) {
     if (isAuthed) {
       // Already logged in — no need to show login/register again
       return NextResponse.redirect(
-        new URL(roleCookie ? getDefaultRouteForRole(roleCookie) : '/properties', request.url),
+        new URL(roleCookie ? getDefaultRouteForRole(roleCookie) : '/', request.url),
       );
     }
     return NextResponse.next();
