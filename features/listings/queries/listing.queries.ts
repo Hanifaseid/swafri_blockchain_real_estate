@@ -2,11 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type {
   CreateListingInput,
+  ListingClusterFilters,
   ListingFilters,
   TransitionInput,
 } from "@/features/listings/types/listing.types";
 import {
   getListings,
+  getListingClusters,
   getMyListings,
   getListing,
   createListing,
@@ -31,6 +33,12 @@ import {
   disputeTitle,
   clearTitleDispute,
   revokeTitle,
+  getListingRentalYield,
+  getYieldDashboard,
+  createMaintenanceRecord,
+  getMaintenanceRecords,
+  getNeighborhoodAnalytics,
+  executeBulkActions,
 } from "@/features/listings/services/listing.service";
 
 const KEYS = {
@@ -39,12 +47,24 @@ const KEYS = {
   mine: () => ["listings", "mine"] as const,
   detail: (id: string) => ["listings", "detail", id] as const,
   adminList: (p: object) => ["listings", "admin", p] as const,
+  rentalYield: (id: string) => ["listings", "rental-yield", id] as const,
+  yieldDashboard: () => ["listings", "yield-dashboard"] as const,
+  maintenance: (id: string, p?: object) => ["listings", "maintenance", id, p] as const,
+  neighborhoodAnalytics: (p?: object) => ["listings", "neighborhood-analytics", p] as const,
 };
 
 export function useListings(filters?: ListingFilters) {
   return useQuery({
     queryKey: KEYS.discover(filters ?? {}),
     queryFn: () => getListings(filters),
+  });
+}
+
+export function useListingClusters(filters?: ListingClusterFilters, enabled = true) {
+  return useQuery({
+    queryKey: ["listings", "clusters", filters ?? {}],
+    queryFn: () => getListingClusters(filters as ListingClusterFilters),
+    enabled: enabled && Boolean(filters),
   });
 }
 
@@ -311,5 +331,82 @@ export function useRevokeTitle(id: string) {
       toast.success("Title revoked. Listing archived.");
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ─── Rental Yield ───────────────────────────────────────────────────────────────
+
+export function useListingRentalYield(id: string) {
+  return useQuery({
+    queryKey: KEYS.rentalYield(id),
+    queryFn: () => getListingRentalYield(id),
+    enabled: !!id,
+  });
+}
+
+export function useYieldDashboard() {
+  return useQuery({
+    queryKey: KEYS.yieldDashboard(),
+    queryFn: () => getYieldDashboard(),
+  });
+}
+
+// ─── Maintenance Records ───────────────────────────────────────────────────────
+
+export function useMaintenanceRecords(listingId: string, params?: {
+  type?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}) {
+  return useQuery({
+    queryKey: KEYS.maintenance(listingId, params),
+    queryFn: () => getMaintenanceRecords(listingId, params),
+    enabled: !!listingId,
+  });
+}
+
+export function useCreateMaintenanceRecord() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ listingId, input }: { listingId: string; input: any }) =>
+      createMaintenanceRecord(listingId, input),
+    onSuccess: (data, { listingId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.maintenance(listingId) });
+      toast.success('Maintenance record created successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to create maintenance record';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
+
+export function useNeighborhoodAnalytics(params?: { region?: string }) {
+  return useQuery({
+    queryKey: KEYS.neighborhoodAnalytics(params),
+    queryFn: () => getNeighborhoodAnalytics(params),
+  });
+}
+
+// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+
+export function useExecuteBulkActions() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (actions: any[]) => executeBulkActions(actions),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.all });
+      toast.success('Bulk actions completed successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to execute bulk actions';
+      toast.error(message);
+    },
   });
 }

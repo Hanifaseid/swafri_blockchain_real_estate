@@ -1,21 +1,16 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
+import type {
+  GeoResult,
+  Neighborhood,
+  NeighborhoodListResponse,
+  NeighborhoodAnalyticsData,
+} from '../types/geo.types';
 
 interface ApiResp<T> {
   success?: boolean;
   message?: string;
   data?: T;
-}
-
-export interface GeoResult {
-  label: string;
-  location: {
-    type: 'Point';
-    coordinates: [number, number];
-  };
-  address?: Record<string, string>;
-  provider?: 'mock' | 'nominatim';
-  confidence?: number;
 }
 
 function isGeoResult(value: unknown): value is GeoResult {
@@ -208,4 +203,49 @@ export async function reverseGeocode(lat: number, lng: number): Promise<GeoResul
   }
 
   return reverseGeocodeWithNominatim(lat, lng);
+}
+
+// ─── Neighborhoods ─────────────────────────────────────────────────────────────
+
+export async function getNeighborhoods(params?: {
+  city?: string;
+  region?: string;
+  country?: string;
+  page?: number;
+  limit?: number;
+}): Promise<NeighborhoodListResponse> {
+  try {
+    const { data } = await apiClient.get<any>(ENDPOINTS.GEO.NEIGHBORHOODS, { params });
+    if (data?.success) {
+      return {
+        items: data.data?.items || data.data || [],
+        total: data.data?.total || data.total || 0,
+        page: data.data?.page || data.page || 1,
+        limit: data.data?.limit || data.limit || 20,
+      };
+    }
+    return { items: [], total: 0, page: 1, limit: 20 };
+  } catch {
+    return { items: [], total: 0, page: 1, limit: 20 };
+  }
+}
+
+export async function getNeighborhoodDetail(id: string): Promise<Neighborhood | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<Neighborhood>>(ENDPOINTS.GEO.NEIGHBORHOOD_DETAIL(id));
+    return data.success ? (data.data ?? null) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getNeighborhoodAnalytics(id: string): Promise<NeighborhoodAnalyticsData | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<NeighborhoodAnalyticsData>>(
+      ENDPOINTS.GEO.NEIGHBORHOOD_ANALYTICS(id)
+    );
+    return data.success ? (data.data ?? null) : null;
+  } catch {
+    return null;
+  }
 }

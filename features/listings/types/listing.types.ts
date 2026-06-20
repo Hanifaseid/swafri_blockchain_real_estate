@@ -45,6 +45,103 @@ export type AvailabilityStatus =
 
 export type FurnishingStatus = "furnished" | "semi_furnished" | "unfurnished";
 
+// ─── Rental Yield ───────────────────────────────────────────────────────────────
+
+export interface YieldSummary {
+  listingId: string;
+  currency: string;
+  period: {
+    from: string;
+    to: string;
+  };
+  grossRent: number;
+  maintenanceCost: number;
+  netIncome: number;
+  occupiedDays: number;
+  occupancyRate: number;
+  escrowHistory: Array<{
+    leaseId: string;
+    status: string;
+    escrowState: string;
+    fundTxHash: string | null;
+    settleTxHash: string | null;
+  }>;
+  annualizedYield: number | null;
+}
+
+export interface YieldDashboard {
+  totalListings: number;
+  activeLeaseCount: number;
+  grossMonthlyRent: number;
+  realizedRevenue: number;
+  occupancyRate: number;
+}
+
+// ─── Maintenance Records ───────────────────────────────────────────────────────
+
+export interface MaintenanceRecord {
+  id: string;
+  listing: string;
+  lease: string | null;
+  owner: string;
+  type: 'maintenance' | 'repair' | 'utility' | 'tax' | 'insurance' | 'management' | 'other';
+  amount: number;
+  currency: string;
+  incurredAt: string;
+  note: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMaintenanceInput {
+  leaseId?: string;
+  type: 'maintenance' | 'repair' | 'utility' | 'tax' | 'insurance' | 'management' | 'other';
+  amount: number;
+  currency: string;
+  incurredAt: string;
+  note?: string;
+}
+
+export interface MaintenanceRecordsResponse {
+  items: MaintenanceRecord[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
+
+export interface NeighborhoodAnalytics {
+  city: string;
+  region: string;
+  count: number;
+  avgPrice: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  avgMonthlyRent: number | null;
+  availability: Record<string, number>;
+}
+
+// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+
+export interface BulkActionItem {
+  id: string;
+  action: string;
+  reason?: string;
+  note?: string;
+}
+
+export interface BulkActionResult {
+  success: boolean;
+  message: string;
+  results: Array<{
+    id: string;
+    success: boolean;
+    message?: string;
+  }>;
+}
+
 // ─── Photo ────────────────────────────────────────────────────────────────────
 
 export interface ListingPhoto {
@@ -203,6 +300,30 @@ export interface PaginatedListings {
   total: number;
   page: number;
   limit: number;
+}
+
+export interface ListingCluster {
+  id: string;
+  count: number;
+  center: GeoPoint;
+  listingIds: string[];
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+export interface ListingClusterFilters {
+  swLng: number;
+  swLat: number;
+  neLng: number;
+  neLat: number;
+  zoom?: number;
+  listingType?: ListingType;
+  category?: ListingCategory;
+  propertyType?: PropertyType;
+  minPrice?: number;
+  maxPrice?: number;
+  verifiedOnly?: boolean;
+  availabilityStatus?: AvailabilityStatus;
 }
 
 // ─── Transition input ─────────────────────────────────────────────────────────

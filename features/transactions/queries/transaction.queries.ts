@@ -6,6 +6,11 @@ import {
   getPurchaseTransactions,
   getPurchaseTransactionDetail,
   updatePurchaseTransactionStatus,
+  fundPurchaseTransaction,
+  releasePurchaseTransaction,
+  refundPurchaseTransaction,
+  disputePurchaseTransaction,
+  resolvePurchaseTransactionDispute,
 } from '@/features/transactions/services/transaction.service';
 import type { CreatePurchaseTransactionPayload, UpdatePurchaseStatusPayload } from '@/features/transactions/types/transaction.types';
 
@@ -78,6 +83,103 @@ export function useUpdatePurchaseTransactionStatus() {
     },
     onError: (error: any) => {
       const message = error?.response?.data?.message || 'Failed to update transaction status';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── useFundPurchaseTransaction ─────────────────────────────────────────────────
+
+export function useFundPurchaseTransaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => fundPurchaseTransaction(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success('Escrow funded successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to fund escrow';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── useReleasePurchaseTransaction ───────────────────────────────────────────────
+
+export function useReleasePurchaseTransaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => releasePurchaseTransaction(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success('Escrow released successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to release escrow';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── useRefundPurchaseTransaction ────────────────────────────────────────────────
+
+export function useRefundPurchaseTransaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => refundPurchaseTransaction(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success('Escrow refunded successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to refund escrow';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── useDisputePurchaseTransaction ───────────────────────────────────────────────
+
+export function useDisputePurchaseTransaction() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      disputePurchaseTransaction(id, { reason }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success('Dispute opened successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to open dispute';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── useResolvePurchaseTransactionDispute ─────────────────────────────────────────
+
+export function useResolvePurchaseTransactionDispute() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, decision, note }: { id: string; decision: 'release' | 'refund'; note?: string }) =>
+      resolvePurchaseTransactionDispute(id, { decision, note }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success('Dispute resolved successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to resolve dispute';
       toast.error(message);
     },
   });

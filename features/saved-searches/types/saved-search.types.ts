@@ -12,6 +12,11 @@ export interface SavedSearchQuery {
   maxPrice?: number;
   minBedrooms?: number;
   minBathrooms?: number;
+  minArea?: number;
+  maxArea?: number;
+  verifiedOnly?: boolean;
+  availabilityStatus?: 'available' | 'under_offer' | 'rented' | 'sold';
+  amenities?: string | string[];
   swLng?: number;
   swLat?: number;
   neLng?: number;

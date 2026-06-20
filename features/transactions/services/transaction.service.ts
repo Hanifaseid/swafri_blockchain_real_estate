@@ -8,15 +8,14 @@ import type {
 } from '../types/transaction.types';
 
 // ─── Purchase Transactions Service ────────────────────────────────────────────
+// Note: Purchase transactions are auto-created when offers are accepted via the offers API
+// Manual creation is not supported per the OpenAPI spec
 
 export async function createPurchaseTransaction(
   payload: CreatePurchaseTransactionPayload
 ): Promise<PurchaseTransaction> {
-  const response = await apiClient.post<PurchaseTransaction>(
-    ENDPOINTS.PURCHASES.CREATE,
-    payload
-  );
-  return response.data;
+  // This endpoint doesn't exist in the spec - transactions are created via offer acceptance
+  throw new Error('Purchase transactions are auto-created when offers are accepted. Use the offers API instead.');
 }
 
 export async function getPurchaseTransactions(
@@ -52,10 +51,58 @@ export async function updatePurchaseTransactionStatus(
   return response.data;
 }
 
+export async function fundPurchaseTransaction(id: string): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.FUND(id)
+  );
+  return response.data;
+}
+
+export async function releasePurchaseTransaction(id: string): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.RELEASE(id)
+  );
+  return response.data;
+}
+
+export async function refundPurchaseTransaction(id: string): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.REFUND(id)
+  );
+  return response.data;
+}
+
+export async function disputePurchaseTransaction(
+  id: string,
+  payload: { reason?: string }
+): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.DISPUTE(id),
+    payload
+  );
+  return response.data;
+}
+
+export async function resolvePurchaseTransactionDispute(
+  id: string,
+  payload: { decision: 'release' | 'refund'; note?: string }
+): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<PurchaseTransaction>(
+    ENDPOINTS.PURCHASES.RESOLVE_DISPUTE(id),
+    payload
+  );
+  return response.data;
+}
+
 // Export as service object for consistency
 export const transactionService = {
   createPurchaseTransaction,
   getPurchaseTransactions,
   getPurchaseTransactionDetail,
   updatePurchaseTransactionStatus,
+  fundPurchaseTransaction,
+  releasePurchaseTransaction,
+  refundPurchaseTransaction,
+  disputePurchaseTransaction,
+  resolvePurchaseTransactionDispute,
 };

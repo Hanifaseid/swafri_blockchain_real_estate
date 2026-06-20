@@ -4,8 +4,18 @@ import type {
   Listing,
   CreateListingInput,
   ListingFilters,
+  ListingCluster,
+  ListingClusterFilters,
   PaginatedListings,
   TransitionInput,
+  YieldSummary,
+  YieldDashboard,
+  MaintenanceRecord,
+  CreateMaintenanceInput,
+  MaintenanceRecordsResponse,
+  NeighborhoodAnalytics,
+  BulkActionItem,
+  BulkActionResult,
 } from "@/features/listings/types/listing.types";
 
 // ─── Response helpers ─────────────────────────────────────────────────────────
@@ -78,35 +88,61 @@ function extractList<T>(data: ApiPaginatedResp<T>): {
 // ─── getListings (public discovery) ──────────────────────────────────────────
 // GET /listings — published listings with filters
 
+function serializeDiscoveryParams(
+  filters?: ListingFilters | ListingClusterFilters,
+): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (!filters) return params;
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (key === 'polygon' && Array.isArray(value)) {
+      params.append(key, JSON.stringify(value));
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item !== undefined && item !== null && item !== '') {
+          params.append(key, String(item));
+        }
+      });
+      return;
+    }
+
+    params.append(key, String(value));
+  });
+
+  return params;
+}
+
 export async function getListings(
   filters?: ListingFilters,
 ): Promise<PaginatedListings> {
   try {
-    const params: Record<string, string | number | boolean | string[]> = {};
-    if (filters) {
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && v !== '') {
-          // Special handling for polygon: JSON-stringify the array
-          if (k === 'polygon' && Array.isArray(v)) {
-            params[k] = JSON.stringify(v);
-          }
-          // Special handling for amenities: can be string or string[]
-          else if (k === 'amenities') {
-            params[k] = v;
-          }
-          else {
-            params[k] = v as string | number | boolean;
-          }
-        }
-      });
-    }
     const { data } = await apiClient.get<ApiPaginatedResp<Listing>>(
       ENDPOINTS.LISTINGS.DISCOVER,
-      { params },
+      { params: serializeDiscoveryParams(filters) },
     );
     return extractList(data);
   } catch {
     return { items: [], total: 0, page: 1, limit: 20 };
+  }
+}
+
+export async function getListingClusters(
+  filters: ListingClusterFilters,
+): Promise<ListingCluster[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<ListingCluster[]>>(
+      ENDPOINTS.LISTINGS.CLUSTERS,
+      { params: serializeDiscoveryParams(filters) },
+    );
+    return data.success && Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
   }
 }
 
@@ -464,4 +500,88 @@ export async function clearTitleDispute(
 
 export async function revokeTitle(id: string, reason: string): Promise<void> {
   await apiClient.post(ENDPOINTS.LISTINGS.REVOKE_TITLE(id), { reason });
+}
+
+// ─── Rental Yield ───────────────────────────────────────────────────────────────
+
+export async function getListingRentalYield(id: string): Promise<YieldSummary | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<YieldSummary>>(
+      ENDPOINTS.LISTINGS.RENTAL_YIELD(id)
+    );
+    return data.success ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getYieldDashboard(): Promise<YieldDashboard | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<YieldDashboard>>(
+      ENDPOINTS.LISTINGS.DASHBOARD_YIELD
+    );
+    return data.success ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Maintenance Records ───────────────────────────────────────────────────────
+
+export async function createMaintenanceRecord(
+  listingId: string,
+  input: CreateMaintenanceInput
+): Promise<MaintenanceRecord> {
+  const { data } = await apiClient.post<ApiResp<MaintenanceRecord>>(
+    ENDPOINTS.LISTINGS.MAINTENANCE(listingId),
+    input
+  );
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function getMaintenanceRecords(
+  listingId: string,
+  params?: {
+    type?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+  }
+): Promise<MaintenanceRecordsResponse> {
+  try {
+    const { data } = await apiClient.get<ApiPaginatedResp<MaintenanceRecord>>(
+      ENDPOINTS.LISTINGS.MAINTENANCE(listingId),
+      { params }
+    );
+    return extractList(data);
+  } catch {
+    return { items: [], total: 0, page: 1, limit: 20 };
+  }
+}
+
+// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
+
+export async function getNeighborhoodAnalytics(params?: { region?: string }): Promise<NeighborhoodAnalytics[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<NeighborhoodAnalytics[]>>(
+      ENDPOINTS.LISTINGS.NEIGHBORHOOD_ANALYTICS,
+      { params }
+    );
+    return data.success && Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
+// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+
+export async function executeBulkActions(actions: BulkActionItem[]): Promise<BulkActionResult> {
+  const { data } = await apiClient.post<ApiResp<BulkActionResult>>(
+    ENDPOINTS.LISTINGS.BULK_ACTIONS,
+    { actions }
+  );
+  if (!data.success) throw new Error(data.message);
+  return data.data;
 }

@@ -49,3 +49,39 @@ export interface EscrowVerification {
   status: string;
   verified: boolean;
 }
+
+// ─── Lease Timeline ───────────────────────────────────────────────────────────────
+
+export interface TimelineEvent {
+  key: string;
+  label: string;
+  at: string | null;
+  status: 'completed' | 'pending' | 'active';
+  metadata?: Record<string, unknown>;
+}
+
+export interface LeaseTimeline {
+  leaseId: string;
+  currentStatus: string;
+  escrowState: string;
+  events: TimelineEvent[];
+}
+
+// ─── Tenant Roster ───────────────────────────────────────────────────────────────
+
+export interface TenantRosterEntry {
+  leaseId: string;
+  tenant: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  listing: {
+    id: string;
+    title: string;
+  };
+  startDate: string;
+  endDate: string;
+  status: string;
+  monthlyRent: number;
+}

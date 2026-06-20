@@ -33,6 +33,7 @@ export const ENDPOINTS = {
     CREATE:       '/listings',
     MINE:         '/listings/mine',
     DISCOVER:     '/listings',               // GET with query params
+    CLUSTERS:     '/listings/clusters',
     DETAIL:       (id: string) => `/listings/${id}`,
     UPDATE:       (id: string) => `/listings/${id}`,
     DELETE:       (id: string) => `/listings/${id}`,
@@ -59,6 +60,19 @@ export const ENDPOINTS = {
 
     // Duplicates
     DUPLICATES: (id: string) => `/listings/${id}/duplicates`,
+
+    // Rental Yield
+    RENTAL_YIELD: (id: string) => `/listings/${id}/rental-yield`,
+    DASHBOARD_YIELD: '/listings/dashboard/yield',
+
+    // Maintenance Records
+    MAINTENANCE: (id: string) => `/listings/${id}/maintenance`,
+
+    // Neighborhood Analytics
+    NEIGHBORHOOD_ANALYTICS: '/listings/analytics/neighborhood',
+
+    // Bulk Actions
+    BULK_ACTIONS: '/listings/bulk',
   },
 
   // ── Favorites ─────────────────────────────────────────────────────────────
@@ -105,6 +119,9 @@ export const ENDPOINTS = {
   GEO: {
     GEOCODE: '/geo/geocode',
     REVERSE: '/geo/reverse',
+    NEIGHBORHOODS: '/geo/neighborhoods',
+    NEIGHBORHOOD_DETAIL: (id: string) => `/geo/neighborhoods/${id}`,
+    NEIGHBORHOOD_ANALYTICS: (id: string) => `/geo/neighborhoods/${id}/analytics`,
   },
 
   // ── Leases ────────────────────────────────────────────────────────────────
@@ -113,14 +130,18 @@ export const ENDPOINTS = {
     MINE:            '/leases/mine',
     DETAIL:          (id: string) => `/leases/${id}`,
     PROPOSE:         (id: string) => `/leases/${id}/propose`,
+    SIGN:            (id: string) => `/leases/${id}/sign`,
     FUND:            (id: string) => `/leases/${id}/fund`,
     ACTIVATE:        (id: string) => `/leases/${id}/activate`,
     CANCEL:          (id: string) => `/leases/${id}/cancel`,
     COMPLETE:        (id: string) => `/leases/${id}/complete`,
     TERMINATE:       (id: string) => `/leases/${id}/terminate`,
     DISPUTE:         (id: string) => `/leases/${id}/dispute`,
+    RESPOND_DISPUTE: (id: string) => `/leases/${id}/dispute/respond`,
     RESOLVE_DISPUTE: (id: string) => `/leases/${id}/dispute/resolve`,
     ESCROW:          (id: string) => `/leases/${id}/escrow`,
+    TIMELINE:        (id: string) => `/leases/${id}/timeline`,
+    TENANTS:         '/leases/tenants',
   },
 
   // ── Rental Applications ───────────────────────────────────────────────────
@@ -140,6 +161,11 @@ export const ENDPOINTS = {
     LIST:          '/purchase-transactions',
     DETAIL:        (id: string) => `/purchase-transactions/${id}`,
     UPDATE_STATUS: (id: string) => `/purchase-transactions/${id}/status`,
+    FUND:          (id: string) => `/purchase-transactions/${id}/fund`,
+    RELEASE:       (id: string) => `/purchase-transactions/${id}/release`,
+    REFUND:        (id: string) => `/purchase-transactions/${id}/refund`,
+    DISPUTE:       (id: string) => `/purchase-transactions/${id}/dispute`,
+    RESOLVE_DISPUTE:(id: string) => `/purchase-transactions/${id}/dispute/resolve`,
   },
 
   // ── Admin — Users ─────────────────────────────────────────────────────────
@@ -169,6 +195,8 @@ export const ENDPOINTS = {
     // Compliance
     COMPLIANCE_CASES:    '/compliance/cases',
     COMPLIANCE_CASE:     (id: string) => `/compliance/cases/${id}`,
+    COMPLIANCE_NOTES:    (id: string) => `/compliance/cases/${id}/notes`,
+    COMPLIANCE_NOTE:     (id: string, noteId: string) => `/compliance/cases/${id}/notes/${noteId}`,
     SCREENINGS:          '/compliance/screenings',
     BROKER_LICENSES:     '/compliance/broker-licenses',
     BROKER_LICENSE:      (id: string) => `/compliance/broker-licenses/${id}/review`,
@@ -180,5 +208,11 @@ export const ENDPOINTS = {
 
     // Audit logs
     AUDIT_LOGS:       '/audit-logs',
+  },
+
+  // ── Health ───────────────────────────────────────────────────────────────────
+  HEALTH: {
+    LIVENESS:  '/health/live',
+    READINESS: '/health/ready',
   },
 } as const;

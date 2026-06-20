@@ -16,15 +16,16 @@ L.Icon.Default.mergeOptions({
 export type MapSearchMode = 'viewport' | 'radius' | 'polygon';
 
 interface PropertyMapProps {
-  center: [number, number];
+  center: [number, number]; // [lat, lng]
   zoom?: number;
   mode: MapSearchMode;
   radius?: number; // in meters
   polygon?: [number, number][];
-  onViewportChange?: (bounds: { swLng: number; swLat: number; neLng: number; neLat: number }) => void;
+  onViewportChange?: (bounds: { swLng: number; swLat: number; neLng: number; neLat: number; zoom: number }) => void;
   onRadiusChange?: (center: [number, number], radius: number) => void;
   onPolygonChange?: (polygon: [number, number][]) => void;
   listings?: Array<{ id: string; lat: number; lng: number; title: string; price: number }>;
+  clusters?: Array<{ id: string; lat: number; lng: number; count: number; minPrice?: number; maxPrice?: number }>;
   onListingClick?: (id: string) => void;
 }
 
@@ -38,6 +39,7 @@ export function PropertyMap({
   onRadiusChange,
   onPolygonChange,
   listings = [],
+  clusters = [],
   onListingClick,
 }: PropertyMapProps) {
   const mapRef = useRef<L.Map | null>(null);
@@ -83,6 +85,7 @@ export function PropertyMap({
           swLat: bounds.getSouth(),
           neLng: bounds.getEast(),
           neLat: bounds.getNorth(),
+          zoom: map.getZoom(),
         });
       }
     };
@@ -118,7 +121,7 @@ export function PropertyMap({
         }
       } else if (mode === 'radius' && onRadiusChange) {
         // Set center point for radius search
-        const newCenter: [number, number] = [e.latlng.lng, e.latlng.lat];
+        const newCenter: [number, number] = [e.latlng.lat, e.latlng.lng];
         onRadiusChange(newCenter, radius);
       }
     });
@@ -130,7 +133,7 @@ export function PropertyMap({
         // Close the polygon
         const points = polygonPointsRef.current.map(p => [p[1], p[0]] as L.LatLngExpression);
         points.push(points[0] as L.LatLngExpression); // Close the loop
-        
+
         if (polygonLayerRef.current) {
           map.removeLayer(polygonLayerRef.current);
         }
@@ -176,7 +179,7 @@ export function PropertyMap({
       if (circleRef.current) {
         mapRef.current.removeLayer(circleRef.current);
       }
-      circleRef.current = L.circle([center[1], center[0]], {
+      circleRef.current = L.circle(center, {
         radius: radius,
         color: '#10b981',
         fillColor: '#10b981',
@@ -185,7 +188,7 @@ export function PropertyMap({
 
       // Update or create center marker
       if (centerMarkerRef.current) {
-        centerMarkerRef.current.setLatLng([center[1], center[0]]);
+        centerMarkerRef.current.setLatLng(center);
       } else {
         const centerIcon = L.divIcon({
           className: 'custom-center-marker',
@@ -193,7 +196,7 @@ export function PropertyMap({
           iconSize: [20, 20],
           iconAnchor: [10, 10],
         });
-        centerMarkerRef.current = L.marker([center[1], center[0]], { icon: centerIcon }).addTo(mapRef.current);
+        centerMarkerRef.current = L.marker(center, { icon: centerIcon }).addTo(mapRef.current);
       }
     } else {
       // Remove radius circle and center marker
@@ -231,16 +234,44 @@ export function PropertyMap({
     }
   }, [mode, polygon]);
 
-  // Update listings markers
+  // Update listings / clusters markers
   useEffect(() => {
     if (!mapRef.current) return;
 
-    // Clear existing markers
-    markersRef.current.forEach(m => mapRef.current!.removeLayer(m));
+    markersRef.current.forEach((marker) => mapRef.current!.removeLayer(marker));
     markersRef.current = [];
 
-    // Add new markers
-    listings.forEach(listing => {
+    if (clusters.length > 0) {
+      clusters.forEach((cluster) => {
+        const clusterIcon = L.divIcon({
+          className: 'property-cluster-marker',
+          html: `<div style="background-color: #10b981; color: white; width: 36px; height: 36px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); font-size: 12px; font-weight: 700;">${cluster.count}</div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        });
+
+        const marker = L.marker([cluster.lat, cluster.lng], { icon: clusterIcon })
+          .addTo(mapRef.current!)
+          .bindPopup(`
+            <div style="min-width: 180px;">
+              <strong>${cluster.count} listings</strong><br/>
+              ${cluster.minPrice != null && cluster.maxPrice != null ? `$${cluster.minPrice.toLocaleString()} - $${cluster.maxPrice.toLocaleString()}` : 'Zoom in for details'}
+            </div>
+          `);
+
+        marker.on('click', () => {
+          if (mapRef.current) {
+            mapRef.current.setView([cluster.lat, cluster.lng], Math.min(mapRef.current.getZoom() + 2, 18));
+          }
+        });
+
+        markersRef.current.push(marker);
+      });
+
+      return;
+    }
+
+    listings.forEach((listing) => {
       const marker = L.marker([listing.lat, listing.lng])
         .addTo(mapRef.current!)
         .bindPopup(`
@@ -258,19 +289,19 @@ export function PropertyMap({
 
       markersRef.current.push(marker);
     });
-  }, [listings, onListingClick]);
+  }, [clusters, listings, onListingClick]);
 
   // Start polygon drawing
   const startPolygonDrawing = () => {
     drawingModeRef.current = 'polygon';
     polygonPointsRef.current = [];
-    
+
     // Clear existing polygon
     if (polygonLayerRef.current && mapRef.current) {
       mapRef.current.removeLayer(polygonLayerRef.current);
       polygonLayerRef.current = null;
     }
-    
+
     // Clear temporary markers
     tempMarkersRef.current.forEach(m => {
       if (mapRef.current) mapRef.current.removeLayer(m);
@@ -309,10 +340,10 @@ export function PropertyMap({
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        const newCenter: [number, number] = [longitude, latitude];
+        const newCenter: [number, number] = [latitude, longitude];
 
         if (mapRef.current) {
-          mapRef.current.setView([latitude, longitude], 15);
+          mapRef.current.setView(newCenter, 15);
         }
 
         if (mode === 'radius' && onRadiusChange) {

@@ -10,6 +10,8 @@ import type {
   ReviewBrokerLicenseInput,
   ComplianceCasesParams,
   BrokerLicensesParams,
+  ComplianceNote,
+  CreateNoteInput,
 } from '../types/compliance.types';
 
 type RawItem = Record<string, unknown>;
@@ -90,4 +92,30 @@ export async function reviewBrokerLicense(
 ): Promise<BrokerLicense> {
   const { data } = await apiClient.post(ENDPOINTS.ADMIN.BROKER_LICENSE(id), input);
   return extractOne<BrokerLicense>(data);
+}
+
+// ─── Compliance Case Notes ───────────────────────────────────────────────────────
+
+export async function getComplianceNotes(caseId: string): Promise<ComplianceNote[]> {
+  try {
+    const { data } = await apiClient.get(ENDPOINTS.ADMIN.COMPLIANCE_NOTES(caseId));
+    return extractArray<ComplianceNote>(data);
+  } catch {
+    return [];
+  }
+}
+
+export async function createComplianceNote(
+  caseId: string,
+  input: CreateNoteInput,
+): Promise<ComplianceNote> {
+  const { data } = await apiClient.post(ENDPOINTS.ADMIN.COMPLIANCE_NOTES(caseId), input);
+  return extractOne<ComplianceNote>(data);
+}
+
+export async function deleteComplianceNote(
+  caseId: string,
+  noteId: string,
+): Promise<void> {
+  await apiClient.delete(ENDPOINTS.ADMIN.COMPLIANCE_NOTE(caseId, noteId));
 }
