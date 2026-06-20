@@ -59,21 +59,21 @@ export function WalletSection() {
   };
 
   return (
-    <section className="rounded-lg border border-[#d5c8b3] bg-white p-5">
+    <section className="rounded-lg border border-border-primary bg-surface-card p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-start gap-3">
-          <div className="rounded-lg bg-[#f1ece0] p-2.5 text-[#7d561f]">
+          <div className="rounded-lg bg-surface-highlight p-2.5 text-accent-400">
             <WalletCards size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-[#153828]">Linked wallet</h2>
-            <p className="mt-0.5 font-mono text-xs text-[#5f6b61]">
+            <h2 className="text-sm font-semibold text-white">Linked wallet</h2>
+            <p className="mt-0.5 font-mono text-xs text-text-muted">
               {currentUser?.linkedWalletAddress ?? 'No wallet linked'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <span className="rounded-full bg-[#f7f2e8] px-3 py-1.5 text-xs font-semibold text-[#163c2c]">
+          <span className="rounded-full bg-surface-highlight px-3 py-1.5 text-xs font-semibold text-emerald-400">
             {WALLET_LABEL[currentUser?.walletStatus ?? 'NOT_LINKED'] ?? currentUser?.walletStatus}
           </span>
           {linked ? (
@@ -88,7 +88,7 @@ export function WalletSection() {
           )}
         </div>
       </div>
-      <p className="mt-3 text-xs text-[#5f6b61]">
+      <p className="mt-3 text-xs text-text-muted">
         A linked wallet is where your property title certificate is issued and where escrow refunds
         are received. Linking asks your wallet to sign a one-time message — no transaction or gas.
       </p>

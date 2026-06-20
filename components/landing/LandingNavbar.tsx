@@ -41,7 +41,6 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Browse', href: '/properties' },
   { label: 'Listings', href: '/listings' },
-  { label: 'List Property', href: '/account/listings/new' },
   { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
 ] as const;
@@ -116,7 +115,6 @@ export default function LandingNavbar() {
     // Property Owner → marketplace-first, account section for management
     if (isOwner) {
       return [
-        { href: '/properties', label: 'Browse Properties', icon: Compass },
         { href: '/account/listings', label: 'My Listings', icon: Building2 },
         { href: '/account/listings/new', label: 'List a Property', icon: Plus },
         { href: '/account/applications', label: 'Applications', icon: ClipboardList },
@@ -129,7 +127,6 @@ export default function LandingNavbar() {
 
     // Tenant → marketplace-first, account section for saved/applications
     return [
-      { href: '/properties', label: 'Browse Properties', icon: Compass },
       { href: '/account/saved', label: 'Saved Searches', icon: Heart },
       { href: '/account/applications', label: 'My Applications', icon: ClipboardList },
       { href: '/account/offers', label: 'My Offers', icon: MessageSquare },

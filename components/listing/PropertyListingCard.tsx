@@ -80,7 +80,7 @@ export function PropertyListingCard({
   priority = false,
   animationDelay = 0,
 }: PropertyListingCardProps) {
-  const listingHref = href ?? `/properties/${listing.id}`;
+  const listingHref = href ?? `/listings/${listing.id}`;
   const coverPhoto = listing.photos?.find((p) => p.isCover) ?? listing.photos?.[0];
   const price = listing.price ?? listing.monthlyRent ?? 0;
   const currency = listing.currency ?? 'USD';
