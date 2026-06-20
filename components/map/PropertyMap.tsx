@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Crosshair, Navigation } from 'lucide-react';
+import { Crosshair, Navigation, PencilLine, Trash2 } from 'lucide-react';
+import type { ListingCluster } from '@/features/listings/types/listing.types';
 
 // Fix for default marker icons in Leaflet with webpack
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -25,7 +26,9 @@ interface PropertyMapProps {
   onRadiusChange?: (center: [number, number], radius: number) => void;
   onPolygonChange?: (polygon: [number, number][]) => void;
   listings?: Array<{ id: string; lat: number; lng: number; title: string; price: number }>;
+  clusters?: ListingCluster[];
   onListingClick?: (id: string) => void;
+  onClusterClick?: (cluster: ListingCluster) => void;
 }
 
 export function PropertyMap({
@@ -38,11 +41,14 @@ export function PropertyMap({
   onRadiusChange,
   onPolygonChange,
   listings = [],
+  clusters = [],
   onListingClick,
+  onClusterClick,
 }: PropertyMapProps) {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const clusterMarkersRef = useRef<L.Marker[]>([]);
   const circleRef = useRef<L.Circle | null>(null);
   const polygonLayerRef = useRef<L.Polyline | L.Polygon | null>(null);
   const drawingModeRef = useRef<'polygon' | null>(null);
@@ -260,6 +266,31 @@ export function PropertyMap({
     });
   }, [listings, onListingClick]);
 
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    clusterMarkersRef.current.forEach((m) => mapRef.current!.removeLayer(m));
+    clusterMarkersRef.current = [];
+
+    clusters.forEach((cluster) => {
+      const lng = cluster.center?.[0] ?? cluster.lng ?? cluster.longitude;
+      const lat = cluster.center?.[1] ?? cluster.lat ?? cluster.latitude;
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+      const icon = L.divIcon({
+        className: 'property-cluster-marker',
+        html: `<div style="min-width:42px;height:42px;padding:0 10px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#143d2b;color:#f4d38b;font-weight:700;border:2px solid white;box-shadow:0 10px 24px rgba(20,61,43,0.28);">${cluster.count}</div>`,
+        iconSize: [42, 42],
+        iconAnchor: [21, 21],
+      });
+      const marker = L.marker([lat as number, lng as number], { icon }).addTo(
+        mapRef.current!,
+      );
+      marker.on('click', () => onClusterClick?.(cluster));
+      clusterMarkersRef.current.push(marker);
+    });
+  }, [clusters, onClusterClick]);
+
   // Start polygon drawing
   const startPolygonDrawing = () => {
     drawingModeRef.current = 'polygon';
@@ -384,14 +415,14 @@ export function PropertyMap({
                 className="block w-8 h-8 flex items-center justify-center bg-blue-100 hover:bg-blue-200 rounded text-blue-600"
                 title="Draw polygon (click to add points, right-click to finish)"
               >
-                ✏️
+                <PencilLine size={16} />
               </button>
               <button
                 onClick={clearPolygon}
                 className="block w-8 h-8 flex items-center justify-center bg-red-100 hover:bg-red-200 rounded text-red-600"
                 title="Clear polygon"
               >
-                🗑️
+                <Trash2 size={16} />
               </button>
             </>
           )}

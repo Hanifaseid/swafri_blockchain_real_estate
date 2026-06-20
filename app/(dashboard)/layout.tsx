@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { DashboardSidebar } from '@/components/layout/dashboard/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/dashboard/DashboardTopbar';
 import { getNavItems } from '@/config/dashboard-nav.config';
+import { getDefaultRouteForRole, isAdminRole, isAdminShellPath } from '@/lib/auth/routes';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,13 +15,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { currentUser, setUser, setLoading } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const isPublicMarketplace =
+    pathname === '/properties' || pathname.startsWith('/properties/');
 
   useEffect(() => {
     // Defer all state updates out of the synchronous effect body
     const init = () => {
       const user = getCurrentUser();
       if (!user) {
+        if (isPublicMarketplace) {
+          setLoading(false);
+          setMounted(true);
+          return;
+        }
         router.replace('/login');
+        return;
+      }
+      if (isAdminShellPath(pathname) && !isAdminRole(user.role)) {
+        router.replace(getDefaultRouteForRole(user.role));
         return;
       }
       setUser(user);
@@ -31,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // queueMicrotask pushes updates after the current render cycle,
     // breaking the synchronous setState-in-effect chain
     queueMicrotask(init);
-  }, [router, setUser, setLoading]);
+  }, [isPublicMarketplace, pathname, router, setUser, setLoading]);
 
  useEffect(() => {
   queueMicrotask(() => setMobileOpen(false));
@@ -57,7 +69,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return match?.label ?? 'Dashboard';
   };
 
-  if (!mounted || !currentUser) {
+  if (isPublicMarketplace && (!currentUser || !isAdminShellPath(pathname))) {
+    return <>{children}</>;
+  }
+
+  if (!mounted || !currentUser || !isAdminRole(currentUser.role)) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"

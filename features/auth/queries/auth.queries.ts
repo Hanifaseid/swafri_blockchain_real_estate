@@ -19,6 +19,7 @@ import type { CreateAdminPayload } from '@/features/users/types/user.types';
 import { useAuthStore } from '@/stores/auth.store';
 import { queryKeys } from '@/lib/query/query-keys';
 import { appConfig } from '@/config/app.config';
+import { getDefaultRouteForRole } from '@/lib/auth/routes';
 
 // ─── useCurrentUser ───────────────────────────────────────────────────────────
 // Reads the active session and returns the current user.
@@ -58,9 +59,9 @@ export function useLogin() {
       // If admin assigned a temporary password, force change before dashboard access
       const mustReset = typeof window !== 'undefined' && localStorage.getItem('vex_must_reset_password') === '1';
       if (mustReset) {
-        router.push('/profile?mustReset=1');
+        router.push('/account/profile?mustReset=1');
       } else {
-        router.push(appConfig.auth.loginRedirect);
+        router.push(getDefaultRouteForRole(data.user.role));
       }
     },
   });
@@ -88,7 +89,7 @@ export function useRegister() {
         document.cookie = `vex_user_role=${data.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
-      router.push(appConfig.auth.loginRedirect);
+      router.push(getDefaultRouteForRole(data.user.role));
     },
   });
 }

@@ -33,11 +33,15 @@ export const ENDPOINTS = {
     CREATE:       '/listings',
     MINE:         '/listings/mine',
     DISCOVER:     '/listings',               // GET with query params
+    CLUSTERS:     '/listings/clusters',
     DETAIL:       (id: string) => `/listings/${id}`,
     UPDATE:       (id: string) => `/listings/${id}`,
     DELETE:       (id: string) => `/listings/${id}`,
     TRANSITION:   (id: string) => `/listings/${id}/transition`,
     DASHBOARD:    '/listings/dashboard',
+    ANALYTICS:    (id: string) => `/listings/${id}/analytics`,
+    YIELD:        (id: string) => `/listings/${id}/yield`,
+    MAINTENANCE:  (id: string) => `/listings/${id}/maintenance-records`,
 
     // Photos
     UPLOAD_PHOTOS:   (id: string) => `/listings/${id}/photos`,
@@ -101,6 +105,13 @@ export const ENDPOINTS = {
     DELETE: (id: string) => `/saved-searches/${id}`,
   },
 
+  GEO: {
+    GEOCODE: '/geo/geocode',
+    REVERSE: '/geo/reverse',
+    NEIGHBORHOODS: '/geo/neighborhoods',
+    NEIGHBORHOOD_ANALYTICS: (id: string) => `/geo/neighborhoods/${id}/analytics`,
+  },
+
   // ── Leases ────────────────────────────────────────────────────────────────
   LEASES: {
     CREATE:          '/leases',
@@ -115,6 +126,7 @@ export const ENDPOINTS = {
     DISPUTE:         (id: string) => `/leases/${id}/dispute`,
     RESOLVE_DISPUTE: (id: string) => `/leases/${id}/dispute/resolve`,
     ESCROW:          (id: string) => `/leases/${id}/escrow`,
+    TIMELINE:        (id: string) => `/leases/${id}/timeline`,
   },
 
   // ── Rental Applications ───────────────────────────────────────────────────
@@ -134,6 +146,11 @@ export const ENDPOINTS = {
     LIST:          '/purchase-transactions',
     DETAIL:        (id: string) => `/purchase-transactions/${id}`,
     UPDATE_STATUS: (id: string) => `/purchase-transactions/${id}/status`,
+    FUND_ESCROW:   (id: string) => `/purchase-transactions/${id}/escrow/fund`,
+    RELEASE_ESCROW:(id: string) => `/purchase-transactions/${id}/escrow/release`,
+    REFUND_ESCROW: (id: string) => `/purchase-transactions/${id}/escrow/refund`,
+    DISPUTE:       (id: string) => `/purchase-transactions/${id}/dispute`,
+    RESOLVE_DISPUTE:(id: string) => `/purchase-transactions/${id}/dispute/resolve`,
   },
 
   // ── Admin — Users ─────────────────────────────────────────────────────────

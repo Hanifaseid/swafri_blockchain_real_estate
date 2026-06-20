@@ -14,6 +14,7 @@ import {
   disputeLease,
   resolveDispute,
   getEscrowVerification,
+  getLeaseTimeline,
 } from '../services/lease.service';
 import { CreateLeasePayload, ResolveDisputePayload } from '../types/lease.types';
 
@@ -22,6 +23,7 @@ export const leaseKeys = {
   mine: () => [...leaseKeys.all, 'mine'] as const,
   detail: (id: string) => [...leaseKeys.all, 'detail', id] as const,
   escrow: (id: string) => [...leaseKeys.all, 'escrow', id] as const,
+  timeline: (id: string) => [...leaseKeys.all, 'timeline', id] as const,
 };
 
 export function useCreateLease() {
@@ -166,5 +168,13 @@ export function useEscrowVerification(id: string) {
     queryFn: () => getEscrowVerification(id),
     enabled: !!id,
     refetchInterval: 10000, // Polling every 10 seconds for on-chain status
+  });
+}
+
+export function useLeaseTimeline(id: string) {
+  return useQuery({
+    queryKey: leaseKeys.timeline(id),
+    queryFn: () => getLeaseTimeline(id),
+    enabled: !!id,
   });
 }

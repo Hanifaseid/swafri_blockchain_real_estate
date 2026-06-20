@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, ShieldCheck, Building2, Coins, Users } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Building2, FileCheck2, Users } from 'lucide-react';
 
 export default function AboutPage() {
   return (
@@ -25,15 +25,16 @@ export default function AboutPage() {
         {/* Header */}
         <div className="mb-14">
           <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-3 py-1.5 rounded-full">
-            About Swafir
+            About TerraChain
           </span>
           <h1 className="text-4xl md:text-5xl font-light text-white mt-5 mb-4 leading-tight tracking-tight">
             Real Estate Ownership,<br />Rebuilt on the Blockchain.
           </h1>
           <p className="text-base text-white/60 max-w-2xl leading-relaxed font-light">
-            Swafir is a blockchain-powered real estate marketplace that makes property ownership
-            transparent, accessible, and trustless. We connect verified property owners with
-            tenants and investors through smart contract technology.
+            TerraChain is a blockchain-enabled real estate marketplace that makes listings,
+            ownership review, lease escrow, and purchase workflows transparent. We connect
+            verified property owners with tenants, buyers, and administrators through smart
+            contract-backed records and operational compliance tools.
           </p>
         </div>
 
@@ -43,17 +44,17 @@ export default function AboutPage() {
             {
               icon: <ShieldCheck className="w-5 h-5 text-emerald-400" />,
               title: 'Verified Ownership',
-              desc: 'Every property is deed-verified before listing. Ownership records are hashed on-chain as ERC-1155 title certificates — immutable and publicly auditable.',
+              desc: 'Every property can be reviewed before publication. Ownership records are anchored on-chain as ERC-721 digital title certificates with auditable document hashes.',
             },
             {
-              icon: <Coins className="w-5 h-5 text-emerald-400" />,
-              title: 'Fractional Investment',
-              desc: 'Own a share of premium real estate globally, starting from $85 USDC. Earn proportional rental yield distributed automatically through smart contracts.',
+              icon: <FileCheck2 className="w-5 h-5 text-emerald-400" />,
+              title: 'Map-Based Discovery',
+              desc: 'Tenants can search listings with viewport, radius, custom boundary, neighborhood, and structured property filters backed by the marketplace API.',
             },
             {
               icon: <Building2 className="w-5 h-5 text-emerald-400" />,
-              title: 'Smart Contract Leases',
-              desc: 'Rental agreements are codified as smart contracts. Payments flow through multisig escrow wallets — no banks, no delays, fully transparent.',
+              title: 'Lease And Purchase Escrow',
+              desc: 'Rental and purchase workflows expose escrow status, title context, offers, applications, and transaction history in one accountable marketplace flow.',
             },
             {
               icon: <Users className="w-5 h-5 text-emerald-400" />,

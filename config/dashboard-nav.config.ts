@@ -113,7 +113,7 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
     },
     {
       label: 'Properties',
-      href: '/properties',
+      href: '/dashboard/properties',
       icon: 'Building2',
       requiredPermission: 'properties:view_all',
     },
@@ -263,5 +263,6 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 export function getNavItems(role: UserRole): NavItem[] {
+  if (role === "PROPERTY_OWNER" || role === "TENANT") return [];
   return dashboardNav[role] ?? [];
 }

@@ -32,7 +32,7 @@ export function NewListingClient() {
 
       toast.success('Listing submitted for review!');
 
-      router.push('/dashboard/listings');
+      router.push('/account/listings');
 
     } catch (error) {
       console.error(error);

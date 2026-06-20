@@ -61,3 +61,10 @@ export interface PaginatedTransactions {
   page: number;
   limit: number;
 }
+
+export interface PurchaseEscrowActionPayload {
+  amount?: number;
+  note?: string;
+  reason?: string;
+  txHash?: string;
+}

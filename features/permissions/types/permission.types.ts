@@ -63,8 +63,6 @@ export type PermissionKey =
   | 'settings:update'
 
   // Dashboard
-  | 'dashboard:tenant'
-  | 'dashboard:owner'
   | 'dashboard:admin'
   | 'dashboard:super_admin';
 

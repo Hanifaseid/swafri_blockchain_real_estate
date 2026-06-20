@@ -49,3 +49,20 @@ export interface EscrowVerification {
   status: string;
   verified: boolean;
 }
+
+export interface LeaseTimelineEvent {
+  id?: string;
+  type: string;
+  label?: string;
+  status?: string;
+  description?: string;
+  txHash?: string;
+  occurredAt: string;
+  actorId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface LeaseTimeline {
+  leaseId: string;
+  events: LeaseTimelineEvent[];
+}

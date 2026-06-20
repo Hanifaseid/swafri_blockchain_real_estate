@@ -194,7 +194,7 @@ export default function KycPage() {
                   >
                     <option value="national_id">National ID</option>
                     <option value="passport">Passport</option>
-                    <option value="drivers_license">Driver's License</option>
+                    <option value="drivers_license">Driver&apos;s License</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
@@ -267,7 +267,7 @@ export default function KycPage() {
             <Wallet size={10} /> Blockchain Wallet
           </p>
           <p className="text-xs text-black/40 mb-5 leading-relaxed">
-            Link your Ethereum wallet for fractional purchases, escrow, and on-chain transactions.
+            Link your Ethereum wallet for purchase offers, lease escrow, title verification, and on-chain transactions.
             {!isKycApproved && <span className="text-amber-500 ml-1">KYC approval required first.</span>}
           </p>
 

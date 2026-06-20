@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/axios-client';
-import { Lease, CreateLeasePayload, ResolveDisputePayload, EscrowVerification } from '../types/lease.types';
+import { ENDPOINTS as API_ENDPOINTS } from '@/lib/api/endpoints';
+import { Lease, CreateLeasePayload, ResolveDisputePayload, EscrowVerification, LeaseTimeline } from '../types/lease.types';
 
 export interface ApiSingleResponse<T> {
   success: boolean;
@@ -20,6 +21,7 @@ const ENDPOINTS = {
   DISPUTE: (id: string) => `/leases/${id}/dispute`,
   RESOLVE: (id: string) => `/leases/${id}/dispute/resolve`,
   ESCROW: (id: string) => `/leases/${id}/escrow`,
+  TIMELINE: (id: string) => `/leases/${id}/timeline`,
 };
 
 export async function createLease(payload: CreateLeasePayload): Promise<Lease> {
@@ -145,4 +147,15 @@ export async function getEscrowVerification(id: string): Promise<EscrowVerificat
   const { data } = await apiClient.get<ApiSingleResponse<EscrowVerification>>(ENDPOINTS.ESCROW(id));
   if (!data.success) throw new Error(data.message || 'Failed to verify escrow');
   return data.data;
+}
+
+export async function getLeaseTimeline(id: string): Promise<LeaseTimeline> {
+  const { data } = await apiClient.get<any>(API_ENDPOINTS.LEASES.TIMELINE(id));
+  if (data?.success === false) throw new Error(data.message || 'Failed to fetch lease timeline');
+  const value = data?.data ?? data;
+  if (Array.isArray(value)) return { leaseId: id, events: value };
+  return {
+    leaseId: value?.leaseId ?? id,
+    events: Array.isArray(value?.events) ? value.events : [],
+  };
 }

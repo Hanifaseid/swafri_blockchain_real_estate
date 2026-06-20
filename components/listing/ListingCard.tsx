@@ -32,7 +32,7 @@ export function ListingCard({
   className,
   priority = false,
 }: ListingCardProps) {
-  const listingHref = href ?? `/listings/${listing.id}`;
+  const listingHref = href ?? `/properties/${listing.id}`;
 
   const price = formatCurrency(listing.price, listing.currency ?? "USD");
   const priceLabel = listing.listingType === "rent" ? `${price}/mo` : price;

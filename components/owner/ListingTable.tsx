@@ -15,7 +15,7 @@ import { formatCurrency } from '@/lib/utils';
 import type { PropertySummary } from '@/components/listing/types';
 
 /**
- * ListingTable — owner's listings manager on /dashboard/listings.
+ * ListingTable - owner's listings manager in the account listing workflow.
  * Wraps DataTable with listing-specific columns and row actions.
  */
 
@@ -94,7 +94,7 @@ export function ListingTable({
           <Tooltip content="View listing">
             <Button variant="ghost" size="icon" asChild>
               <Link
-                href={`/listings/${row.original.id}`}
+                href={`/properties/${row.original.id}`}
                 aria-label={`View ${row.original.title}`}
               >
                 <Eye size={15} />
@@ -105,7 +105,7 @@ export function ListingTable({
           <Tooltip content="Edit listing">
             <Button variant="ghost" size="icon" asChild>
               <Link
-                href={`/dashboard/listings/${row.original.id}/edit`}
+                href={`/properties/${row.original.id}/edit`}
                 aria-label={`Edit ${row.original.title}`}
               >
                 <Edit2 size={15} />
@@ -140,7 +140,7 @@ export function ListingTable({
         description="Create your first property listing to get started."
         action={
           <Button asChild>
-            <Link href="/dashboard/listings/new">
+            <Link href="/account/listings/new">
               <Plus size={15} />
               Add Listing
             </Link>

@@ -62,7 +62,7 @@ export function Footer() {
       <div className="border-t border-white/8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
         <p className="text-[10px] font-mono text-white/25">{siteConfig.copyright}</p>
         <p className="text-[10px] font-mono text-white/20">
-          BLOCKCHAIN REAL ESTATE // ERC-1155 TITLE CERTIFICATES
+          BLOCKCHAIN REAL ESTATE // ERC-721 DIGITAL TITLES
         </p>
       </div>
     </footer>

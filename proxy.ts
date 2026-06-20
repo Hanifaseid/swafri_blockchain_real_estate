@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { UserAccount } from '@/features/users/types/user.types';
 import { canAccessRoute, publicRoutes, authRoutes } from '@/config/permissions.config';
+import { getDefaultRouteForRole } from '@/lib/auth/routes';
 
 // ─── Proxy (Next.js 16) ───────────────────────────────────────────────────────
 // In Next.js 16, middleware.ts was renamed to proxy.ts and the exported
@@ -47,7 +48,9 @@ export function proxy(request: NextRequest) {
   if (isAuthRoute) {
     if (isAuthed) {
       // Already logged in — no need to show login/register again
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(
+        new URL(roleCookie ? getDefaultRouteForRole(roleCookie) : '/properties', request.url),
+      );
     }
     return NextResponse.next();
   }
@@ -60,9 +63,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Wrong role — redirect to their own dashboard root instead of showing an error
+  // Wrong role — redirect to the role's non-dashboard home.
   if (!canAccessRoute(pathname, roleCookie)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL(getDefaultRouteForRole(roleCookie), request.url));
   }
 
   return NextResponse.next();

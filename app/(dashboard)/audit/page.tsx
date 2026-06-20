@@ -20,8 +20,10 @@ export default function AuditPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const raw = localStorage.getItem(SESSION_KEYS.AUDIT_LOGS);
-    if (raw) setLogs(JSON.parse(raw));
+    queueMicrotask(() => {
+      const raw = localStorage.getItem(SESSION_KEYS.AUDIT_LOGS);
+      if (raw) setLogs(JSON.parse(raw));
+    });
   }, []);
 
   if (!currentUser) return null;

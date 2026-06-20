@@ -6,8 +6,17 @@ import {
   getPurchaseTransactions,
   getPurchaseTransactionDetail,
   updatePurchaseTransactionStatus,
+  fundPurchaseEscrow,
+  releasePurchaseEscrow,
+  refundPurchaseEscrow,
+  disputePurchaseTransaction,
+  resolvePurchaseDispute,
 } from '@/features/transactions/services/transaction.service';
-import type { CreatePurchaseTransactionPayload, UpdatePurchaseStatusPayload } from '@/features/transactions/types/transaction.types';
+import type {
+  CreatePurchaseTransactionPayload,
+  PurchaseEscrowActionPayload,
+  UpdatePurchaseStatusPayload,
+} from '@/features/transactions/types/transaction.types';
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
@@ -81,4 +90,44 @@ export function useUpdatePurchaseTransactionStatus() {
       toast.error(message);
     },
   });
+}
+
+function usePurchaseEscrowMutation(
+  action: (id: string, payload?: PurchaseEscrowActionPayload) => Promise<any>,
+  successMessage: string,
+) {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload?: PurchaseEscrowActionPayload }) =>
+      action(id, payload),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      if (data?.id) qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success(successMessage);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || error?.message || 'Purchase escrow action failed');
+    },
+  });
+}
+
+export function useFundPurchaseEscrow() {
+  return usePurchaseEscrowMutation(fundPurchaseEscrow, 'Purchase escrow funding recorded.');
+}
+
+export function useReleasePurchaseEscrow() {
+  return usePurchaseEscrowMutation(releasePurchaseEscrow, 'Purchase escrow released.');
+}
+
+export function useRefundPurchaseEscrow() {
+  return usePurchaseEscrowMutation(refundPurchaseEscrow, 'Purchase escrow refunded.');
+}
+
+export function useDisputePurchaseTransaction() {
+  return usePurchaseEscrowMutation(disputePurchaseTransaction, 'Purchase transaction disputed.');
+}
+
+export function useResolvePurchaseDispute() {
+  return usePurchaseEscrowMutation(resolvePurchaseDispute, 'Purchase dispute resolved.');
 }

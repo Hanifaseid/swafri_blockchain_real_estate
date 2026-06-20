@@ -16,7 +16,7 @@ const LEDGER = [
 
 export default function HeroSection() {
   return (
-    <section className="relative z-10 min-h-[92vh] flex items-center px-6 md:px-12 lg:px-16 pt-10 pb-16">
+    <section className="relative z-10 min-h-[92vh] flex items-center px-6 md:px-12 lg:px-16 pt-28 md:pt-24 pb-16">
       <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 lg:gap-8 items-center">
         {/* ── Editorial column ───────────────────────────────────────────── */}
         <div className="lg:col-span-7">

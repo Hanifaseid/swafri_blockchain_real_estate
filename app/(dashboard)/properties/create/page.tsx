@@ -8,11 +8,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import type * as Leaflet from 'leaflet';
 
 import { useAuthStore } from '@/stores/auth.store';
 import { useCreateListing } from '@/features/listings/queries/listing.queries';
+import { geocode } from '@/features/listings/services/listing.service';
+import type { GeocodeResult } from '@/features/listings/types/listing.types';
 import { inputClass, inputErrorClass } from '@/components/forms/styles';
 import { cn } from '@/lib/utils';
 
@@ -57,11 +59,12 @@ export default function CreateListingPage() {
   const [showMap, setShowMap] = useState(false);
   const [mapCenter, setMapCenter] = useState<[number, number]>([40.4897, 9.1450]); // Ethiopia center
   const [locationSearch, setLocationSearch] = useState('');
-  const [locationSuggestions, setLocationSuggestions] = useState<any[]>([]);
+  const [locationSuggestions, setLocationSuggestions] = useState<GeocodeResult[]>([]);
   const [gettingLocation, setGettingLocation] = useState(false);
-  const mapRef = useRef<L.Map | null>(null);
+  const leafletRef = useRef<typeof import('leaflet') | null>(null);
+  const mapRef = useRef<Leaflet.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const markerRef = useRef<Leaflet.Marker | null>(null);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(createSchema) as any,
@@ -81,50 +84,57 @@ export default function CreateListingPage() {
   useEffect(() => {
     if (currentUser && currentUser.role === 'PROPERTY_OWNER' && currentUser.kycStatus !== 'verified') {
       toast.error('Please complete KYC verification to create listings.');
-      router.push('/kyc');
+      router.push('/account/kyc');
     }
   }, [currentUser, router]);
 
   // Initialize map when shown
   useEffect(() => {
+    let cancelled = false;
+
     if (showMap && mapContainerRef.current && !mapRef.current) {
       // Ensure container has proper dimensions
       const container = mapContainerRef.current;
       container.style.height = '300px';
       container.style.width = '100%';
 
-      const map = L.map(container).setView(mapCenter, 13);
+      void import('leaflet').then((L) => {
+        if (cancelled || mapRef.current) return;
+        leafletRef.current = L;
+        const map = L.map(container).setView(mapCenter, 13);
 
-      // Use standard OpenStreetMap tiles instead of MapTiler JSON style
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }).addTo(map);
+        // Use standard OpenStreetMap tiles instead of MapTiler JSON style
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        }).addTo(map);
 
-      // Handle map click to set location
-      map.on('click', (e) => {
-        const { lat, lng } = e.latlng;
-        setValue('latitude', lat);
-        setValue('longitude', lng);
-        setMapCenter([lng, lat]);
+        // Handle map click to set location
+        map.on('click', (e) => {
+          const { lat, lng } = e.latlng;
+          setValue('latitude', lat);
+          setValue('longitude', lng);
+          setMapCenter([lng, lat]);
 
-        // Update or create marker
-        if (markerRef.current) {
-          markerRef.current.setLatLng([lat, lng]);
-        } else {
-          markerRef.current = L.marker([lat, lng]).addTo(map);
-        }
+          // Update or create marker
+          if (markerRef.current) {
+            markerRef.current.setLatLng([lat, lng]);
+          } else {
+            markerRef.current = L.marker([lat, lng]).addTo(map);
+          }
+        });
+
+        // Force map to invalidate size after initialization
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 100);
+
+        mapRef.current = map;
       });
-
-      // Force map to invalidate size after initialization
-      setTimeout(() => {
-        map.invalidateSize();
-      }, 100);
-
-      mapRef.current = map;
     }
 
     return () => {
+      cancelled = true;
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
@@ -156,7 +166,7 @@ export default function CreateListingPage() {
     );
   };
 
-  // Search location using Nominatim (OpenStreetMap)
+  // Search location through the backend geocoding adapter.
   const handleLocationSearch = async (query: string) => {
     setLocationSearch(query);
     if (query.length < 3) {
@@ -165,10 +175,7 @@ export default function CreateListingPage() {
     }
 
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
-      );
-      const data = await response.json();
+      const data = await geocode(query);
       setLocationSuggestions(data);
     } catch (error) {
       console.error('Location search error:', error);
@@ -176,13 +183,13 @@ export default function CreateListingPage() {
   };
 
   // Select location from suggestions
-  const handleSelectLocation = (suggestion: any) => {
-    const lat = parseFloat(suggestion.lat);
-    const lon = parseFloat(suggestion.lon);
+  const handleSelectLocation = (suggestion: GeocodeResult) => {
+    const lat = suggestion.lat;
+    const lon = suggestion.lng;
     setValue('latitude', lat);
     setValue('longitude', lon);
     setMapCenter([lon, lat]);
-    setLocationSearch(suggestion.display_name);
+    setLocationSearch(suggestion.label);
     setLocationSuggestions([]);
 
     // Update map if shown
@@ -190,8 +197,8 @@ export default function CreateListingPage() {
       mapRef.current.setView([lat, lon], 15);
       if (markerRef.current) {
         markerRef.current.setLatLng([lat, lon]);
-      } else {
-        markerRef.current = L.marker([lat, lon]).addTo(mapRef.current);
+      } else if (leafletRef.current) {
+        markerRef.current = leafletRef.current.marker([lat, lon]).addTo(mapRef.current);
       }
     }
   };
@@ -437,7 +444,7 @@ export default function CreateListingPage() {
                     onClick={() => handleSelectLocation(suggestion)}
                     className="w-full text-left px-4 py-3 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
-                    <div className="font-medium">{suggestion.display_name}</div>
+                    <div className="font-medium">{suggestion.label}</div>
                   </button>
                 ))}
               </div>
