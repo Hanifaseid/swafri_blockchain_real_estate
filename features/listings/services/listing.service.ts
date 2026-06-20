@@ -8,14 +8,16 @@ import type {
   ListingClusterFilters,
   PaginatedListings,
   TransitionInput,
-  YieldSummary,
-  YieldDashboard,
-  MaintenanceRecord,
-  CreateMaintenanceInput,
-  MaintenanceRecordsResponse,
+  CreateSavedSearchInput,
+  SavedSearch,
+  ListingCluster,
+  GeocodeResult,
+  ReverseGeocodeResult,
+  Neighborhood,
   NeighborhoodAnalytics,
-  BulkActionItem,
-  BulkActionResult,
+  MaintenanceRecord,
+  CreateMaintenanceRecordInput,
+  YieldSummary,
 } from "@/features/listings/types/listing.types";
 
 // ─── Response helpers ─────────────────────────────────────────────────────────
@@ -85,6 +87,16 @@ function extractList<T>(data: ApiPaginatedResp<T>): {
   return { items: [], total: 0, page: 1, limit: 20 };
 }
 
+function unwrapData<T>(payload: unknown, fallback: T): T {
+  const value = payload as Record<string, unknown>;
+  if (value?.data !== undefined) {
+    const nested = value.data as Record<string, unknown>;
+    if (nested?.data !== undefined) return nested.data as T;
+    return value.data as T;
+  }
+  return (payload as T) ?? fallback;
+}
+
 // ─── getListings (public discovery) ──────────────────────────────────────────
 // GET /listings — published listings with filters
 
@@ -133,8 +145,131 @@ export async function getListings(
 }
 
 export async function getListingClusters(
-  filters: ListingClusterFilters,
+  filters?: ListingFilters & { zoom?: number },
 ): Promise<ListingCluster[]> {
+  try {
+    const params: Record<string, string | number | boolean | string[]> = {};
+    if (filters) {
+      Object.entries(filters).forEach(([k, v]) => {
+        if (v === undefined || v === null || v === "") return;
+        params[k] =
+          k === "polygon" && Array.isArray(v)
+            ? JSON.stringify(v)
+            : (v as string | number | boolean | string[]);
+      });
+    }
+    const { data } = await apiClient.get<unknown>(ENDPOINTS.LISTINGS.CLUSTERS, {
+      params,
+    });
+    const unwrapped = unwrapData<ListingCluster[] | { items?: ListingCluster[] }>(
+      data,
+      [],
+    );
+    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function geocode(query: string): Promise<GeocodeResult[]> {
+  if (!query.trim()) return [];
+  try {
+    const { data } = await apiClient.get<unknown>(ENDPOINTS.GEO.GEOCODE, {
+      params: { q: query },
+    });
+    const unwrapped = unwrapData<GeocodeResult[] | { items?: GeocodeResult[] }>(
+      data,
+      [],
+    );
+    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function reverseGeocode(
+  lat: number,
+  lng: number,
+): Promise<ReverseGeocodeResult | null> {
+  try {
+    const { data } = await apiClient.get<unknown>(ENDPOINTS.GEO.REVERSE, {
+      params: { lat, lng },
+    });
+    return unwrapData<ReverseGeocodeResult | null>(data, null);
+  } catch {
+    return null;
+  }
+}
+
+export async function getNeighborhoods(params?: {
+  city?: string;
+  country?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+}): Promise<Neighborhood[]> {
+  try {
+    const { data } = await apiClient.get<unknown>(ENDPOINTS.GEO.NEIGHBORHOODS, {
+      params,
+    });
+    const unwrapped = unwrapData<Neighborhood[] | { items?: Neighborhood[] }>(
+      data,
+      [],
+    );
+    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function getNeighborhoodAnalytics(
+  id: string,
+): Promise<NeighborhoodAnalytics | null> {
+  try {
+    const { data } = await apiClient.get<unknown>(
+      ENDPOINTS.GEO.NEIGHBORHOOD_ANALYTICS(id),
+    );
+    return unwrapData<NeighborhoodAnalytics | null>(data, null);
+  } catch {
+    return null;
+  }
+}
+
+export async function createSavedSearch(
+  input: CreateSavedSearchInput,
+): Promise<SavedSearch> {
+  const payload = {
+    name: input.name,
+    alertEnabled: input.alertEnabled ?? false,
+    query: {
+      ...(input.query.listingType && { listingType: input.query.listingType }),
+      ...(input.query.category && { category: input.query.category }),
+      ...(input.query.minPrice != null && { minPrice: input.query.minPrice }),
+      ...(input.query.maxPrice != null && { maxPrice: input.query.maxPrice }),
+      ...(input.query.minBedrooms != null && {
+        minBedrooms: input.query.minBedrooms,
+      }),
+      ...(input.query.minBathrooms != null && {
+        minBathrooms: input.query.minBathrooms,
+      }),
+      ...(input.query.swLng != null && { swLng: input.query.swLng }),
+      ...(input.query.swLat != null && { swLat: input.query.swLat }),
+      ...(input.query.neLng != null && { neLng: input.query.neLng }),
+      ...(input.query.neLat != null && { neLat: input.query.neLat }),
+      ...(input.query.lng != null && { lng: input.query.lng }),
+      ...(input.query.lat != null && { lat: input.query.lat }),
+      ...(input.query.radius != null && { radius: input.query.radius }),
+    },
+  };
+  const { data } = await apiClient.post<ApiResp<SavedSearch>>(
+    ENDPOINTS.SAVED_SEARCHES.CREATE,
+    payload,
+  );
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function getSavedSearches(): Promise<SavedSearch[]> {
   try {
     const { data } = await apiClient.get<ApiResp<ListingCluster[]>>(
       ENDPOINTS.LISTINGS.CLUSTERS,
@@ -295,12 +430,50 @@ export async function getListingAnalytics(
 ): Promise<ListingAnalytics | null> {
   try {
     const { data } = await apiClient.get<ApiResp<ListingAnalytics>>(
-      `/listings/${id}/analytics`,
+      ENDPOINTS.LISTINGS.ANALYTICS(id),
     );
     return data.success ? data.data : null;
   } catch {
     return null;
   }
+}
+
+export async function getListingYield(id: string): Promise<YieldSummary | null> {
+  try {
+    const { data } = await apiClient.get<unknown>(ENDPOINTS.LISTINGS.YIELD(id));
+    return unwrapData<YieldSummary | null>(data, null);
+  } catch {
+    return null;
+  }
+}
+
+export async function getMaintenanceRecords(
+  id: string,
+): Promise<MaintenanceRecord[]> {
+  try {
+    const { data } = await apiClient.get<unknown>(
+      ENDPOINTS.LISTINGS.MAINTENANCE(id),
+    );
+    const unwrapped = unwrapData<
+      MaintenanceRecord[] | { items?: MaintenanceRecord[] }
+    >(data, []);
+    return Array.isArray(unwrapped) ? unwrapped : unwrapped.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function createMaintenanceRecord(
+  id: string,
+  input: CreateMaintenanceRecordInput,
+): Promise<MaintenanceRecord> {
+  const { data } = await apiClient.post<unknown>(
+    ENDPOINTS.LISTINGS.MAINTENANCE(id),
+    input,
+  );
+  const record = unwrapData<MaintenanceRecord | null>(data, null);
+  if (!record) throw new Error("Failed to create maintenance record.");
+  return record;
 }
 
 // ─── Owner dashboard stats ────────────────────────────────────────────────────
@@ -426,6 +599,31 @@ export async function uploadPhotos(
         throw new Error(errData.stack.split("\n")[0]);
       }
       throw new Error(errData.message || "Upload failed");
+    }
+    throw error;
+  }
+}
+
+export async function uploadDocuments(
+  listingId: string,
+  files: File[],
+  type: string,
+): Promise<void> {
+  const form = new FormData();
+  files.forEach((f) => form.append("documents", f));
+  form.append("type", type);
+  try {
+    await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(listingId), form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 0,
+    });
+  } catch (error: any) {
+    const errData = error.response?.data;
+    if (errData) {
+      if (errData.stack && errData.stack.includes("MulterError")) {
+        throw new Error(errData.stack.split("\n")[0]);
+      }
+      throw new Error(errData.message || "Document upload failed");
     }
     throw error;
   }

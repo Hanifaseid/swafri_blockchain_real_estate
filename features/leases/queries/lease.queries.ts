@@ -17,7 +17,6 @@ import {
   resolveDispute,
   getEscrowVerification,
   getLeaseTimeline,
-  getTenantRoster,
 } from '../services/lease.service';
 import { CreateLeasePayload, ResolveDisputePayload } from '../types/lease.types';
 
@@ -27,7 +26,6 @@ export const leaseKeys = {
   detail: (id: string) => [...leaseKeys.all, 'detail', id] as const,
   escrow: (id: string) => [...leaseKeys.all, 'escrow', id] as const,
   timeline: (id: string) => [...leaseKeys.all, 'timeline', id] as const,
-  tenants: () => [...leaseKeys.all, 'tenants'] as const,
 };
 
 export function useCreateLease() {
@@ -72,6 +70,19 @@ export function useProposeLease() {
       qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
       qc.invalidateQueries({ queryKey: leaseKeys.mine() });
       toast.success('Lease proposed to tenant.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useSignLease() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => signLease(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
+      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      toast.success('Lease signed.');
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -219,5 +230,13 @@ export function useTenantRoster(params?: { ownerId?: string }) {
   return useQuery({
     queryKey: [...leaseKeys.tenants(), params],
     queryFn: () => getTenantRoster(params),
+  });
+}
+
+export function useLeaseTimeline(id: string) {
+  return useQuery({
+    queryKey: leaseKeys.timeline(id),
+    queryFn: () => getLeaseTimeline(id),
+    enabled: !!id,
   });
 }

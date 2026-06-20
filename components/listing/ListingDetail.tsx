@@ -9,21 +9,17 @@ import {
   MapPin,
   MessageSquare,
 } from "lucide-react";
-import { PhotoGallery } from "./PhotoGallery";
-import { PropertyMetadata } from "./PropertyMetadata";
-import type { PropertyPhoto } from "./types";
-import type { Listing } from "@/features/listings/types/listing.types";
-import { getCurrentUser } from "@/lib/auth/session";
-import { Modal } from "@/components/ui/Modal";
-import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
-import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
-import { useSendInquiry } from "@/features/inquiries/queries/inquiry.queries";
-import {
-  useFavorites,
-  useRemoveFavorite,
-  useSaveFavorite,
-} from "@/features/favorites/queries/favorite.queries";
+import { SESSION_KEYS } from "@/lib/auth/session";
+import { apiClient } from "@/lib/api/axios-client";
+import { ENDPOINTS } from "@/lib/api/endpoints";
+import Link from "next/link";
 import toast from "react-hot-toast";
+import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
+import { Modal } from "@/components/ui/Modal";
+import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
+import type { PropertyPhoto } from "./types";
+import { TitleCertificatePanel } from "./TitleCertificatePanel";
+import { useAuthStore } from "@/stores/auth.store";
 
 function formatAreaSqft(listing: Listing): number | undefined {
   if (!listing.area) return undefined;
@@ -35,22 +31,8 @@ function ownerLabel(createdBy: string): string {
   return createdBy ? `Owner #${createdBy.slice(0, 8)}` : "Property Owner";
 }
 
-function proofText(listing: Listing): string {
-  if (listing.tokenId) {
-    return `This listing has a minted title token (${listing.tokenId}).`;
-  }
-
-  if (listing.verificationStatus === "verified") {
-    return "Ownership documents have been verified, but the on-chain title has not been minted yet.";
-  }
-
-  return `Verification status: ${listing.verificationStatus.replace(/_/g, " ")}.`;
-}
-
-export default function ListingDetail({ listing }: { listing: Listing }) {
-  const placeholderImage = "/placeholder-property.jpg";
-  const currentUser = getCurrentUser();
   const { mutate: submitOffer, isPending: creatingOffer } = useSubmitOffer();
+  const currentUser = useAuthStore((s) => s.currentUser);
 
   const [showOfferModal, setShowOfferModal] = React.useState(false);
   const [offerAmount, setOfferAmount] = React.useState<number>(listing.price ?? 0);
@@ -111,9 +93,9 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
     <div className="max-w-6xl mx-auto px-4">
       <div className="mb-4">
         <Link
-          href="/properties"
+          href="/discovery"
           aria-label="Browse properties"
-          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 shadow-sm transition-colors"
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-card border border-border-primary text-sm font-medium text-text-secondary hover:bg-surface-highlight hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Browse properties</span>
@@ -124,19 +106,43 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
         <div className="lg:col-span-2 space-y-4">
           <PhotoGallery photos={photos} title={listing.title} />
 
-          <div className="bg-white p-6 rounded-2xl border shadow-sm">
-            <PropertyMetadata listing={metadataListing as any} />
+          <div className="bg-surface-card p-6 rounded-2xl border border-border-primary">
+            <PropertyMetadata
+              listing={
+                {
+                  title: listing.title ?? "",
+                  description: listing.description ?? "",
+                  price: listing.price ?? listing.monthlyRent ?? 0,
+                  currency: listing.currency ?? "USD",
+                  listingType: listing.monthlyRent ? "rent" : "sale",
+                  status: "active",
+                  tier: "basic",
+                  address: normalizedAddress,
+                  city,
+                  country,
+                  beds: listing.bedrooms,
+                  baths: listing.bathrooms,
+                  sqft: listing.sqft,
+                  parkingSpaces: undefined,
+                  yearBuilt: undefined,
+                  floorNumber: undefined,
+                  totalFloors: undefined,
+                  type: "apartment",
+                  amenities: [],
+                } as any
+              }
+            />
           </div>
 
-          <div className="bg-white p-6 rounded-2xl border shadow-sm">
-            <h3 className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500" /> Location
+          <div className="bg-surface-card p-6 rounded-2xl border border-border-primary">
+            <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-text-muted" /> Location
             </h3>
 
             <iframe
               width="100%"
               height="360"
-              style={{ border: 0 }}
+              style={{ border: 0, borderRadius: '12px' }}
               loading="lazy"
               allowFullScreen
               src={`https://maps.google.com/maps?q=${encodeURIComponent(
@@ -147,12 +153,13 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
         </div>
 
         <aside className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
+          {/* ── Owner card ─────────────────────────────────────────────── */}
+          <div className="bg-surface-card rounded-2xl border border-border-primary p-5">
+            <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">
               Listed by
             </p>
-            <p className="text-sm font-semibold text-gray-900 mb-3">
-              {ownerLabel(listing.createdBy)}
+            <p className="text-sm font-semibold text-white mb-3">
+              {listing.ownerName ?? "Platform"}
             </p>
             <div className="flex items-center justify-between mb-3">
               <VerificationBadge
@@ -166,14 +173,14 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
           <InquiryCard listing={listing} />
 
           {listing.listingType === "sale" && (
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-              <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
+            <div className="bg-surface-card rounded-2xl border border-border-primary p-5">
+              <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">
                 Ready to buy?
               </p>
-              <p className="text-sm font-semibold text-gray-900 mb-1">
+              <p className="text-sm font-semibold text-white mb-1">
                 Make an offer
               </p>
-              <p className="text-xs text-gray-500 mb-3">
+              <p className="text-xs text-text-muted mb-3">
                 Submit a direct offer to the owner from this page.
               </p>
               <button
@@ -192,15 +199,8 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
             </div>
           )}
 
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
-            <h4 className="text-xs font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <FileCheck2 className="w-4 h-4 text-emerald-600" />
-              Verification Status
-            </h4>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              {proofText(listing)}
-            </p>
-          </div>
+          {/* ── On-chain Certificate of Title ──────────────────────────── */}
+          <TitleCertificatePanel listingId={listing.id} />
         </aside>
       </div>
 
@@ -247,20 +247,22 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
             min={1}
             value={offerAmount}
             onChange={(e) => setOfferAmount(Number(e.target.value))}
-            className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+            className="w-full border border-border-primary rounded-xl p-3 text-sm text-white placeholder:text-text-placeholder bg-surface-input focus:outline-none focus:border-accent-400 transition-colors"
           />
 
           <textarea
             value={offerMessage}
             onChange={(e) => setOfferMessage(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+            className="w-full border border-border-primary rounded-xl p-3 text-sm text-white placeholder:text-text-placeholder bg-surface-input focus:outline-none focus:border-accent-400 transition-colors"
             placeholder="Add a message to the owner (optional)"
           />
 
           <button
             type="submit"
-            disabled={creatingOffer || offerAmount <= 0 || Number.isNaN(offerAmount)}
-            className="w-full bg-emerald-600 text-white rounded-xl py-3 disabled:bg-gray-200 disabled:text-gray-400"
+            disabled={
+              creatingOffer || offerAmount <= 0 || Number.isNaN(offerAmount)
+            }
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl py-3 font-semibold text-sm disabled:bg-gray-800 disabled:text-text-muted transition-colors"
           >
             {creatingOffer ? "Submitting offer..." : "Send Offer"}
           </button>
@@ -277,39 +279,51 @@ function VerificationBadge({
   verificationStatus: Listing["verificationStatus"];
   tokenId?: string;
 }) {
-  if (tokenId) {
-    return <span className="text-xs text-emerald-600">Verified on-chain</span>;
-  }
-
-  if (verificationStatus === "verified") {
-    return <span className="text-xs text-emerald-600">Documents verified</span>;
-  }
-
-  return (
-    <span className="text-xs text-gray-500 capitalize">
-      {verificationStatus.replace(/_/g, " ")}
-    </span>
+  return blockchainHash ? (
+    <span className="text-xs text-emerald-400 font-medium">Verified</span>
+  ) : (
+    <span className="text-xs text-text-muted">Unverified</span>
   );
 }
 
-function FavoriteActionButton({ listingId }: { listingId: string }) {
-  const currentUser = getCurrentUser();
-  const { data: favorites = [] } = useFavorites(Boolean(currentUser));
-  const { mutate: save, isPending: saving } = useSaveFavorite();
-  const { mutate: remove, isPending: removing } = useRemoveFavorite();
+function FavoriteButton({ listingId }: { listingId: string }) {
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const favoriteKey = currentUser ? SESSION_KEYS.FAVORITES(currentUser.id) : "vex_favorites_guest";
+  const optimisticKey = `${favoriteKey}:${listingId}`;
+  const [optimisticFavs, setOptimisticFavs] = React.useState<Record<string, boolean>>({});
 
-  const isSaved = favorites.some((favorite) => favorite.id === listingId);
-  const isPending = saving || removing;
+  const storedFav = React.useMemo(() => {
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem(favoriteKey) : null;
+      return raw ? (JSON.parse(raw) as string[]).includes(listingId) : false;
+    } catch {
+      return false;
+    }
+  }, [favoriteKey, listingId]);
 
-  const handleToggle = () => {
+  const fav = optimisticFavs[optimisticKey] ?? storedFav;
+
+  const toggle = async () => {
     if (!currentUser) {
-      window.location.href = "/login";
+      window.location.href = "/auth/login";
       return;
     }
-
-    if (isPending) return;
-    if (isSaved) remove(listingId);
-    else save(listingId);
+    const key = SESSION_KEYS.FAVORITES(currentUser.id);
+    const arr: string[] = JSON.parse(localStorage.getItem(key) ?? "[]");
+    const next = fav
+      ? arr.filter((id) => id !== listingId)
+      : [...arr, listingId];
+    localStorage.setItem(key, JSON.stringify(next));
+    setOptimisticFavs((existing) => ({ ...existing, [optimisticKey]: !fav }));
+    try {
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        fav
+          ? await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId))
+          : await apiClient.post(ENDPOINTS.FAVORITES.SAVE, { listingId });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -318,22 +332,26 @@ function FavoriteActionButton({ listingId }: { listingId: string }) {
       aria-pressed={isSaved}
       disabled={isPending}
       className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
-        isSaved
-          ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"
-          : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+        fav
+          ? "bg-surface-danger text-text-danger border-text-danger/20 hover:bg-surface-danger/80"
+          : "bg-surface-highlight text-text-secondary border-border-primary hover:bg-surface-card hover:text-white"
       }`}
     >
       <Heart
-        className={`w-4 h-4 ${isSaved ? "fill-rose-500 text-rose-500" : "text-gray-400"}`}
+        className={`w-4 h-4 ${fav ? "fill-text-danger text-text-danger" : "text-text-muted"}`}
       />
       {isSaved ? "Saved" : "Save listing"}
     </button>
   );
 }
-
-function InquiryCard({ listing }: { listing: Listing }) {
-  const currentUser = getCurrentUser();
-  const { mutate: sendInquiry, isPending } = useSendInquiry();
+function InquiryCard({
+  listingId,
+  title,
+}: {
+  listingId: string;
+  title?: string;
+}) {
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [open, setOpen] = React.useState(false);
   const [message, setMessage] = React.useState("");
   const [inquiryType, setInquiryType] = React.useState<"rent" | "buy" | "general">(
@@ -346,9 +364,8 @@ function InquiryCard({ listing }: { listing: Listing }) {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!currentUser) {
-      window.location.href = "/login";
+      window.location.href = "/auth/login";
       return;
     }
 
@@ -356,37 +373,40 @@ function InquiryCard({ listing }: { listing: Listing }) {
       toast.error("Please write a message.");
       return;
     }
-
-    sendInquiry(
-      {
-        listingId: listing.id,
-        message: message.trim(),
-        inquiryType,
-        contactInfo:
-          currentUser.email || currentUser.phone
-            ? {
-                email: currentUser.email,
-                phone: currentUser.phone,
-              }
-            : undefined,
-      },
-      {
-        onSuccess: () => {
-          setMessage("");
-          setOpen(false);
-        },
-      },
-    );
+    try {
+      if (process.env.NEXT_PUBLIC_API_URL) {
+        await apiClient.post(ENDPOINTS.INQUIRIES.SEND, {
+          propertyId: listingId,
+          message: msg,
+          tenantName: currentUser.name,
+          tenantEmail: currentUser.email,
+        });
+      } else {
+        const arr = JSON.parse(localStorage.getItem("vex_inquiries") ?? "[]");
+        arr.push({
+          id: Math.random().toString(36).slice(2),
+          propertyId: listingId,
+          message: msg,
+          createdAt: new Date().toISOString(),
+        });
+        localStorage.setItem("vex_inquiries", JSON.stringify(arr));
+      }
+      setMsg("");
+      setOpen(false);
+      alert("Inquiry submitted!");
+    } catch {
+      alert("Failed to submit inquiry");
+    }
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+    <div className="bg-surface-card rounded-2xl border border-border-primary p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-text-muted mb-0.5">
             Interested?
           </p>
-          <p className="text-sm font-semibold text-gray-900">
+          <p className="text-sm font-semibold text-white">
             Contact the lister
           </p>
         </div>
@@ -404,20 +424,20 @@ function InquiryCard({ listing }: { listing: Listing }) {
         <div className="mt-4">
           {!currentUser ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-text-muted">
                 Please sign in to contact the lister.
               </p>
               <div className="flex gap-2 flex-wrap">
                 <Link
-                  href="/login"
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  href="/auth/login"
+                  className="px-3 py-2 rounded-xl border border-border-primary text-xs font-medium text-text-secondary hover:bg-surface-highlight transition-colors"
                 >
                   Sign in
                 </Link>
                 <WalletConnectButton />
                 <button
                   onClick={() => setOpen(false)}
-                  className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="px-3 py-2 rounded-xl border border-border-primary text-xs font-medium text-text-muted hover:bg-surface-highlight transition-colors"
                 >
                   Cancel
                 </button>
@@ -444,8 +464,8 @@ function InquiryCard({ listing }: { listing: Listing }) {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
-                placeholder={`Message about ${listing.title}…`}
-                className="w-full p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+                placeholder={`Message about ${title ?? "this property"}…`}
+                className="w-full p-3 text-sm text-white placeholder:text-text-placeholder bg-surface-input border border-border-primary rounded-xl resize-none focus:outline-none focus:border-accent-400 transition-colors"
               />
               <div className="flex gap-2">
                 <button
@@ -458,7 +478,7 @@ function InquiryCard({ listing }: { listing: Listing }) {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2.5 rounded-xl border border-border-primary text-xs font-medium text-text-muted hover:bg-surface-highlight transition-colors"
                 >
                   Cancel
                 </button>

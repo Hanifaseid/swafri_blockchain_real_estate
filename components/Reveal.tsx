@@ -28,7 +28,7 @@ export default function Reveal({ children, delay = 0, className = '', y = 18, as
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     ) {
-      setShown(true);
+      queueMicrotask(() => setShown(true));
       return;
     }
 

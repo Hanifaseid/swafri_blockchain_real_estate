@@ -11,10 +11,10 @@ export default function NotFound() {
         <p className="text-xs font-mono uppercase tracking-widest text-white/30 mb-3">404</p>
         <h2 className="text-2xl font-light text-white mb-2 tracking-tight">Page not found</h2>
         <p className="text-sm text-white/45 mb-8 font-light">
-          The page you're looking for doesn't exist or has been moved.
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
         <Link
-          href="/properties"
+          href="/discovery"
           className="inline-flex items-center gap-2 bg-white text-black text-sm font-semibold px-6 py-2.5 rounded-xl hover:bg-gray-100 transition-colors"
         >
           Browse Properties

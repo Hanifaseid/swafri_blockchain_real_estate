@@ -2,23 +2,12 @@ import type { UserAccount, AccountStatus, UserFilters } from '@/features/users/t
 import type { UserRole } from '@/features/roles/types/role.types';
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
-import { SESSION_KEYS } from '@/lib/auth/session';
 import { adaptUser, type ApiUser, ROLE_TO_API } from '@/lib/api/adapters';
 
 // ─── Audit helper ─────────────────────────────────────────────────────────────
 
-function logAudit(actorName: string, actorEmail: string, action: string) {
-  if (typeof window === 'undefined') return;
-  const raw = localStorage.getItem(SESSION_KEYS.AUDIT_LOGS);
-  const logs = raw ? JSON.parse(raw) : [];
-  logs.unshift({
-    id: `log-${Date.now()}`,
-    user: actorName,
-    email: actorEmail,
-    action,
-    timestamp: new Date().toISOString(),
-  });
-  localStorage.setItem(SESSION_KEYS.AUDIT_LOGS, JSON.stringify(logs));
+function logAudit(_actorName: string, _actorEmail: string, _action: string) {
+  // Backend audit logs are the source of truth; do not persist user data locally.
 }
 
 // ─── Response shapes ──────────────────────────────────────────────────────────

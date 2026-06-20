@@ -275,7 +275,15 @@ export interface ListingFilters {
   verifiedOnly?: boolean;
   availabilityStatus?: AvailabilityStatus;
   amenities?: string | string[];
-  sort?: "newest" | "oldest" | "price_asc" | "price_desc";
+  sort?:
+    | "newest"
+    | "oldest"
+    | "price_asc"
+    | "price_desc"
+    | "distance"
+    | "verified"
+    | "yield"
+    | "popularity";
   page?: number;
   limit?: number;
   // Viewport (bounding box) - all 4 required together
@@ -291,6 +299,124 @@ export interface ListingFilters {
   polygon?: [number, number][];
 }
 
+export interface ListingCluster {
+  id?: string;
+  count: number;
+  center?: [number, number];
+  lng?: number;
+  lat?: number;
+  longitude?: number;
+  latitude?: number;
+  listingIds?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+export interface GeocodeResult {
+  label: string;
+  lat: number;
+  lng: number;
+  address?: Partial<ListingAddress>;
+  source?: string;
+  confidence?: number;
+}
+
+export interface ReverseGeocodeResult extends GeocodeResult {
+  neighborhoodId?: string;
+  neighborhoodName?: string;
+}
+
+export interface Neighborhood {
+  id: string;
+  name: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  center?: [number, number];
+  boundary?: [number, number][];
+}
+
+export interface NeighborhoodAnalytics {
+  neighborhoodId: string;
+  listingCount: number;
+  availableCount?: number;
+  averagePrice?: number;
+  medianPrice?: number;
+  averageRent?: number;
+  medianRent?: number;
+  leadCount?: number;
+  favoriteCount?: number;
+  inquiryCount?: number;
+  offerCount?: number;
+  rentalApplicationCount?: number;
+}
+
+export type MaintenanceRecordType =
+  | "maintenance"
+  | "repair"
+  | "utility"
+  | "tax"
+  | "insurance"
+  | "management"
+  | "other";
+
+export interface MaintenanceRecord {
+  id: string;
+  listingId: string;
+  leaseId?: string;
+  type: MaintenanceRecordType;
+  amount: number;
+  currency: string;
+  incurredAt: string;
+  note?: string;
+  createdAt?: string;
+}
+
+export interface CreateMaintenanceRecordInput {
+  leaseId?: string;
+  type: MaintenanceRecordType;
+  amount: number;
+  currency?: string;
+  incurredAt: string;
+  note?: string;
+}
+
+export interface YieldSummary {
+  listingId: string;
+  currency: string;
+  grossRent?: number;
+  occupancyRate?: number;
+  escrowHistory?: unknown[];
+  maintenanceCost?: number;
+  netYield?: number;
+  annualizedYield?: number;
+  annualRent?: number;
+  expenseTotal?: number;
+  purchasePrice?: number;
+}
+
+export interface SavedSearch {
+  id: string;
+  name: string;
+  query: {
+    listingType?: ListingType;
+    category?: ListingCategory;
+    minPrice?: number;
+    maxPrice?: number;
+    minBedrooms?: number;
+    minBathrooms?: number;
+    swLng?: number;
+    swLat?: number;
+    neLng?: number;
+    neLat?: number;
+    lng?: number;
+    lat?: number;
+    radius?: number;
+  };
+  alertEnabled: boolean;
+  createdAt: string;
+  updatedAt?: string;
+}
 
 
 // ─── Paginated response ───────────────────────────────────────────────────────

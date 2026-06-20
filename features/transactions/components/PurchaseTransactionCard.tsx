@@ -8,27 +8,25 @@ interface PurchaseTransactionCardProps {
 }
 
 const STATUS_STYLES: Record<PurchaseStatus, string> = {
-  pending: 'bg-gray-50 text-gray-600',
+  offer_accepted: 'bg-blue-50 text-blue-600',
   deposit_pending: 'bg-amber-50 text-amber-600',
-  processing: 'bg-blue-50 text-blue-600',
-  under_inspection: 'bg-purple-50 text-purple-600',
-  approved: 'bg-emerald-50 text-emerald-600',
+  deposit_received: 'bg-amber-100 text-amber-700',
+  closing_review: 'bg-purple-50 text-purple-600',
+  title_transfer_pending: 'bg-indigo-50 text-indigo-600',
   completed: 'bg-emerald-100 text-emerald-700',
-  rejected: 'bg-red-50 text-red-600',
   cancelled: 'bg-gray-100 text-gray-500',
-  failed: 'bg-red-100 text-red-700',
+  disputed: 'bg-red-50 text-red-600',
 };
 
 const STATUS_ICONS: Record<PurchaseStatus, any> = {
-  pending: Clock,
+  offer_accepted: Clock,
   deposit_pending: Clock,
-  processing: Clock,
-  under_inspection: AlertTriangle,
-  approved: CheckCircle2,
+  deposit_received: DollarSign,
+  closing_review: AlertTriangle,
+  title_transfer_pending: Clock,
   completed: CheckCircle2,
-  rejected: XCircle,
   cancelled: XCircle,
-  failed: XCircle,
+  disputed: AlertTriangle,
 };
 
 export function PurchaseTransactionCard({ transaction, onView }: PurchaseTransactionCardProps) {

@@ -39,6 +39,9 @@ export const ENDPOINTS = {
     DELETE:       (id: string) => `/listings/${id}`,
     TRANSITION:   (id: string) => `/listings/${id}/transition`,
     DASHBOARD:    '/listings/dashboard',
+    ANALYTICS:    (id: string) => `/listings/${id}/analytics`,
+    YIELD:        (id: string) => `/listings/${id}/yield`,
+    MAINTENANCE:  (id: string) => `/listings/${id}/maintenance-records`,
 
     // Photos
     UPLOAD_PHOTOS:   (id: string) => `/listings/${id}/photos`,
@@ -115,12 +118,10 @@ export const ENDPOINTS = {
     DELETE: (id: string) => `/saved-searches/${id}`,
   },
 
-  // ── Geo ───────────────────────────────────────────────────────────────────
   GEO: {
     GEOCODE: '/geo/geocode',
     REVERSE: '/geo/reverse',
     NEIGHBORHOODS: '/geo/neighborhoods',
-    NEIGHBORHOOD_DETAIL: (id: string) => `/geo/neighborhoods/${id}`,
     NEIGHBORHOOD_ANALYTICS: (id: string) => `/geo/neighborhoods/${id}/analytics`,
   },
 
@@ -141,7 +142,6 @@ export const ENDPOINTS = {
     RESOLVE_DISPUTE: (id: string) => `/leases/${id}/dispute/resolve`,
     ESCROW:          (id: string) => `/leases/${id}/escrow`,
     TIMELINE:        (id: string) => `/leases/${id}/timeline`,
-    TENANTS:         '/leases/tenants',
   },
 
   // ── Rental Applications ───────────────────────────────────────────────────
@@ -161,9 +161,9 @@ export const ENDPOINTS = {
     LIST:          '/purchase-transactions',
     DETAIL:        (id: string) => `/purchase-transactions/${id}`,
     UPDATE_STATUS: (id: string) => `/purchase-transactions/${id}/status`,
-    FUND:          (id: string) => `/purchase-transactions/${id}/fund`,
-    RELEASE:       (id: string) => `/purchase-transactions/${id}/release`,
-    REFUND:        (id: string) => `/purchase-transactions/${id}/refund`,
+    FUND_ESCROW:   (id: string) => `/purchase-transactions/${id}/fund`,
+    RELEASE_ESCROW:(id: string) => `/purchase-transactions/${id}/release`,
+    REFUND_ESCROW: (id: string) => `/purchase-transactions/${id}/refund`,
     DISPUTE:       (id: string) => `/purchase-transactions/${id}/dispute`,
     RESOLVE_DISPUTE:(id: string) => `/purchase-transactions/${id}/dispute/resolve`,
   },

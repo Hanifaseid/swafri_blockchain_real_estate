@@ -6,13 +6,13 @@ import { Bot, Minimize2, Sparkles, RotateCcw, X, Send } from 'lucide-react';
 const INITIAL_MESSAGE = {
   role: 'assistant' as const,
   content:
-    'Welcome to VEX. I am your blockchain real estate advisor. Ask me about fractional ownership, rental yields, smart contracts, or verified property listings.',
+    'Welcome to TerraChain. I can help with map-based property discovery, digital title verification, KYC review, lease escrow, and purchase offers.',
 };
 
 const QUICK_PROMPTS = [
-  'How do fractional tokens work?',
-  'What APY can I expect?',
-  'How is rent paid on-chain?',
+  'How is a title verified?',
+  'How does lease escrow work?',
+  'How do I submit an offer?',
 ];
 
 export default function AiChat() {

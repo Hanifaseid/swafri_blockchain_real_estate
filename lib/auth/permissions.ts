@@ -41,15 +41,13 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     'wallet:link_own',
     'wallet:view_own',
     'wallet:view_all',
-    // Audit + settings + all dashboards
+    // Audit + settings + admin dashboards
     'audit:view',
     'settings:view',
     'settings:update',
     'chain-transactions:view',
     'chain-transactions:reconcile',
     'chain-transactions:mark_stale',
-    'dashboard:tenant',
-    'dashboard:owner',
     'dashboard:admin',
     'dashboard:super_admin',
   ],
@@ -98,7 +96,6 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     'wallet:link_own',
     'wallet:view_own',
     'transactions:view_own',
-    'dashboard:owner',
   ],
 
   TENANT: [
@@ -110,10 +107,9 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     // Inquiries
     'inquiries:create',
     'inquiries:view_own',
-    // Own wallet (required for fractional buy later)
+    // Own wallet (required for escrow and title-related actions)
     'wallet:link_own',
     'wallet:view_own',
-    'dashboard:tenant',
   ],
 };
 

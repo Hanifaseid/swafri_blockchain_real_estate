@@ -17,7 +17,7 @@ import {
  * ListingFilters — filter bar for the search page and listings manager.
  *
  * variant="search"  → shown on /listings (public search page, horizontal)
- * variant="manage"  → shown on /dashboard/listings (owner, compact row)
+ * variant="manage"  -> shown in the account listings workflow (owner, compact row)
  *
  * All state lives in the parent — this is a pure controlled component.
  * URL sync (for shareable search URLs) is handled by the page component.

@@ -45,7 +45,7 @@ export function getNotificationHref(notification: Notification): string | null {
     case 'listing.rejected':
     case 'listing.published':
     case 'listing.review':
-      return meta.listingId ? `/properties/${meta.listingId}` : '/properties';
+      return meta.listingId ? `/discovery/${meta.listingId}` : '/discovery';
 
     // KYC
     case 'kyc.approved':

@@ -12,7 +12,7 @@ export function Footer() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2.5 mb-3 select-none">
             <div className="w-7 h-7 rounded bg-white flex items-center justify-center text-black font-extrabold text-xs">
-              S
+              V
             </div>
             <span className="text-base font-semibold text-white">{siteConfig.shortName}</span>
           </div>
@@ -26,12 +26,12 @@ export function Footer() {
           <p className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-3">Platform</p>
           <ul className="space-y-2">
             {[
-              { label: 'Browse Properties', href: '/login' },
-              { label: 'List a Property', href: '/login' },
+              { label: 'Discover Properties', href: '/discovery' },
+              { label: 'List a Property', href: '/auth/register' },
               { label: 'How It Works', href: '/#how-it-works-section' },
               { label: 'About', href: '/about' },
             ].map(({ label, href }) => (
-              <li key={href}>
+              <li key={label}>
                 <Link href={href} className="text-xs text-white/45 hover:text-white transition-colors">
                   {label}
                 </Link>
@@ -49,7 +49,7 @@ export function Footer() {
               { label: siteConfig.links.support, href: `mailto:${siteConfig.links.support}` },
               { label: 'Operations', href: `mailto:${siteConfig.links.operations}` },
             ].map(({ label, href }) => (
-              <li key={href}>
+              <li key={label}>
                 <a href={href} className="text-xs text-white/45 hover:text-white transition-colors font-mono">
                   {label}
                 </a>
@@ -62,7 +62,7 @@ export function Footer() {
       <div className="border-t border-white/8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2">
         <p className="text-[10px] font-mono text-white/25">{siteConfig.copyright}</p>
         <p className="text-[10px] font-mono text-white/20">
-          BLOCKCHAIN REAL ESTATE // ERC-1155 TITLE CERTIFICATES
+          BLOCKCHAIN REAL ESTATE // ERC-721 DIGITAL TITLES
         </p>
       </div>
     </footer>

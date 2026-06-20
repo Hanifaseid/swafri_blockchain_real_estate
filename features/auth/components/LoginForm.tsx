@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
 
 import { loginSchema, type LoginFormValues } from '@/features/auth/schemas/auth.schema';
 import { useLogin } from '@/features/auth/queries/auth.queries';
@@ -48,11 +49,11 @@ export function LoginForm() {
     <div className="space-y-5 p-6 md:p-8">
       {/* Heading */}
       <div className="text-center space-y-1">
-        <h2 className="text-xl font-light text-white tracking-tight uppercase">
-          Sign In
+        <h2 className="text-lg font-medium text-white tracking-tight">
+          Sign in to your account
         </h2>
-        <p className="text-xs text-white/50 font-mono">
-          Enter your credentials to access your dashboard
+        <p className="text-xs text-white/35">
+          Enter your credentials to continue
         </p>
       </div>
 
@@ -140,13 +141,12 @@ export function LoginForm() {
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
             Secured connection
           </span>
-          <button
-            type="button"
-            className="text-[10px] font-mono text-white/75 hover:text-white/60 transition-colors cursor-pointer"
-            onClick={() => { if (typeof window !== 'undefined') window.location.href = '/forgot-password'; }}
+          <Link
+            href="/auth/forgot-password"
+            className="text-[10px] font-mono text-amber-400/70 hover:text-amber-400 transition-colors"
           >
             Forgot password?
-          </button>
+          </Link>
         </div>
 
         {/* Submit — uses Button component with loading state */}
@@ -154,7 +154,7 @@ export function LoginForm() {
           type="submit"
           disabled={isPending || isSuccess}
           loading={isPending}
-          className="w-full bg-white hover:bg-neutral-100 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest font-mono uppercase shadow-xl"
+          className="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest uppercase shadow-lg shadow-amber-500/20"
           size="lg"
         >
           {isSuccess ? 'Redirecting…' : 'Sign In'}

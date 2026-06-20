@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/axios-client';
-import { Lease, CreateLeasePayload, ResolveDisputePayload, EscrowVerification, TimelineEvent, LeaseTimeline, TenantRosterEntry } from '../types/lease.types';
+import { ENDPOINTS as API_ENDPOINTS } from '@/lib/api/endpoints';
+import { Lease, CreateLeasePayload, ResolveDisputePayload, EscrowVerification, LeaseTimeline } from '../types/lease.types';
 
 export interface ApiSingleResponse<T> {
   success: boolean;
@@ -23,7 +24,6 @@ const ENDPOINTS = {
   RESOLVE: (id: string) => `/leases/${id}/dispute/resolve`,
   ESCROW: (id: string) => `/leases/${id}/escrow`,
   TIMELINE: (id: string) => `/leases/${id}/timeline`,
-  TENANTS: '/leases/tenants',
 };
 
 export async function createLease(payload: CreateLeasePayload): Promise<Lease> {
@@ -72,6 +72,16 @@ export async function proposeLease(id: string): Promise<Lease> {
     return data.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to propose lease');
+  }
+}
+
+export async function signLease(id: string): Promise<Lease> {
+  try {
+    const { data } = await apiClient.post<ApiSingleResponse<Lease>>(ENDPOINTS.SIGN(id));
+    if (!data.success) throw new Error(data.message || 'Failed to sign lease');
+    return data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || error.message || 'Failed to sign lease');
   }
 }
 
@@ -151,44 +161,13 @@ export async function getEscrowVerification(id: string): Promise<EscrowVerificat
   return data.data;
 }
 
-export async function signLease(id: string, payload?: { tenantSignature?: string }): Promise<Lease> {
-  try {
-    const { data } = await apiClient.post<ApiSingleResponse<Lease>>(ENDPOINTS.SIGN(id), payload || {});
-    if (!data.success) throw new Error(data.message || 'Failed to sign lease');
-    return data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to sign lease');
-  }
-}
-
 export async function getLeaseTimeline(id: string): Promise<LeaseTimeline> {
-  try {
-    const { data } = await apiClient.get<ApiSingleResponse<LeaseTimeline>>(ENDPOINTS.TIMELINE(id));
-    if (!data.success) throw new Error(data.message || 'Failed to fetch lease timeline');
-    return data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch lease timeline');
-  }
-}
-
-export async function respondToDispute(id: string, payload: { response: string }): Promise<Lease> {
-  try {
-    const { data } = await apiClient.post<ApiSingleResponse<Lease>>(ENDPOINTS.RESPOND_DISPUTE(id), payload);
-    if (!data.success) throw new Error(data.message || 'Failed to respond to dispute');
-    return data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to respond to dispute');
-  }
-}
-
-export async function getTenantRoster(params?: { ownerId?: string }): Promise<TenantRosterEntry[]> {
-  try {
-    const { data } = await apiClient.get<any>(ENDPOINTS.TENANTS, { params });
-    if (data?.success && Array.isArray(data.data)) {
-      return data.data;
-    }
-    return [];
-  } catch {
-    return [];
-  }
+  const { data } = await apiClient.get<any>(API_ENDPOINTS.LEASES.TIMELINE(id));
+  if (data?.success === false) throw new Error(data.message || 'Failed to fetch lease timeline');
+  const value = data?.data ?? data;
+  if (Array.isArray(value)) return { leaseId: id, events: value };
+  return {
+    leaseId: value?.leaseId ?? id,
+    events: Array.isArray(value?.events) ? value.events : [],
+  };
 }

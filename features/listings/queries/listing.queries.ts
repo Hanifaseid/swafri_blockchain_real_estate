@@ -5,10 +5,16 @@ import type {
   ListingClusterFilters,
   ListingFilters,
   TransitionInput,
+  CreateSavedSearchInput,
+  CreateMaintenanceRecordInput,
 } from "@/features/listings/types/listing.types";
 import {
   getListings,
   getListingClusters,
+  geocode,
+  reverseGeocode,
+  getNeighborhoods,
+  getNeighborhoodAnalytics,
   getMyListings,
   getListing,
   createListing,
@@ -18,6 +24,9 @@ import {
   getAdminListings,
   getAdminListingsStats,
   getListingAnalytics,
+  getListingYield,
+  getMaintenanceRecords,
+  createMaintenanceRecord,
   getListingDashboard,
   getListingDocuments,
   uploadListingDocuments,
@@ -47,10 +56,8 @@ const KEYS = {
   mine: () => ["listings", "mine"] as const,
   detail: (id: string) => ["listings", "detail", id] as const,
   adminList: (p: object) => ["listings", "admin", p] as const,
-  rentalYield: (id: string) => ["listings", "rental-yield", id] as const,
-  yieldDashboard: () => ["listings", "yield-dashboard"] as const,
-  maintenance: (id: string, p?: object) => ["listings", "maintenance", id, p] as const,
-  neighborhoodAnalytics: (p?: object) => ["listings", "neighborhood-analytics", p] as const,
+  clusters: (f: object) => ["listings", "clusters", f] as const,
+  savedSearches: () => ["saved-searches"] as const,
 };
 
 export function useListings(filters?: ListingFilters) {
@@ -60,11 +67,47 @@ export function useListings(filters?: ListingFilters) {
   });
 }
 
-export function useListingClusters(filters?: ListingClusterFilters, enabled = true) {
+export function useListingClusters(filters?: ListingFilters & { zoom?: number }) {
   return useQuery({
-    queryKey: ["listings", "clusters", filters ?? {}],
-    queryFn: () => getListingClusters(filters as ListingClusterFilters),
-    enabled: enabled && Boolean(filters),
+    queryKey: KEYS.clusters(filters ?? {}),
+    queryFn: () => getListingClusters(filters),
+  });
+}
+
+export function useGeocode(query: string) {
+  return useQuery({
+    queryKey: ["geo", "geocode", query],
+    queryFn: () => geocode(query),
+    enabled: query.trim().length >= 3,
+  });
+}
+
+export function useReverseGeocode(lat?: number, lng?: number) {
+  return useQuery({
+    queryKey: ["geo", "reverse", lat, lng],
+    queryFn: () => reverseGeocode(lat as number, lng as number),
+    enabled: Number.isFinite(lat) && Number.isFinite(lng),
+  });
+}
+
+export function useNeighborhoods(params?: {
+  city?: string;
+  country?: string;
+  q?: string;
+  page?: number;
+  limit?: number;
+}) {
+  return useQuery({
+    queryKey: ["geo", "neighborhoods", params ?? {}],
+    queryFn: () => getNeighborhoods(params),
+  });
+}
+
+export function useNeighborhoodAnalytics(id?: string) {
+  return useQuery({
+    queryKey: ["geo", "neighborhoods", id, "analytics"],
+    queryFn: () => getNeighborhoodAnalytics(id as string),
+    enabled: !!id,
   });
 }
 
@@ -157,6 +200,36 @@ export function useListingAnalytics(id: string) {
     queryKey: ["listings", "analytics", id],
     queryFn: () => getListingAnalytics(id),
     enabled: !!id,
+  });
+}
+
+export function useListingYield(id: string) {
+  return useQuery({
+    queryKey: ["listings", "yield", id],
+    queryFn: () => getListingYield(id),
+    enabled: !!id,
+  });
+}
+
+export function useMaintenanceRecords(id: string) {
+  return useQuery({
+    queryKey: ["listings", "maintenance", id],
+    queryFn: () => getMaintenanceRecords(id),
+    enabled: !!id,
+  });
+}
+
+export function useCreateMaintenanceRecord(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateMaintenanceRecordInput) =>
+      createMaintenanceRecord(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["listings", "maintenance", id] });
+      qc.invalidateQueries({ queryKey: ["listings", "yield", id] });
+      toast.success("Maintenance record added.");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 

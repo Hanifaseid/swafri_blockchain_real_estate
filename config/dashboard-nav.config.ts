@@ -15,68 +15,104 @@ export interface NavItem {
 }
 
 // ─── Route Note ───────────────────────────────────────────────────────────────
-// The route group (dashboard) does NOT add a URL segment.
-// app/(dashboard)/users/page.tsx  → serves /users
-// app/(dashboard)/audit/page.tsx  → serves /audit
-// The "dashboard" overview is at app/(dashboard)/dashboard/page.tsx → /dashboard
-// All other pages are at their folder name directly: /users, /roles, etc.
+// Admin pages live under app/admin/ → routes are /admin/dashboard, /admin/users, etc.
+// PROPERTY_OWNER and TENANT do not use the admin shell — they use the
+// marketplace layout (LandingNavbar + Footer) via /account/* pages.
 
 export const dashboardNav: Record<UserRole, NavItem[]> = {
   // ── Super Admin ────────────────────────────────────────────────────────
   SUPER_ADMIN: [
     {
       label: 'Overview',
-      href: '/dashboard',
+      href: '/admin/dashboard',
       icon: 'LayoutDashboard',
     },
     {
       label: 'All Users',
-      href: '/users',
+      href: '/admin/users',
       icon: 'Users',
       requiredPermission: 'users:view',
     },
     {
       label: 'Manage Admins',
-      href: '/users?role=ADMIN',
+      href: '/admin/users?role=ADMIN',
       icon: 'ShieldCheck',
       requiredPermission: 'users:create_admin',
     },
     {
-      label: 'Roles',
-      href: '/roles',
-      icon: 'KeyRound',
+      label: 'Properties',
+      href: '/admin/properties',
+      icon: 'Building2',
+      requiredPermission: 'properties:view_all',
     },
     {
-      label: 'Permissions',
-      href: '/permissions',
-      icon: 'Lock',
+      label: 'Leases & Escrow',
+      href: '/admin/leases',
+      icon: 'FileSignature',
+    },
+    {
+      label: 'Inquiries',
+      href: '/admin/inquiries',
+      icon: 'MessageSquare',
+    },
+    {
+      label: 'Offers',
+      href: '/admin/offers',
+      icon: 'ArrowRightLeft',
+    },
+    {
+      label: 'Applications',
+      href: '/admin/applications',
+      icon: 'FileText',
+    },
+    {
+      label: 'KYC & Wallet',
+      href: '/admin/kyc',
+      icon: 'BadgeCheck',
     },
     {
       label: 'Compliance',
-      href: '/compliance',
+      href: '/admin/compliance',
       icon: 'ShieldCheck',
       requiredPermission: 'compliance:view',
     },
     {
       label: 'Purchase Transactions',
-      href: '/transactions',
+      href: '/admin/transactions',
       icon: 'CreditCard',
       requiredPermission: 'transactions:view_all',
     },
     {
+      label: 'Chain Transactions',
+      href: '/admin/chain-transactions',
+      icon: 'ServerCog',
+      requiredPermission: 'chain-transactions:view',
+    },
+    {
       label: 'Audit Logs',
-      href: '/audit',
+      href: '/admin/audit',
       icon: 'History',
       requiredPermission: 'audit:view',
     },
     {
-      label: 'KYC & Wallet',
-      href: '/kyc',
-      icon: 'BadgeCheck',
+      label: 'Roles',
+      href: '/admin/roles',
+      icon: 'KeyRound',
+    },
+    {
+      label: 'Permissions',
+      href: '/admin/permissions',
+      icon: 'Lock',
+    },
+    {
+      label: 'Settings',
+      href: '/admin/settings',
+      icon: 'Settings',
+      requiredPermission: 'settings:view',
     },
     {
       label: 'Profile',
-      href: '/profile',
+      href: '/admin/profile',
       icon: 'User',
     },
   ],
@@ -85,171 +121,93 @@ export const dashboardNav: Record<UserRole, NavItem[]> = {
   ADMIN: [
     {
       label: 'Overview',
-      href: '/dashboard',
+      href: '/admin/dashboard',
       icon: 'LayoutDashboard',
     },
     {
       label: 'Users',
-      href: '/users',
+      href: '/admin/users',
       icon: 'Users',
       requiredPermission: 'users:view',
     },
     {
-      label: 'KYC Review',
-      href: '/kyc',
-      icon: 'BadgeCheck',
-      requiredPermission: 'kyc:view_all',
-    },
-    {
-      label: 'Leases & Escrow',
-      href: '/leases',
-      icon: 'FileSignature',
-    },
-    {
       label: 'Properties',
-      href: '/properties',
+      href: '/admin/properties',
       icon: 'Building2',
       requiredPermission: 'properties:view_all',
     },
     {
+      label: 'Leases & Escrow',
+      href: '/admin/leases',
+      icon: 'FileSignature',
+    },
+    {
+      label: 'Inquiries',
+      href: '/admin/inquiries',
+      icon: 'MessageSquare',
+    },
+    {
+      label: 'Offers',
+      href: '/admin/offers',
+      icon: 'ArrowRightLeft',
+    },
+    {
+      label: 'Applications',
+      href: '/admin/applications',
+      icon: 'FileText',
+    },
+    {
+      label: 'KYC Review',
+      href: '/admin/kyc',
+      icon: 'BadgeCheck',
+      requiredPermission: 'kyc:view_all',
+    },
+    {
       label: 'Compliance',
-      href: '/compliance',
+      href: '/admin/compliance',
       icon: 'ShieldCheck',
       requiredPermission: 'compliance:view',
     },
     {
       label: 'Purchase Transactions',
-      href: '/transactions',
+      href: '/admin/transactions',
       icon: 'CreditCard',
       requiredPermission: 'transactions:view_all',
     },
     {
-      label: 'Audit Logs',
-      href: '/audit',
-      icon: 'History',
-      requiredPermission: 'audit:view',
-    },
-    {
       label: 'Chain Transactions',
-      href: '/chain-transactions',
+      href: '/admin/chain-transactions',
       icon: 'ServerCog',
       requiredPermission: 'chain-transactions:view',
     },
     {
+      label: 'Audit Logs',
+      href: '/admin/audit',
+      icon: 'History',
+      requiredPermission: 'audit:view',
+    },
+    {
+      label: 'Settings',
+      href: '/admin/settings',
+      icon: 'Settings',
+      requiredPermission: 'settings:view',
+    },
+    {
       label: 'Profile',
-      href: '/profile',
+      href: '/admin/profile',
       icon: 'User',
     },
   ],
 
-  // ── Property Owner ─────────────────────────────────────────────────────
-  PROPERTY_OWNER: [
-    {
-      label: 'Overview',
-      href: '/dashboard',
-      icon: 'LayoutDashboard',
-    },
-    {
-      label: 'My Properties',
-      href: '/properties',
-      icon: 'Building2',
-      requiredPermission: 'properties:create',
-    },
-    {
-      label: 'Applications',
-      href: '/applications',
-      icon: 'FileText',
-    },
-    {
-      label: 'Leases & Escrow',
-      href: '/leases',
-      icon: 'FileSignature',
-    },
-    {
-      label: 'Inquiries',
-      href: '/inquiries',
-      icon: 'MessageSquare',
-      requiredPermission: 'inquiries:view_own',
-    },
-    {
-      label: 'Offers',
-      href: '/offers',
-      icon: 'ArrowRightLeft',
-    },
-    {
-      label: 'Transactions',
-      href: '/chain-transactions',
-      icon: 'CreditCard',
-      // requiredPermission: 'transactions:view_own',
-    },
-    {
-      label: 'KYC & Wallet',
-      href: '/kyc',
-      icon: 'BadgeCheck',
-      requiredPermission: 'kyc:view_own',
-    },
-    {
-      label: 'Profile',
-      href: '/profile',
-      icon: 'User',
-    },
-  ],
-
-  // ── Tenant ────────────────────────────────────────────────────────────
-  TENANT: [
-    {
-      label: 'Overview',
-      href: '/dashboard',
-      icon: 'LayoutDashboard',
-    },
-    {
-      label: 'Browse Properties',
-      href: '/properties',
-      icon: 'Compass',
-      requiredPermission: 'properties:view_published',
-    },
-    {
-      label: 'Applications',
-      href: '/applications',
-      icon: 'FileText',
-    },
-    {
-      label: 'Leases & Escrow',
-      href: '/leases',
-      icon: 'FileSignature',
-    },
-    {
-      label: 'Saved',
-      href: '/saved',
-      icon: 'Heart',
-    },
-    {
-      label: 'My Inquiries',
-      href: '/inquiries',
-      icon: 'MessageSquare',
-      requiredPermission: 'inquiries:view_own',
-    },
-    {
-      label: 'My Offers',
-      href: '/offers',
-      icon: 'ArrowRightLeft',
-    },
-    {
-      label: 'KYC & Wallet',
-      href: '/kyc',
-      icon: 'BadgeCheck',
-      requiredPermission: 'kyc:view_own',
-    },
-    {
-      label: 'Profile',
-      href: '/profile',
-      icon: 'User',
-    },
-  ],
+  // PROPERTY_OWNER and TENANT do not use the admin dashboard sidebar.
+  // They navigate via LandingNavbar → /account/* pages.
+  PROPERTY_OWNER: [],
+  TENANT: [],
 };
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
 export function getNavItems(role: UserRole): NavItem[] {
+  if (role === "PROPERTY_OWNER" || role === "TENANT") return [];
   return dashboardNav[role] ?? [];
 }

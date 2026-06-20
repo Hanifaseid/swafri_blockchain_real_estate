@@ -5,7 +5,19 @@ import type {
   UpdatePurchaseStatusPayload, 
   PaginatedTransactions,
   CreatePurchaseTransactionPayload,
+  PurchaseEscrowActionPayload,
 } from '../types/transaction.types';
+
+interface ApiSingleResponse<T> {
+  success?: boolean;
+  message?: string;
+  data?: T;
+}
+
+function unwrapTransaction(payload: ApiSingleResponse<PurchaseTransaction> | PurchaseTransaction): PurchaseTransaction {
+  if ('data' in payload && payload.data) return payload.data;
+  return payload as PurchaseTransaction;
+}
 
 // ─── Purchase Transactions Service ────────────────────────────────────────────
 // Note: Purchase transactions are auto-created when offers are accepted via the offers API
@@ -19,7 +31,7 @@ export async function createPurchaseTransaction(
     ENDPOINTS.PURCHASES.LIST,
     payload
   );
-  return response.data;
+  return unwrapTransaction(response.data as PurchaseTransaction);
 }
 
 export async function getPurchaseTransactions(
@@ -40,19 +52,64 @@ export async function getPurchaseTransactions(
 }
 
 export async function getPurchaseTransactionDetail(id: string): Promise<PurchaseTransaction> {
-  const response = await apiClient.get<PurchaseTransaction>(ENDPOINTS.PURCHASES.DETAIL(id));
-  return response.data;
+  const response = await apiClient.get<ApiSingleResponse<PurchaseTransaction> | PurchaseTransaction>(ENDPOINTS.PURCHASES.DETAIL(id));
+  return unwrapTransaction(response.data);
 }
 
 export async function updatePurchaseTransactionStatus(
   id: string,
   payload: UpdatePurchaseStatusPayload
 ): Promise<PurchaseTransaction> {
-  const response = await apiClient.patch<PurchaseTransaction>(
+  const response = await apiClient.patch<ApiSingleResponse<PurchaseTransaction> | PurchaseTransaction>(
     ENDPOINTS.PURCHASES.UPDATE_STATUS(id),
     payload
   );
-  return response.data;
+  return unwrapTransaction(response.data);
+}
+
+async function postPurchaseEscrowAction(
+  endpoint: string,
+  payload?: PurchaseEscrowActionPayload,
+): Promise<PurchaseTransaction> {
+  const response = await apiClient.post<
+    ApiSingleResponse<PurchaseTransaction> | PurchaseTransaction
+  >(endpoint, payload ?? {});
+  return unwrapTransaction(response.data);
+}
+
+export function fundPurchaseEscrow(
+  id: string,
+  payload?: PurchaseEscrowActionPayload,
+) {
+  return postPurchaseEscrowAction(ENDPOINTS.PURCHASES.FUND_ESCROW(id), payload);
+}
+
+export function releasePurchaseEscrow(
+  id: string,
+  payload?: PurchaseEscrowActionPayload,
+) {
+  return postPurchaseEscrowAction(ENDPOINTS.PURCHASES.RELEASE_ESCROW(id), payload);
+}
+
+export function refundPurchaseEscrow(
+  id: string,
+  payload?: PurchaseEscrowActionPayload,
+) {
+  return postPurchaseEscrowAction(ENDPOINTS.PURCHASES.REFUND_ESCROW(id), payload);
+}
+
+export function disputePurchaseTransaction(
+  id: string,
+  payload?: PurchaseEscrowActionPayload,
+) {
+  return postPurchaseEscrowAction(ENDPOINTS.PURCHASES.DISPUTE(id), payload);
+}
+
+export function resolvePurchaseDispute(
+  id: string,
+  payload?: PurchaseEscrowActionPayload,
+) {
+  return postPurchaseEscrowAction(ENDPOINTS.PURCHASES.RESOLVE_DISPUTE(id), payload);
 }
 
 export async function fundPurchaseTransaction(id: string): Promise<PurchaseTransaction> {
@@ -104,9 +161,9 @@ export const transactionService = {
   getPurchaseTransactions,
   getPurchaseTransactionDetail,
   updatePurchaseTransactionStatus,
-  fundPurchaseTransaction,
-  releasePurchaseTransaction,
-  refundPurchaseTransaction,
+  fundPurchaseEscrow,
+  releasePurchaseEscrow,
+  refundPurchaseEscrow,
   disputePurchaseTransaction,
-  resolvePurchaseTransactionDispute,
+  resolvePurchaseDispute,
 };

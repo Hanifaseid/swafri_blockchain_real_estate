@@ -59,12 +59,12 @@ export default function PrdDoc({ onBack }: PrdDocProps) {
     },
     {
       id: 'onchain',
-      title: 'Modules 3 & 4: Blockchain Property Verification & NFTs',
+      title: 'Modules 3 & 4: Blockchain Property Verification & Digital Titles',
       category: 'Blockchain',
       icon: <Layout className="w-5 h-5 text-sky-400" />,
       content: `Cryptographically registers property credentials without committing private files to the public ledger. 
       
-• ON-CHAIN DATA: Property ID, SHA-256 document hash, owner wallet address, transaction proof hash, and unique ERC-1155 certificate ID.
+• ON-CHAIN DATA: Property ID, SHA-256 document hash, owner wallet address, transaction proof hash, and unique ERC-721 digital title ID.
 • OFF-CHAIN DATA: Private home address, phone numbers, ownership deeds PDFs, and client passports (retained in secure compliance folders).`,
       rules: [
         'Only Admin or Super Admin roles can trigger verification and certificate issuance.',

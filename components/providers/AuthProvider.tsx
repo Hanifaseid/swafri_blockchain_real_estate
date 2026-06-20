@@ -1,44 +1,68 @@
 'use client';
 
 import { useEffect } from 'react';
+import { getCurrentUser } from '@/features/auth/services/auth.service';
+import { clearSession } from '@/lib/auth/session';
 import { useAuthStore } from '@/stores/auth.store';
-import { getCurrentUser } from '@/lib/auth/session';
 
-// ─── AuthProvider ─────────────────────────────────────────────────────────────
-// Runs once on app mount:
-//   1. Reads the active session from localStorage
-//   2. Hydrates the Zustand auth store
-//   3. Sets two cookies that proxy.ts reads for server-side route protection:
-//        vex_authed     = '1'         (is the user logged in?)
-//        vex_user_role  = 'TENANT'    (what is their role?)
-//
-// These cookies contain no sensitive data — just the role string.
-// They let proxy.ts redirect unauthenticated or wrong-role users
-// without reading localStorage (which is client-only).
+const AUTH_CHANNEL = 'vex_auth';
+
+function writeAuthCookies(isAuthed?: boolean): void {
+  if (typeof document === 'undefined') return;
+  if (isAuthed) {
+    const maxAge = 60 * 60 * 24 * 7;
+    document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
+    return;
+  }
+  document.cookie = 'vex_authed=; path=/; max-age=0';
+  document.cookie = 'vex_user_role=; path=/; max-age=0';
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, clearUser, setLoading } = useAuthStore();
 
   useEffect(() => {
+    let mounted = true;
 
-    const user = getCurrentUser();
+    async function hydrate() {
+      setLoading(true);
+      const user = await getCurrentUser();
 
-    if (user) {
-      setUser(user);
+      if (!mounted) return;
 
-      // Mirror session into cookies for proxy.ts
-      const maxAge = 60 * 60 * 24 * 7; // 7 days
-      document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
-      document.cookie = `vex_user_role=${user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else {
-      clearUser();
+      if (user) {
+        setUser(user);
+        writeAuthCookies(true);
+      } else {
+        clearSession();
+        clearUser();
+        writeAuthCookies();
+      }
 
-      // Clear auth cookies
-      document.cookie = 'vex_authed=; path=/; max-age=0';
-      document.cookie = 'vex_user_role=; path=/; max-age=0';
+      setLoading(false);
     }
 
-    setLoading(false);
+    void hydrate();
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'vex_token' || event.key === 'vex_refresh_token') {
+        void hydrate();
+      }
+      if (event.key === 'vex_auth_event' && event.newValue) {
+        void hydrate();
+      }
+    };
+
+    const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(AUTH_CHANNEL) : null;
+    channel?.addEventListener('message', hydrate);
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('storage', handleStorage);
+      channel?.removeEventListener('message', hydrate);
+      channel?.close();
+    };
   }, [setUser, clearUser, setLoading]);
 
   return <>{children}</>;

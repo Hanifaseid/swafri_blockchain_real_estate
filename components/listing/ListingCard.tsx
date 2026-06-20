@@ -1,53 +1,53 @@
-import * as React from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { Bath, Bed, MapPin, Maximize2, Star } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
-import { cn, formatCurrency } from "@/lib/utils";
-import type { PropertySummary } from "./types";
+import * as React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Bath, Bed, MapPin, Maximize2, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/Badge';
+import { cn, formatCurrency } from '@/lib/utils';
+import type { PropertySummary } from './types';
 
 /**
- * ListingCard — property card used in grid and featured listings.
+ * ListingCard — dark-theme property card.
  *
  * Variants:
- *  - "grid"     (default) — image top, content bottom, full-width in a grid
- *  - "compact"  — horizontal layout, image left, used in sidebar / map panel
+ *  - "grid"    (default) — image top, content bottom, for grid layouts
+ *  - "compact" — horizontal, image left, for sidebar / map panel lists
  */
 
 interface ListingCardProps {
   listing: PropertySummary;
-  variant?: "grid" | "compact";
+  variant?: 'grid' | 'compact';
   href?: string;
   /** Slot for FavoriteButton — rendered top-right over the image */
   favoriteSlot?: React.ReactNode;
   className?: string;
-  priority?: boolean; // passed to next/image for LCP images
+  priority?: boolean;
 }
 
 export function ListingCard({
   listing,
-  variant = "grid",
+  variant = 'grid',
   href,
   favoriteSlot,
   className,
   priority = false,
 }: ListingCardProps) {
-  const listingHref = href ?? `/listings/${listing.id}`;
+  const listingHref = href ?? `/discovery/${listing.id}`;
+  const price = formatCurrency(listing.price, listing.currency ?? 'USD');
+  const priceLabel = listing.listingType === 'rent' ? `${price}/mo` : price;
 
-  const price = formatCurrency(listing.price, listing.currency ?? "USD");
-  const priceLabel = listing.listingType === "rent" ? `${price}/mo` : price;
-
-  if (variant === "compact") {
+  // ── Compact variant (sidebar / map panel) ──────────────────────────────────
+  if (variant === 'compact') {
     return (
       <Link
         href={listingHref}
         className={cn(
-          "group flex gap-3 rounded-xl border border-gray-200 bg-white p-3 transition duration-300 ease-out transform hover:-translate-y-1 hover:shadow-xl hover:border-emerald-300",
+          'group flex gap-3 rounded-xl border border-white/8 bg-white/[0.05] p-3 transition-all duration-200 hover:border-amber-400/40 hover:bg-white/[0.09]',
           className,
         )}
       >
         {/* Thumbnail */}
-        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-gray-200">
+        <div className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-white/10">
           {listing.image ? (
             <Image
               src={listing.image}
@@ -57,68 +57,86 @@ export function ListingCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-300 text-xs text-gray-500">
-              No img
+            <div className="absolute inset-0 flex items-center justify-center bg-white/5 text-[10px] text-white/30">
+              No image
             </div>
           )}
+          <span className="absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider bg-black/55 text-amber-300 backdrop-blur-sm">
+            {listing.listingType === 'rent' ? 'Rent' : 'Sale'}
+          </span>
         </div>
+
         {/* Info */}
         <div className="flex min-w-0 flex-col justify-between py-0.5">
-          <p className="truncate text-sm font-medium text-gray-900">
+          <p className="line-clamp-1 text-sm font-medium text-white/90 group-hover:text-white">
             {listing.title}
           </p>
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <MapPin size={11} />
+          <div className="flex items-center gap-1 text-[11px] text-white/40">
+            <MapPin size={10} />
             <span className="truncate">{listing.city}</span>
           </div>
-          <p className="font-display text-base font-semibold text-emerald-800">{priceLabel}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-display text-sm font-semibold text-amber-300">{priceLabel}</p>
+            {(listing.beds !== undefined || listing.baths !== undefined) && (
+              <span className="flex items-center gap-1.5 text-[10px] text-white/35">
+                {listing.beds !== undefined && (
+                  <span className="flex items-center gap-0.5"><Bed size={9} />{listing.beds}bd</span>
+                )}
+                {listing.baths !== undefined && (
+                  <span className="flex items-center gap-0.5"><Bath size={9} />{listing.baths}ba</span>
+                )}
+              </span>
+            )}
+          </div>
         </div>
       </Link>
     );
   }
 
-  // ── Grid variant ───────────────────────────────────────────────────────────
+  // ── Grid variant ────────────────────────────────────────────────────────────
   return (
     <Link
       href={listingHref}
       className={cn(
-        "group relative flex flex-col rounded-xl border border-gray-200 bg-white overflow-hidden transition duration-300 ease-out transform hover:-translate-y-1 hover:scale-[1.01] hover:shadow-xl hover:border-emerald-300",
+        'group relative flex flex-col rounded-xl border border-white/8 bg-white/[0.05] overflow-hidden transition-all duration-200 hover:border-amber-400/40 hover:bg-white/[0.08] hover:-translate-y-0.5 hover:shadow-[0_8px_30px_-8px_rgba(0,0,0,0.6)]',
         className,
       )}
       aria-label={`View ${listing.title}`}
     >
       {/* Image */}
-      <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+      <div className="relative h-48 w-full overflow-hidden bg-white/5">
         {listing.image ? (
           <Image
             src={listing.image}
             alt={listing.title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-110"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             priority={priority}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 text-gray-400">
-            <span>No image</span>
+          <div className="absolute inset-0 flex items-center justify-center bg-white/5 text-white/20">
+            <span className="text-xs">No image</span>
           </div>
         )}
+        {/* gradient scrim */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-        {/* Badges overlay — top left */}
+        {/* Badges — top left */}
         <div className="absolute left-3 top-3 flex gap-1.5">
           <Badge
-            status={listing.listingType === "sale" ? "active" : "rented"}
-            label={listing.listingType === "sale" ? "For Sale" : "For Rent"}
+            status={listing.listingType === 'sale' ? 'active' : 'rented'}
+            label={listing.listingType === 'sale' ? 'For Sale' : 'For Rent'}
             hideDot
           />
-          {listing.tier === "featured" && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-medium text-white">
-              <Star size={10} className="fill-white" aria-hidden="true" />
+          {listing.tier === 'featured' && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[11px] font-semibold text-emerald-950">
+              <Star size={9} className="fill-emerald-950" aria-hidden="true" />
               Featured
             </span>
           )}
-          {listing.tier === "premium" && (
-            <span className="inline-flex items-center rounded-full bg-emerald-900 px-2 py-0.5 text-xs font-medium text-amber-200 ring-1 ring-amber-400/30">
+          {listing.tier === 'premium' && (
+            <span className="inline-flex items-center rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-amber-300 ring-1 ring-amber-400/40 backdrop-blur">
               Premium
             </span>
           )}
@@ -132,46 +150,40 @@ export function ListingCard({
 
       {/* Content */}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        {/* Title */}
-        <h3 className="line-clamp-1 text-sm font-semibold text-gray-900">
+        <h3 className="line-clamp-1 text-sm font-semibold text-white/90 group-hover:text-white">
           {listing.title}
         </h3>
 
-        {/* Location */}
-        <div className="flex items-center gap-1 text-xs text-gray-500">
-          <MapPin size={12} aria-hidden="true" />
-          <span className="truncate">
-            {listing.address}, {listing.city}
-          </span>
+        <div className="flex items-center gap-1 text-xs text-white/40">
+          <MapPin size={11} aria-hidden="true" />
+          <span className="truncate">{listing.address}, {listing.city}</span>
         </div>
 
-        {/* Specs row */}
         {(listing.beds || listing.baths || listing.sqft) && (
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className="flex items-center gap-3 text-xs text-white/50">
             {listing.beds !== undefined && (
               <span className="flex items-center gap-1">
-                <Bed size={13} aria-hidden="true" />
-                {listing.beds} {listing.beds === 1 ? "bed" : "beds"}
+                <Bed size={12} aria-hidden="true" />
+                {listing.beds} {listing.beds === 1 ? 'bed' : 'beds'}
               </span>
             )}
             {listing.baths !== undefined && (
               <span className="flex items-center gap-1">
-                <Bath size={13} aria-hidden="true" />
-                {listing.baths} {listing.baths === 1 ? "bath" : "baths"}
+                <Bath size={12} aria-hidden="true" />
+                {listing.baths} {listing.baths === 1 ? 'bath' : 'baths'}
               </span>
             )}
             {listing.sqft !== undefined && (
               <span className="flex items-center gap-1">
-                <Maximize2 size={13} aria-hidden="true" />
+                <Maximize2 size={12} aria-hidden="true" />
                 {listing.sqft.toLocaleString()} sqft
               </span>
             )}
           </div>
         )}
 
-        {/* Price — pushed to bottom */}
-        <div className="mt-auto pt-2 flex items-end justify-between border-t border-gray-100">
-          <p className="font-display text-lg font-semibold text-emerald-800">{priceLabel}</p>
+        <div className="mt-auto flex items-end justify-between border-t border-white/8 pt-2">
+          <p className="font-display text-base font-semibold text-amber-300">{priceLabel}</p>
           <Badge status={listing.status} />
         </div>
       </div>

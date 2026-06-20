@@ -2,11 +2,11 @@
 // Static metadata used by Next.js layout, SEO, and public pages.
 
 export const siteConfig = {
-  name: 'VEX Real Estate',
-  shortName: 'VEX',
-  title: "VEX — Blockchain Real Estate Marketplace",
+  name: 'TerraChain Real Estate',
+  shortName: 'TerraChain',
+  title: "TerraChain - Blockchain Real Estate Marketplace",
   description:
-    'A blockchain-powered real estate marketplace for property owners, tenants, and investors. Verify ownership, complete KYC, and transact with confidence.',
+    'A blockchain-enabled real estate marketplace for property owners and tenants. Discover listings, verify digital titles, complete KYC, and transact with escrow visibility.',
 
   // Used in <meta name="keywords">
   keywords: [
@@ -14,15 +14,15 @@ export const siteConfig = {
     'blockchain',
     'property marketplace',
     'web3 real estate',
-    'fractional ownership',
-    'property investment',
+    'digital title verification',
+    'map property search',
     'KYC verification',
     'escrow',
   ],
 
   // Open Graph / Social
   og: {
-    title: 'Swafir — Blockchain Real Estate Marketplace',
+    title: 'TerraChain - Blockchain Real Estate Marketplace',
     description:
       'Verify ownership. Complete KYC. Transact with confidence on the blockchain.',
     image: '/og-image.png',
@@ -43,5 +43,5 @@ export const siteConfig = {
   },
 
   // Copyright
-  copyright: `© ${new Date().getFullYear()} Swafir Real Estate Platform. All rights reserved.`,
+  copyright: `© ${new Date().getFullYear()} TerraChain Real Estate Platform. All rights reserved.`,
 } as const;
