@@ -173,3 +173,33 @@ export async function getLeaseTimeline(id: string): Promise<LeaseTimeline> {
     events: Array.isArray(value?.events) ? value.events : [],
   };
 }
+
+// ─── getTenantRoster ──────────────────────────────────────────────────────────
+// GET /leases/tenants — Admin only. Returns all tenants with active leases.
+
+export interface TenantRosterEntry {
+  tenantId: string;
+  tenantName?: string;
+  tenantEmail?: string;
+  leaseId: string;
+  listingTitle?: string;
+  status: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export async function getTenantRoster(
+  params?: { ownerId?: string; page?: number; limit?: number }
+): Promise<TenantRosterEntry[]> {
+  try {
+    const { data } = await apiClient.get<any>(
+      API_ENDPOINTS.LEASES.TENANTS,
+      { params: { page: 1, limit: 50, ...params } }
+    );
+    if (!data.success) throw new Error(data.message || 'Failed to fetch tenant roster');
+    if (Array.isArray(data.data)) return data.data;
+    return data.data?.items ?? data.data?.tenants ?? [];
+  } catch {
+    return [];
+  }
+}

@@ -16,6 +16,7 @@ import {
   resolveDispute,
   getEscrowVerification,
   getLeaseTimeline,
+  getTenantRoster,
 } from '../services/lease.service';
 import { CreateLeasePayload, ResolveDisputePayload } from '../types/lease.types';
 
@@ -25,6 +26,7 @@ export const leaseKeys = {
   detail: (id: string) => [...leaseKeys.all, 'detail', id] as const,
   escrow: (id: string) => [...leaseKeys.all, 'escrow', id] as const,
   timeline: (id: string) => [...leaseKeys.all, 'timeline', id] as const,
+  tenants: (params?: object) => [...leaseKeys.all, 'tenants', params ?? {}] as const,
 };
 
 export function useCreateLease() {
@@ -206,5 +208,15 @@ export function useRespondToDispute() {
       toast.success('Dispute resolved.');
     },
     onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── useTenantRoster ──────────────────────────────────────────────────────────
+// Admin only — fetches all tenants with active leases (GET /leases/tenants).
+
+export function useTenantRoster(params?: { ownerId?: string }) {
+  return useQuery({
+    queryKey: leaseKeys.tenants(params),
+    queryFn: () => getTenantRoster(params),
   });
 }
