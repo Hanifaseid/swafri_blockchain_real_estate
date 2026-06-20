@@ -12,6 +12,7 @@ import {
   useReactivateUser,
   useSuspendAdmin,
   useReactivateAdmin,
+  useRestoreUser,
 } from '@/features/users/queries/users.queries';
 import type { UserAccount, AccountStatus } from '@/features/users/types/user.types';
 import type { UserRole } from '@/features/roles/types/role.types';
@@ -49,6 +50,7 @@ export default function UsersPage() {
   const { mutate: suspend }    = useSuspendUser();
   const { mutate: block }      = useBlockUser();
   const { mutate: reactivate } = useReactivateUser();
+  const { mutate: restore }    = useRestoreUser();
   const { mutate: suspendAdm } = useSuspendAdmin();
   const { mutate: reactivateAdm } = useReactivateAdmin();
 
@@ -198,6 +200,7 @@ export default function UsersPage() {
                       key={user.id}
                       user={user}
                       currentUserId={currentUser.id}
+                      isSuperAdmin={isSuperAdmin}
                       onView={setSelectedUser}
                       onSuspend={(id) =>
                         activeTab === 'admins'
@@ -210,6 +213,7 @@ export default function UsersPage() {
                           ? reactivateAdm(id)
                           : reactivate(id)
                       }
+                      onRestore={isSuperAdmin ? (id) => restore(id) : undefined}
                       canModify={isSuperAdmin || (isAdmin && activeTab === 'users')}
                       // Block action not available for admins (super_admin can only suspend/reactivate)
                       hideBlock={activeTab === 'admins'}

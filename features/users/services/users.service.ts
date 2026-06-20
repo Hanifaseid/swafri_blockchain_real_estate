@@ -276,3 +276,27 @@ export async function revokeUserWallet(
   logAudit(actor.name, actor.email, `Revoked wallet for user ${updated.email}`);
   return updated;
 }
+
+// ─── restoreUser ──────────────────────────────────────────────────────────────
+// POST /admin/users/:id/restore — Super Admin only
+// Restores a permanently blocked/deleted user back to active state.
+
+export async function restoreUser(
+  userId: string,
+  actor: UserAccount
+): Promise<UserAccount> {
+  if (actor.role !== 'SUPER_ADMIN') {
+    throw new Error('Only Super Admin can restore users.');
+  }
+
+  const { data } = await apiClient.post<UserDetailResponse>(
+    ENDPOINTS.ADMIN.USER_RESTORE(userId),
+    {}
+  );
+
+  if (!data.success) throw new Error((data as { message: string }).message || 'Failed to restore user');
+
+  const updated = adaptUser(extractUser(data.data));
+  logAudit(actor.name, actor.email, `Restored user ${updated.email}`);
+  return updated;
+}

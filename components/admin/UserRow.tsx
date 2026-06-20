@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MoreVertical, ShieldOff, ShieldBan, ShieldCheck, Eye } from 'lucide-react';
+import { MoreVertical, ShieldOff, ShieldBan, ShieldCheck, Eye, RotateCcw } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import { cn } from '@/lib/utils';
 import type { UserAccount } from '@/features/users/types/user.types';
@@ -19,10 +19,13 @@ interface UserRowProps {
   user: UserAccount;
   /** The ID of the currently logged-in admin — used to block self-action. */
   currentUserId?: string;
+  /** Whether the current actor is a Super Admin (enables restore action). */
+  isSuperAdmin?: boolean;
   onView: (user: UserAccount) => void;
   onSuspend: (userId: string) => void;
   onBlock: (userId: string) => void;
   onReactivate: (userId: string) => void;
+  onRestore?: (userId: string) => void;
   canModify: boolean;
   hideBlock?: boolean;
 }
@@ -30,10 +33,12 @@ interface UserRowProps {
 export function UserRow({
   user,
   currentUserId,
+  isSuperAdmin = false,
   onView,
   onSuspend,
   onBlock,
   onReactivate,
+  onRestore,
   canModify,
   hideBlock = false,
 }: UserRowProps) {
@@ -153,6 +158,16 @@ export function UserRow({
                       >
                         <ShieldCheck size={13} />
                         Reactivate
+                      </button>
+                    )}
+                    {isSuperAdmin && user.status === 'BLOCKED' && onRestore && (
+                      <button
+                        type="button"
+                        onClick={() => { onRestore(user.id); setMenuOpen(false); }}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-blue-400 hover:bg-blue-950/20 transition-colors"
+                      >
+                        <RotateCcw size={13} />
+                        Restore
                       </button>
                     )}
                   </div>
