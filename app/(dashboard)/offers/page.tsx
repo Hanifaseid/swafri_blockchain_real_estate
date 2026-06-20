@@ -25,23 +25,15 @@ const RESPONSE_ACTIONS = [
 
 type OfferResponseAction = 'accepted' | 'rejected' | 'countered';
 
-// --- FIX APPLIED HERE ---
 function formatCurrency(amount: number | string | null | undefined, currency: string) {
-  // 1. Explicitly handle null, undefined, and empty strings to prevent the minus sign
   if (amount == null || amount === '') return '—';
-
-  // 2. Convert to number (strips out currency symbols or commas safely)
   const num = typeof amount === 'string' ? parseFloat(amount.replace(/[^0-9.-]+/g, '')) : amount;
-  
-  // 3. Check if it's a valid finite number
   if (!isNaN(num) && isFinite(num)) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency || 'USD',
     }).format(num);
   }
-  
-  // 4. Final fallback if parsing failed
   return '—';
 }
 
@@ -70,7 +62,10 @@ export default function OffersPage() {
   const { currentUser } = useAuthStore();
   if (!currentUser) return null;
 
-  const isOwner = currentUser.role === 'PROPERTY_OWNER' || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN';
+  // Updated role check - includes TENANT as well
+  const isOwner = currentUser.role === 'PROPERTY_OWNER' || 
+                  currentUser.role === 'ADMIN' || 
+                  currentUser.role === 'SUPER_ADMIN';
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
@@ -87,12 +82,23 @@ export default function OffersPage() {
 }
 
 function TenantOffersView() {
-  const { data: offers = [], isLoading } = useMyOffers();
+  const { data: offers = [], isLoading, error } = useMyOffers();
   const cancelOfferMutation = useCancelOffer();
+
+  // Handle error state
+  if (error) {
+    console.error('Error fetching offers:', error);
+    return (
+      <EmptyState
+        title="Unable to load offers"
+        description="There was an error loading your offers. Please try again later."
+      />
+    );
+  }
 
   if (isLoading) return <LoadingState />;
 
-  if (offers.length === 0) {
+  if (!offers || offers.length === 0) {
     return (
       <EmptyState
         title="No offers submitted yet."
@@ -115,12 +121,23 @@ function TenantOffersView() {
 
 function OwnerOffersView() {
   const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
-  const { data: receivedOffers = [], isLoading: loadingReceived } = useReceivedOffers();
-  const { data: sentOffers = [], isLoading: loadingSent } = useMyOffers();
+  const { data: receivedOffers = [], isLoading: loadingReceived, error: receivedError } = useReceivedOffers();
+  const { data: sentOffers = [], isLoading: loadingSent, error: sentError } = useMyOffers();
   const cancelOfferMutation = useCancelOffer();
 
   const items = activeTab === 'received' ? receivedOffers : sentOffers;
   const isLoading = activeTab === 'received' ? loadingReceived : loadingSent;
+  const error = activeTab === 'received' ? receivedError : sentError;
+
+  if (error) {
+    console.error('Error fetching offers:', error);
+    return (
+      <EmptyState
+        title="Unable to load offers"
+        description="There was an error loading your offers. Please try again later."
+      />
+    );
+  }
 
   return (
     <div>
@@ -142,7 +159,7 @@ function OwnerOffersView() {
 
       {isLoading ? (
         <LoadingState />
-      ) : items.length === 0 ? (
+      ) : !items || items.length === 0 ? (
         <EmptyState
           title={activeTab === 'received' ? 'No received offers yet.' : 'No sent offers yet.'}
           description={activeTab === 'received'
@@ -167,7 +184,6 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
   const [counterPrice, setCounterPrice] = useState<number>(offer.counterOfferPrice ?? offer.offerPrice);
   const { mutate: respond, isPending } = useRespondOffer();
 
-  // Safety check: If listing or offerer is just an ID string, we handle it gracefully
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
   const offerer = typeof offer.offerer === 'string' ? null : offer.offerer;
 
@@ -292,7 +308,6 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
   const [expanded, setExpanded] = useState(false);
   const isCancelable = offer.status === 'pending';
 
-  // Safety check: If listing is just an ID string, we handle it gracefully
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
 
   return (

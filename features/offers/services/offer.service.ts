@@ -1,6 +1,11 @@
 import { apiClient } from '@/lib/api/axios-client';
 import { ENDPOINTS } from '@/lib/api/endpoints';
-import type { Offer, CreateOfferInput, RespondOfferInput } from '@/features/offers/types/offer.types';
+import type {
+  Offer,
+  CreateOfferInput,
+  RespondOfferInput,
+} from '@/features/offers/types/offer.types';
+
 
 interface ApiResp<T> {
   success: boolean;
@@ -8,31 +13,46 @@ interface ApiResp<T> {
   data: T;
 }
 
+
 interface ApiPaginatedResp<T> {
   success: boolean;
   message: string;
-  data: T[] | { items: T[]; total?: number; page?: number; limit?: number };
+  data: T[] | {
+    items: T[];
+    total?: number;
+    page?: number;
+    limit?: number;
+  };
   items?: T[];
   total?: number;
   page?: number;
   limit?: number;
 }
 
-function isArrayPayload<T>(payload: T[] | { items: T[] } | undefined): payload is T[] {
+
+function isArrayPayload<T>(
+  payload: T[] | { items: T[] } | undefined
+): payload is T[] {
   return Array.isArray(payload);
 }
 
+
 function normalizeOffer(offer: any): Offer {
+
   return {
     ...offer,
 
-    // backend -> frontend mapping
-    offerPrice: offer.offerPrice ?? offer.amount ?? 0,
+    offerPrice:
+      offer.offerPrice ??
+      offer.amount ??
+      0,
+
 
     listing:
       typeof offer.listing === 'object'
         ? offer.listing
         : offer.listing,
+
 
     offerer:
       typeof offer.offerer === 'object'
@@ -41,39 +61,70 @@ function normalizeOffer(offer: any): Offer {
   };
 }
 
-function normalizeArray<T>(data: ApiResp<T[]> | ApiPaginatedResp<T>): T[] {
+
+
+function normalizeArray<T>(
+  data: ApiResp<T[]> | ApiPaginatedResp<T>
+): T[] {
+
   let items: T[] = [];
 
+
   if (isArrayPayload(data.data)) {
+
     items = data.data;
+
   } 
   else if ('items' in data && Array.isArray(data.items)) {
+
     items = data.items;
+
   } 
   else {
+
     const nested = data.data;
+
 
     if (
       nested &&
       typeof nested === 'object' &&
-      Array.isArray((nested as { items?: unknown }).items)
+      Array.isArray(
+        (nested as { items?: unknown }).items
+      )
     ) {
-      items = (nested as { items: T[] }).items;
+
+      items =
+        (nested as { items: T[] }).items;
+
     }
+
   }
+
 
   return items;
 }
 
 
-export async function submitOffer(input: CreateOfferInput): Promise<Offer> {
+
+
+export async function submitOffer(
+  input: CreateOfferInput
+): Promise<Offer> {
+
 
   const payload = {
+
     listingId: input.listingId,
+
     amount: input.offerPrice,
+
     currency: input.currency,
+
     message: input.message,
+
   };
+
+
 
   const { data } =
     await apiClient.post<ApiResp<Offer>>(
@@ -81,77 +132,160 @@ export async function submitOffer(input: CreateOfferInput): Promise<Offer> {
       payload
     );
 
-  if (!data.success) throw new Error(data.message);
+
+
+  if (!data.success) {
+
+    throw new Error(data.message);
+
+  }
+
+
 
   return normalizeOffer(data.data);
+
 }
+
+
+
+
 
 
 export async function getMyOffers(): Promise<Offer[]> {
 
+
   try {
+
 
     const { data } =
       await apiClient.get<
-        ApiResp<Offer[]> | ApiPaginatedResp<Offer>
-      >(ENDPOINTS.OFFERS.MINE);
+        ApiResp<Offer[]> |
+        ApiPaginatedResp<Offer>
+      >(
+        ENDPOINTS.OFFERS.MINE
+      );
+
 
 
     return normalizeArray<Offer>(data)
       .map(normalizeOffer);
 
 
+
   } catch {
+
 
     return [];
 
+
   }
+
 }
+
+
+
+
 
 
 export async function getReceivedOffers(): Promise<Offer[]> {
 
+
   try {
+
 
     const { data } =
       await apiClient.get<
-        ApiResp<Offer[]> | ApiPaginatedResp<Offer>
-      >(ENDPOINTS.OFFERS.RECEIVED);
+        ApiResp<Offer[]> |
+        ApiPaginatedResp<Offer>
+      >(
+        ENDPOINTS.OFFERS.RECEIVED
+      );
+
 
 
     return normalizeArray<Offer>(data)
       .map(normalizeOffer);
 
 
+
   } catch {
+
 
     return [];
 
+
   }
+
 }
+
+
+
+
+
 
 
 export async function respondOffer(
   id: string,
   input: RespondOfferInput
 ): Promise<Offer> {
+  // Convert status to action
+  let action: string;
+  if (input.status === 'accepted') action = 'accept';
+  else if (input.status === 'rejected') action = 'reject';
+  else if (input.status === 'countered') action = 'counter';
+  else throw new Error('Invalid status');
 
-  const { data } =
-    await apiClient.patch<ApiResp<Offer>>(
+  // Build payload - TRY BOTH FORMATS
+  // Option A: Simple
+  const payload = { action };
+  
+  // Option B: With extra fields (uncomment to try)
+  // const payload: any = { action };
+  // if (input.responseMessage?.trim()) payload.responseNote = input.responseMessage.trim();
+  // if (input.status === 'countered' && input.counterOfferPrice) payload.counterAmount = input.counterOfferPrice;
+
+  console.log("=== TESTING RESPOND OFFER ===");
+  console.log("Offer ID:", id);
+  console.log("Status:", input.status);
+  console.log("Action:", action);
+  console.log("Payload:", JSON.stringify(payload, null, 2));
+  console.log("Full input:", input);
+
+  try {
+    const { data } = await apiClient.patch<ApiResp<Offer>>(
       ENDPOINTS.OFFERS.RESPOND(id),
-      input
+      payload
     );
 
+    if (!data.success) {
+      throw new Error(data.message);
+    }
 
-  if (!data.success) throw new Error(data.message);
-
-
-  return normalizeOffer(data.data);
+    return normalizeOffer(data.data);
+  } catch (error: any) {
+    console.log("=== ERROR ===");
+    console.log("Status:", error.response?.status);
+    console.log("Data:", JSON.stringify(error.response?.data, null, 2));
+    
+    // Check if there are validation errors
+    if (error.response?.data?.errors) {
+      console.log("Validation errors:", JSON.stringify(error.response.data.errors, null, 2));
+    }
+    
+    throw error;
+  }
 }
 
 
 
-export async function cancelOffer(id: string): Promise<Offer> {
+
+
+
+
+export async function cancelOffer(
+  id: string
+): Promise<Offer> {
+
 
   const { data } =
     await apiClient.post<ApiResp<Offer>>(
@@ -159,18 +293,34 @@ export async function cancelOffer(id: string): Promise<Offer> {
     );
 
 
-  if (!data.success) throw new Error(data.message);
+
+  if (!data.success) {
+
+    throw new Error(data.message);
+
+  }
+
 
 
   return normalizeOffer(data.data);
+
 }
 
 
 
+
+
+
 export const offerService = {
+
   submitOffer,
+
   getMyOffers,
+
   getReceivedOffers,
+
   respondOffer,
+
   cancelOffer,
+
 };
