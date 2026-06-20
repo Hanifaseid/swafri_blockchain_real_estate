@@ -4,10 +4,18 @@ import type {
   Listing,
   CreateListingInput,
   ListingFilters,
+  ListingCluster,
+  ListingClusterFilters,
   PaginatedListings,
   TransitionInput,
-  CreateSavedSearchInput,
-  SavedSearch,
+  YieldSummary,
+  YieldDashboard,
+  MaintenanceRecord,
+  CreateMaintenanceInput,
+  MaintenanceRecordsResponse,
+  NeighborhoodAnalytics,
+  BulkActionItem,
+  BulkActionResult,
 } from "@/features/listings/types/listing.types";
 
 // ─── Response helpers ─────────────────────────────────────────────────────────
@@ -80,31 +88,43 @@ function extractList<T>(data: ApiPaginatedResp<T>): {
 // ─── getListings (public discovery) ──────────────────────────────────────────
 // GET /listings — published listings with filters
 
+function serializeDiscoveryParams(
+  filters?: ListingFilters | ListingClusterFilters,
+): URLSearchParams {
+  const params = new URLSearchParams();
+
+  if (!filters) return params;
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') return;
+
+    if (key === 'polygon' && Array.isArray(value)) {
+      params.append(key, JSON.stringify(value));
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item !== undefined && item !== null && item !== '') {
+          params.append(key, String(item));
+        }
+      });
+      return;
+    }
+
+    params.append(key, String(value));
+  });
+
+  return params;
+}
+
 export async function getListings(
   filters?: ListingFilters,
 ): Promise<PaginatedListings> {
   try {
-    const params: Record<string, string | number | boolean | string[]> = {};
-    if (filters) {
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && v !== '') {
-          // Special handling for polygon: JSON-stringify the array
-          if (k === 'polygon' && Array.isArray(v)) {
-            params[k] = JSON.stringify(v);
-          }
-          // Special handling for amenities: can be string or string[]
-          else if (k === 'amenities') {
-            params[k] = v;
-          }
-          else {
-            params[k] = v as string | number | boolean;
-          }
-        }
-      });
-    }
     const { data } = await apiClient.get<ApiPaginatedResp<Listing>>(
       ENDPOINTS.LISTINGS.DISCOVER,
-      { params },
+      { params: serializeDiscoveryParams(filters) },
     );
     return extractList(data);
   } catch {
@@ -112,59 +132,21 @@ export async function getListings(
   }
 }
 
-export async function createSavedSearch(
-  input: CreateSavedSearchInput,
-): Promise<SavedSearch> {
-  const payload = {
-    name: input.name,
-    alertEnabled: input.alertEnabled ?? false,
-    query: {
-      ...(input.query.listingType && { listingType: input.query.listingType }),
-      ...(input.query.category && { category: input.query.category }),
-      ...(input.query.minPrice != null && { minPrice: input.query.minPrice }),
-      ...(input.query.maxPrice != null && { maxPrice: input.query.maxPrice }),
-      ...(input.query.minBedrooms != null && {
-        minBedrooms: input.query.minBedrooms,
-      }),
-      ...(input.query.minBathrooms != null && {
-        minBathrooms: input.query.minBathrooms,
-      }),
-    },
-  };
-  const { data } = await apiClient.post<ApiResp<SavedSearch>>(
-    ENDPOINTS.SAVED_SEARCHES.CREATE,
-    payload,
-  );
-  if (!data.success) throw new Error(data.message);
-  return data.data;
-}
-
-export async function getSavedSearches(): Promise<SavedSearch[]> {
+export async function getListingClusters(
+  filters: ListingClusterFilters,
+): Promise<ListingCluster[]> {
   try {
-    const { data } = await apiClient.get<ApiResp<SavedSearch[]>>(
-      ENDPOINTS.SAVED_SEARCHES.LIST,
+    const { data } = await apiClient.get<ApiResp<ListingCluster[]>>(
+      ENDPOINTS.LISTINGS.CLUSTERS,
+      { params: serializeDiscoveryParams(filters) },
     );
-    return data.success ? (Array.isArray(data.data) ? data.data : []) : [];
+    return data.success && Array.isArray(data.data) ? data.data : [];
   } catch {
     return [];
   }
 }
 
-export async function updateSavedSearch(
-  id: string,
-  input: Partial<CreateSavedSearchInput>,
-): Promise<SavedSearch> {
-  const { data } = await apiClient.patch<ApiResp<SavedSearch>>(
-    ENDPOINTS.SAVED_SEARCHES.UPDATE(id),
-    input,
-  );
-  if (!data.success) throw new Error(data.message);
-  return data.data;
-}
 
-export async function deleteSavedSearch(id: string): Promise<void> {
-  await apiClient.delete(ENDPOINTS.SAVED_SEARCHES.DELETE(id));
-}
 
 // ─── getMyListings ────────────────────────────────────────────────────────────
 // GET /listings/mine — owner's own listings
@@ -339,6 +321,16 @@ export async function getListingDashboard(): Promise<Record<
 
 // ─── Documents ────────────────────────────────────────────────────────────────
 
+export type ListingDocumentType =
+  | "title_deed"
+  | "tax_record"
+  | "utility_bill"
+  | "ownership_certificate"
+  | "lease_authority"
+  | "government_doc"
+  | "government_document"
+  | "other";
+
 export interface ListingDocument {
   id: string;
   type: string;
@@ -358,6 +350,29 @@ export async function getListingDocuments(
     return data.success ? (Array.isArray(data.data) ? data.data : []) : [];
   } catch {
     return [];
+  }
+}
+
+export async function uploadListingDocuments(
+  listingId: string,
+  type: ListingDocumentType,
+  files: File[],
+): Promise<void> {
+  const form = new FormData();
+  form.append("type", type);
+  files.forEach((file) => form.append("documents", file));
+
+  try {
+    await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(listingId), form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 0,
+    });
+  } catch (error: any) {
+    const errData = error.response?.data;
+    if (errData) {
+      throw new Error(errData.message || "Document upload failed");
+    }
+    throw error;
   }
 }
 
@@ -447,6 +462,7 @@ export interface TitleInfo {
   tokenId: string;
   contractAddress: string;
   owner: string;
+  status?: string;
   onChainHash: string;
   offChainHash: string;
   verified: boolean;
@@ -484,4 +500,88 @@ export async function clearTitleDispute(
 
 export async function revokeTitle(id: string, reason: string): Promise<void> {
   await apiClient.post(ENDPOINTS.LISTINGS.REVOKE_TITLE(id), { reason });
+}
+
+// ─── Rental Yield ───────────────────────────────────────────────────────────────
+
+export async function getListingRentalYield(id: string): Promise<YieldSummary | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<YieldSummary>>(
+      ENDPOINTS.LISTINGS.RENTAL_YIELD(id)
+    );
+    return data.success ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getYieldDashboard(): Promise<YieldDashboard | null> {
+  try {
+    const { data } = await apiClient.get<ApiResp<YieldDashboard>>(
+      ENDPOINTS.LISTINGS.DASHBOARD_YIELD
+    );
+    return data.success ? data.data : null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Maintenance Records ───────────────────────────────────────────────────────
+
+export async function createMaintenanceRecord(
+  listingId: string,
+  input: CreateMaintenanceInput
+): Promise<MaintenanceRecord> {
+  const { data } = await apiClient.post<ApiResp<MaintenanceRecord>>(
+    ENDPOINTS.LISTINGS.MAINTENANCE(listingId),
+    input
+  );
+  if (!data.success) throw new Error(data.message);
+  return data.data;
+}
+
+export async function getMaintenanceRecords(
+  listingId: string,
+  params?: {
+    type?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+  }
+): Promise<MaintenanceRecordsResponse> {
+  try {
+    const { data } = await apiClient.get<ApiPaginatedResp<MaintenanceRecord>>(
+      ENDPOINTS.LISTINGS.MAINTENANCE(listingId),
+      { params }
+    );
+    return extractList(data);
+  } catch {
+    return { items: [], total: 0, page: 1, limit: 20 };
+  }
+}
+
+// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
+
+export async function getNeighborhoodAnalytics(params?: { region?: string }): Promise<NeighborhoodAnalytics[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<NeighborhoodAnalytics[]>>(
+      ENDPOINTS.LISTINGS.NEIGHBORHOOD_ANALYTICS,
+      { params }
+    );
+    return data.success && Array.isArray(data.data) ? data.data : [];
+  } catch {
+    return [];
+  }
+}
+
+// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+
+export async function executeBulkActions(actions: BulkActionItem[]): Promise<BulkActionResult> {
+  const { data } = await apiClient.post<ApiResp<BulkActionResult>>(
+    ENDPOINTS.LISTINGS.BULK_ACTIONS,
+    { actions }
+  );
+  if (!data.success) throw new Error(data.message);
+  return data.data;
 }

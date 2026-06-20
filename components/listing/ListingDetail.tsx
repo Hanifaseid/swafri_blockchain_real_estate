@@ -1,105 +1,111 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
-import { PhotoGallery } from "./PhotoGallery";
-import { PropertyMetadata } from "./PropertyMetadata";
+import Link from "next/link";
 import {
+  ArrowLeft,
+  FileCheck2,
   Heart,
   MapPin,
-  FileCheck2,
   MessageSquare,
-  ArrowLeft,
 } from "lucide-react";
-import { SESSION_KEYS, getCurrentUser } from "@/lib/auth/session";
-import { apiClient } from "@/lib/api/axios-client";
-import { ENDPOINTS } from "@/lib/api/endpoints";
-import Link from "next/link";
-import toast from "react-hot-toast";
-import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
-import { Modal } from "@/components/ui/Modal";
-import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
+import { PhotoGallery } from "./PhotoGallery";
+import { PropertyMetadata } from "./PropertyMetadata";
 import type { PropertyPhoto } from "./types";
+import type { Listing } from "@/features/listings/types/listing.types";
+import { getCurrentUser } from "@/lib/auth/session";
+import { Modal } from "@/components/ui/Modal";
+import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
+import { useSubmitOffer } from "@/features/offers/queries/offer.queries";
+import { useSendInquiry } from "@/features/inquiries/queries/inquiry.queries";
+import {
+  useFavorites,
+  useRemoveFavorite,
+  useSaveFavorite,
+} from "@/features/favorites/queries/favorite.queries";
+import toast from "react-hot-toast";
 
-type ListingAddress = {
-  street?: string;
-  city?: string;
-  region?: string;
-  country?: string;
-};
-
-interface ListingProp {
-  id: string;
-  title?: string;
-  description?: string;
-  listingType?: "sale" | "rent";
-  price?: number;
-  monthlyRent?: number;
-  currency?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  sqft?: number;
-  address?: string | ListingAddress;
-  city?: string;
-  country?: string;
-  photos?: { url: string }[];
-  blockchainHash?: string;
-  certificateId?: string;
-  ownerName?: string;
+function formatAreaSqft(listing: Listing): number | undefined {
+  if (!listing.area) return undefined;
+  if (listing.area.unit === "sqft") return listing.area.value;
+  return Math.round(listing.area.value * 10.764);
 }
 
-export default function ListingDetail({ listing }: { listing: ListingProp }) {
-  const placeholderImage = "/placeholder-property.jpg";
+function ownerLabel(createdBy: string): string {
+  return createdBy ? `Owner #${createdBy.slice(0, 8)}` : "Property Owner";
+}
 
-  const { mutate: submitOffer, isPending: creatingOffer } = useSubmitOffer();
+function proofText(listing: Listing): string {
+  if (listing.tokenId) {
+    return `This listing has a minted title token (${listing.tokenId}).`;
+  }
+
+  if (listing.verificationStatus === "verified") {
+    return "Ownership documents have been verified, but the on-chain title has not been minted yet.";
+  }
+
+  return `Verification status: ${listing.verificationStatus.replace(/_/g, " ")}.`;
+}
+
+export default function ListingDetail({ listing }: { listing: Listing }) {
+  const placeholderImage = "/placeholder-property.jpg";
   const currentUser = getCurrentUser();
+  const { mutate: submitOffer, isPending: creatingOffer } = useSubmitOffer();
 
   const [showOfferModal, setShowOfferModal] = React.useState(false);
-  const [offerAmount, setOfferAmount] = React.useState<number>(
-    listing.price ?? listing.monthlyRent ?? 0,
-  );
+  const [offerAmount, setOfferAmount] = React.useState<number>(listing.price ?? 0);
   const [offerMessage, setOfferMessage] = React.useState("");
 
   const photos: PropertyPhoto[] =
     listing.photos && listing.photos.length > 0
-      ? listing.photos.map((p: any, i: number) => ({
-          id: String(p.publicId ?? i),
-          url: p.url ?? placeholderImage,
-          alt: listing.title ?? undefined,
-          isPrimary: !!p.isCover || i === 0,
+      ? listing.photos.map((photo, index) => ({
+          id: String(photo.publicId ?? index),
+          url: photo.url ?? placeholderImage,
+          alt: listing.title,
+          isPrimary: Boolean(photo.isCover) || index === 0,
         }))
       : [
           {
             id: "cover",
             url: placeholderImage,
-            alt: listing.title ?? undefined,
+            alt: listing.title,
             isPrimary: true,
           },
         ];
 
-  const normalizedAddress =
-    typeof listing.address === "string"
-      ? listing.address
-      : listing.address
-        ? [
-            listing.address.street,
-            listing.address.city,
-            listing.address.region,
-            listing.address.country,
-          ]
-            .filter(Boolean)
-            .join(", ")
-        : "";
+  const normalizedAddress = [
+    listing.address.street,
+    listing.address.city,
+    listing.address.region,
+    listing.address.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
-  const city =
-    listing.city ??
-    (typeof listing.address === "object" && listing.address?.city) ??
-    "";
-
-  const country =
-    listing.country ??
-    (typeof listing.address === "object" && listing.address?.country) ??
-    "";
+  const metadataListing = {
+    title: listing.title,
+    description: listing.description ?? "",
+    price: listing.price ?? listing.monthlyRent ?? 0,
+    currency: listing.currency ?? "USD",
+    listingType: listing.listingType,
+    status: "active",
+    tier: "basic",
+    address: normalizedAddress,
+    city: listing.address.city,
+    country: listing.address.country,
+    beds: listing.bedrooms,
+    baths: listing.bathrooms,
+    sqft: formatAreaSqft(listing),
+    parkingSpaces: listing.parkingSpaces,
+    yearBuilt: listing.yearBuilt,
+    floorNumber: listing.floorNumber,
+    totalFloors: listing.totalFloors,
+    type: listing.category,
+    amenities: listing.amenities.map((amenity, index) => ({
+      id: `${index}-${amenity}`,
+      label: amenity,
+    })),
+  } as const;
 
   return (
     <div className="max-w-6xl mx-auto px-4">
@@ -116,34 +122,10 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          <PhotoGallery photos={photos} title={listing.title ?? "Property"} />
+          <PhotoGallery photos={photos} title={listing.title} />
 
           <div className="bg-white p-6 rounded-2xl border shadow-sm">
-            <PropertyMetadata
-              listing={
-                {
-                  title: listing.title ?? "",
-                  description: listing.description ?? "",
-                  price: listing.price ?? listing.monthlyRent ?? 0,
-                  currency: listing.currency ?? "USD",
-                  listingType: listing.monthlyRent ? "rent" : "sale",
-                  status: "active",
-                  tier: "basic",
-                  address: normalizedAddress,
-                  city,
-                  country,
-                  beds: listing.bedrooms,
-                  baths: listing.bathrooms,
-                  sqft: listing.sqft,
-                  parkingSpaces: undefined,
-                  yearBuilt: undefined,
-                  floorNumber: undefined,
-                  totalFloors: undefined,
-                  type: "apartment",
-                  amenities: [],
-                } as any
-              }
-            />
+            <PropertyMetadata listing={metadataListing as any} />
           </div>
 
           <div className="bg-white p-6 rounded-2xl border shadow-sm">
@@ -158,34 +140,31 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
               loading="lazy"
               allowFullScreen
               src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                normalizedAddress || listing.title || "",
+                normalizedAddress || listing.title,
               )}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
             />
           </div>
         </div>
 
         <aside className="space-y-4">
-          {/* ── Owner card ─────────────────────────────────────────────── */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
               Listed by
             </p>
             <p className="text-sm font-semibold text-gray-900 mb-3">
-              {listing.ownerName ?? "Platform"}
+              {ownerLabel(listing.createdBy)}
             </p>
             <div className="flex items-center justify-between mb-3">
               <VerificationBadge
-                blockchainHash={listing.blockchainHash}
-                certificateId={listing.certificateId}
+                verificationStatus={listing.verificationStatus}
+                tokenId={listing.tokenId}
               />
             </div>
-            <FavoriteButton listingId={listing.id} />
+            <FavoriteActionButton listingId={listing.id} />
           </div>
 
-          {/* ── Inquiry card ───────────────────────────────────────────── */}
-          <InquiryCard listingId={listing.id} title={listing.title} />
+          <InquiryCard listing={listing} />
 
-          {/* ── Make an offer ──────────────────────────────────────────── */}
           {listing.listingType === "sale" && (
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
               <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400 mb-0.5">
@@ -213,21 +192,14 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
             </div>
           )}
 
-          {/* ── Blockchain proof ───────────────────────────────────────── */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
             <h4 className="text-xs font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <FileCheck2 className="w-4 h-4 text-emerald-600" />
-              Blockchain Proof
+              Verification Status
             </h4>
-            <p className="text-xs text-gray-500 break-all leading-relaxed">
-              {listing.blockchainHash ??
-                "No on-chain proof available for this listing."}
+            <p className="text-xs text-gray-500 leading-relaxed">
+              {proofText(listing)}
             </p>
-            {listing.certificateId && (
-              <p className="mt-2 text-xs font-medium text-emerald-600">
-                Certificate: {listing.certificateId}
-              </p>
-            )}
           </div>
         </aside>
       </div>
@@ -263,7 +235,7 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
                 onSuccess: () => {
                   setShowOfferModal(false);
                   setOfferMessage("");
-                  setOfferAmount(listing.price ?? listing.monthlyRent ?? 0);
+                  setOfferAmount(listing.price ?? 0);
                 },
               },
             );
@@ -287,9 +259,7 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 
           <button
             type="submit"
-            disabled={
-              creatingOffer || offerAmount <= 0 || Number.isNaN(offerAmount)
-            }
+            disabled={creatingOffer || offerAmount <= 0 || Number.isNaN(offerAmount)}
             className="w-full bg-emerald-600 text-white rounded-xl py-3 disabled:bg-gray-200 disabled:text-gray-400"
           >
             {creatingOffer ? "Submitting offer..." : "Send Offer"}
@@ -301,121 +271,112 @@ export default function ListingDetail({ listing }: { listing: ListingProp }) {
 }
 
 function VerificationBadge({
-  blockchainHash,
-  certificateId,
+  verificationStatus,
+  tokenId,
 }: {
-  blockchainHash?: string;
-  certificateId?: string;
+  verificationStatus: Listing["verificationStatus"];
+  tokenId?: string;
 }) {
-  return blockchainHash ? (
-    <span className="text-xs text-emerald-600">Verified</span>
-  ) : (
-    <span className="text-xs text-gray-500">Unverified</span>
+  if (tokenId) {
+    return <span className="text-xs text-emerald-600">Verified on-chain</span>;
+  }
+
+  if (verificationStatus === "verified") {
+    return <span className="text-xs text-emerald-600">Documents verified</span>;
+  }
+
+  return (
+    <span className="text-xs text-gray-500 capitalize">
+      {verificationStatus.replace(/_/g, " ")}
+    </span>
   );
 }
 
-function FavoriteButton({ listingId }: { listingId: string }) {
-  const [fav, setFav] = React.useState(() => {
-    try {
-      const user = getCurrentUser();
-      const key = user
-        ? SESSION_KEYS.FAVORITES(user.id)
-        : "vex_favorites_guest";
-      const raw =
-        typeof window !== "undefined" ? localStorage.getItem(key) : null;
-      return raw ? (JSON.parse(raw) as string[]).includes(listingId) : false;
-    } catch {
-      return false;
-    }
-  });
+function FavoriteActionButton({ listingId }: { listingId: string }) {
+  const currentUser = getCurrentUser();
+  const { data: favorites = [] } = useFavorites(Boolean(currentUser));
+  const { mutate: save, isPending: saving } = useSaveFavorite();
+  const { mutate: remove, isPending: removing } = useRemoveFavorite();
 
-  const toggle = async () => {
-    const user = getCurrentUser();
-    if (!user) {
+  const isSaved = favorites.some((favorite) => favorite.id === listingId);
+  const isPending = saving || removing;
+
+  const handleToggle = () => {
+    if (!currentUser) {
       window.location.href = "/login";
       return;
     }
-    const key = SESSION_KEYS.FAVORITES(user.id);
-    const arr: string[] = JSON.parse(localStorage.getItem(key) ?? "[]");
-    const next = fav
-      ? arr.filter((id) => id !== listingId)
-      : [...arr, listingId];
-    localStorage.setItem(key, JSON.stringify(next));
-    setFav(!fav);
-    try {
-      if (process.env.NEXT_PUBLIC_API_URL) {
-        fav
-          ? await apiClient.delete(ENDPOINTS.FAVORITES.REMOVE(listingId))
-          : await apiClient.post(ENDPOINTS.FAVORITES.SAVE, { listingId });
-      }
-    } catch (err) {
-      console.error(err);
-    }
+
+    if (isPending) return;
+    if (isSaved) remove(listingId);
+    else save(listingId);
   };
 
   return (
     <button
-      onClick={toggle}
-      aria-pressed={fav}
+      onClick={handleToggle}
+      aria-pressed={isSaved}
+      disabled={isPending}
       className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-colors ${
-        fav
+        isSaved
           ? "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100"
           : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
       }`}
     >
       <Heart
-        className={`w-4 h-4 ${fav ? "fill-rose-500 text-rose-500" : "text-gray-400"}`}
+        className={`w-4 h-4 ${isSaved ? "fill-rose-500 text-rose-500" : "text-gray-400"}`}
       />
-      {fav ? "Saved" : "Save listing"}
+      {isSaved ? "Saved" : "Save listing"}
     </button>
   );
 }
 
-function InquiryCard({
-  listingId,
-  title,
-}: {
-  listingId: string;
-  title?: string;
-}) {
+function InquiryCard({ listing }: { listing: Listing }) {
+  const currentUser = getCurrentUser();
+  const { mutate: sendInquiry, isPending } = useSendInquiry();
   const [open, setOpen] = React.useState(false);
-  const [msg, setMsg] = React.useState("");
+  const [message, setMessage] = React.useState("");
+  const [inquiryType, setInquiryType] = React.useState<"rent" | "buy" | "general">(
+    listing.listingType === "rent"
+      ? "rent"
+      : listing.listingType === "sale"
+        ? "buy"
+        : "general",
+  );
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const user = getCurrentUser();
-    if (!user) {
+
+    if (!currentUser) {
       window.location.href = "/login";
       return;
     }
-    if (!msg.trim()) {
-      alert("Please write a message");
+
+    if (!message.trim()) {
+      toast.error("Please write a message.");
       return;
     }
-    try {
-      if (process.env.NEXT_PUBLIC_API_URL) {
-        await apiClient.post(ENDPOINTS.INQUIRIES.SEND, {
-          propertyId: listingId,
-          message: msg,
-          tenantName: user.name,
-          tenantEmail: user.email,
-        });
-      } else {
-        const arr = JSON.parse(localStorage.getItem("vex_inquiries") ?? "[]");
-        arr.push({
-          id: Math.random().toString(36).slice(2),
-          propertyId: listingId,
-          message: msg,
-          createdAt: new Date().toISOString(),
-        });
-        localStorage.setItem("vex_inquiries", JSON.stringify(arr));
-      }
-      setMsg("");
-      setOpen(false);
-      alert("Inquiry submitted!");
-    } catch {
-      alert("Failed to submit inquiry");
-    }
+
+    sendInquiry(
+      {
+        listingId: listing.id,
+        message: message.trim(),
+        inquiryType,
+        contactInfo:
+          currentUser.email || currentUser.phone
+            ? {
+                email: currentUser.email,
+                phone: currentUser.phone,
+              }
+            : undefined,
+      },
+      {
+        onSuccess: () => {
+          setMessage("");
+          setOpen(false);
+        },
+      },
+    );
   };
 
   return (
@@ -441,7 +402,7 @@ function InquiryCard({
 
       {open && (
         <div className="mt-4">
-          {!getCurrentUser() ? (
+          {!currentUser ? (
             <div className="space-y-3">
               <p className="text-sm text-gray-600">
                 Please sign in to contact the lister.
@@ -464,19 +425,35 @@ function InquiryCard({
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-3">
+              <select
+                value={inquiryType}
+                onChange={(e) =>
+                  setInquiryType(e.target.value as "rent" | "buy" | "general")
+                }
+                className="w-full p-3 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
+              >
+                <option value="general">General inquiry</option>
+                {listing.listingType === "rent" && (
+                  <option value="rent">Interested in renting</option>
+                )}
+                {listing.listingType === "sale" && (
+                  <option value="buy">Interested in buying</option>
+                )}
+              </select>
               <textarea
-                value={msg}
-                onChange={(e) => setMsg(e.target.value)}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 rows={4}
-                placeholder={`Message about ${title ?? "this property"}…`}
+                placeholder={`Message about ${listing.title}…`}
                 className="w-full p-3 text-sm text-gray-900 placeholder:text-gray-400 bg-gray-50 border border-gray-200 rounded-xl resize-none focus:outline-none focus:border-emerald-400 focus:bg-white transition-colors"
               />
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors"
+                  disabled={isPending}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors disabled:bg-gray-200 disabled:text-gray-400"
                 >
-                  Send Inquiry
+                  {isPending ? "Sending..." : "Send Inquiry"}
                 </button>
                 <button
                   type="button"

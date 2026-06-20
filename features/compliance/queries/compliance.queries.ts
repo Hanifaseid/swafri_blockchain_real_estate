@@ -7,6 +7,9 @@ import {
   getBrokerLicenses,
   submitBrokerLicense,
   reviewBrokerLicense,
+  getComplianceNotes,
+  createComplianceNote,
+  deleteComplianceNote,
 } from '../services/compliance.service';
 import type {
   UpdateComplianceCaseInput,
@@ -20,6 +23,7 @@ import type {
 const KEYS = {
   cases: (params?: ComplianceCasesParams) => ['compliance-cases', params] as const,
   case: (id: string) => ['compliance-case', id] as const,
+  caseNotes: (id: string) => ['compliance-case-notes', id] as const,
   brokerLicenses: (params?: BrokerLicensesParams) => ['broker-licenses', params] as const,
   brokerLicense: (id: string) => ['broker-license', id] as const,
 };
@@ -89,6 +93,44 @@ export function useReviewBrokerLicense() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.brokerLicenses() });
       toast.success('License reviewed.');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ─── Compliance Case Notes ─────────────────────────────────────────────────────
+
+export function useComplianceNotes(caseId: string) {
+  return useQuery({
+    queryKey: KEYS.caseNotes(caseId),
+    queryFn: () => getComplianceNotes(caseId),
+    enabled: !!caseId,
+  });
+}
+
+export function useCreateComplianceNote() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ caseId, input }: { caseId: string; input: { body: string } }) =>
+      createComplianceNote(caseId, input),
+    onSuccess: (_, { caseId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.caseNotes(caseId) });
+      toast.success('Note added successfully');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteComplianceNote() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ caseId, noteId }: { caseId: string; noteId: string }) =>
+      deleteComplianceNote(caseId, noteId),
+    onSuccess: (_, { caseId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.caseNotes(caseId) });
+      toast.success('Note deleted successfully');
     },
     onError: (e: Error) => toast.error(e.message),
   });

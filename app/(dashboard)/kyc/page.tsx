@@ -13,7 +13,13 @@ import { useWalletChallenge, useLinkWallet, useUnlinkWallet } from '@/features/a
 import { useUsers } from '@/features/users/queries/users.queries';
 import { useAdminKycDetails, useReviewUserKyc, useAdminKycDocUrl } from '@/features/kyc/queries/kyc.admin.queries';
 import { cn } from '@/lib/utils';
-import { ENDPOINTS } from '@/lib/api/endpoints';
+import { ENDPOINTS } from '@/lib/api/endpoints';import { WalletLinkFlow } from '@/features/wallet/components/WalletLinkFlow';
+import { WalletUnlinkDialog } from '@/features/wallet/components/WalletUnlinkDialog';
+import { WalletStatusBadge, getWalletStatusDisplay } from '@/features/wallet/components/WalletStatusBadge';
+import { getEtherscanAddressUrl } from '@/features/wallet/types/wallet.types';
+import { updateSessionUser } from '@/lib/auth/session';
+import { Button } from '@/components/ui/Button';
+
 
 const KYC_STEPS = [
   { key: 'not_started',  label: 'Not Started',  Icon: AlertCircle,  color: 'text-black/30',   bg: 'bg-gray-100' },
@@ -39,6 +45,8 @@ export default function KycPage() {
   const { mutate: getChallenge,  isPending: gettingChallenge } = useWalletChallenge();
   const { mutate: doLinkWallet,  isPending: linkingWallet }    = useLinkWallet();
   const { mutate: doUnlinkWallet, isPending: unlinkingWallet } = useUnlinkWallet();
+  const [showWalletLink, setShowWalletLink] = useState(false);
+  const [showWalletUnlink, setShowWalletUnlink] = useState(false);
 
   const [activeTab, setActiveTab] = useState<'mine' | 'queue'>('mine');
 
@@ -67,6 +75,19 @@ export default function KycPage() {
       onError: () => toast.error('Failed to get challenge.'),
     });
   };
+
+  // ── Wallet handlers ──
+  const handleWalletLinkSuccess = (user: any) => {
+    updateUser(user);
+    updateSessionUser(user);
+    setShowWalletLink(false);
+  };
+  const handleWalletUnlinkSuccess = (user: any) => {
+    updateUser(user);
+    updateSessionUser(user);
+    setShowWalletUnlink(false);
+  };
+
 
   const handleLinkWallet = () => {
     if (!signature.trim()) { toast.error('Paste your signature.'); return; }
@@ -348,6 +369,81 @@ export default function KycPage() {
                   Cancel
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+         {/* ── Blockchain Wallet ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-1">
+                Blockchain Wallet
+              </p>
+              <div className="flex items-center gap-2">
+                <WalletStatusBadge 
+                  walletStatus={currentUser.walletStatus} 
+                  walletAddress={currentUser.linkedWalletAddress}
+                />
+              </div>
+            </div>
+            {currentUser.walletStatus === 'LINKED' && currentUser.linkedWalletAddress && (
+              <a
+                href={getEtherscanAddressUrl(currentUser.linkedWalletAddress)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+              >
+                View on Etherscan →
+              </a>
+            )}
+          </div>
+          {currentUser.walletStatus === 'LINKED' && currentUser.linkedWalletAddress && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-xs text-black/50 mb-1">Wallet Address</p>
+              <p className="text-sm font-mono text-black">{currentUser.linkedWalletAddress}</p>
+            </div>
+          )}
+          {showWalletLink && (
+            <div className="mb-4">
+              <WalletLinkFlow
+                onSuccess={handleWalletLinkSuccess}
+                onCancel={() => setShowWalletLink(false)}
+              />
+            </div>
+          )}
+          {showWalletUnlink && currentUser.linkedWalletAddress && (
+            <div className="mb-4">
+              <WalletUnlinkDialog
+                walletAddress={currentUser.linkedWalletAddress}
+                onSuccess={handleWalletUnlinkSuccess}
+                onCancel={() => setShowWalletUnlink(false)}
+              />
+            </div>
+          )}
+          {!showWalletLink && !showWalletUnlink && (
+            <div className="flex gap-3">
+              {(currentUser.walletStatus === 'NOT_LINKED' || 
+                currentUser.walletStatus === 'REVOKED') && (
+                <Button
+                  onClick={() => setShowWalletLink(true)}
+                  size="md"
+                  className="flex-1"
+                >
+                  <Wallet size={14} />
+                  {getWalletStatusDisplay(currentUser.walletStatus, currentUser.linkedWalletAddress).action}
+                </Button>
+              )}
+              {(currentUser.walletStatus === 'LINKED' || currentUser.walletStatus === 'VERIFIED') && (
+                <Button
+                  onClick={() => setShowWalletUnlink(true)}
+                  variant="destructive"
+                  size="md"
+                  className="flex-1"
+                >
+                  Unlink Wallet
+                </Button>
+              )}
             </div>
           )}
         </div>

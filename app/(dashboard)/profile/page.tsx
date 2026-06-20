@@ -127,9 +127,9 @@ export default function ProfilePage() {
     );
   };
 
-  const statusBadge = ACCOUNT_STATUS_BADGE[currentUser.status];
-  const kycBadge = KYC_STATUS_BADGE[currentUser.kycStatus];
-  const walletBadge = WALLET_STATUS_BADGE[currentUser.walletStatus];
+  const statusBadge = ACCOUNT_STATUS_BADGE[currentUser.status] || { label: currentUser.status, color: 'bg-gray-100 text-gray-700' };
+  const kycBadge = KYC_STATUS_BADGE[currentUser.kycStatus] || { label: currentUser.kycStatus, color: 'bg-gray-100 text-gray-700' };
+  const walletBadge = WALLET_STATUS_BADGE[currentUser.walletStatus] || { label: currentUser.walletStatus, color: 'bg-gray-100 text-gray-700' };
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">

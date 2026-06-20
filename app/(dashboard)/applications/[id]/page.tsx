@@ -2,78 +2,134 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';  // ← Only import once
+import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
-import { 
-  useRentalApplication, 
+import {
+  useRentalApplication,
   useWithdrawRentalApplication,
   useReviewRentalApplication,
   useUpdateScreening,
   useUpdateAppointment,
   useCreateLeaseFromApplication
 } from '@/features/rental-applications/queries/rental-application.queries';
-import { 
-  FileText, Loader2, Calendar, MapPin, DollarSign, 
-  Users, Briefcase, CheckCircle2, XCircle, Clock, ShieldCheck,
-  Building2, Mail, Phone, User, Home
+import type { RentalApplication, RentalApplicationStatus } from '@/features/rental-applications/types/rental-application.types';
+import {
+  FileText,
+  Loader2,
+  Calendar,
+  DollarSign,
+  Users,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  ShieldCheck,
+  Mail,
+  User,
+  Home,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+function formatStatus(status: RentalApplicationStatus) {
+  return status.replace('_', ' ');
+}
+
+function statusBadgeClass(status: RentalApplicationStatus) {
+  switch (status) {
+    case 'approved':
+    case 'lease_created':
+      return 'bg-emerald-50 border-emerald-200 text-emerald-700';
+    case 'rejected':
+    case 'withdrawn':
+      return 'bg-red-50 border-red-200 text-red-700';
+    case 'screening':
+      return 'bg-blue-50 border-blue-200 text-blue-700';
+    default:
+      return 'bg-amber-50 border-amber-200 text-amber-700';
+  }
+}
+
+function getLeaseId(app: RentalApplication) {
+  return app.lease?.id ?? null;
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
+function formatMoney(value: number) {
+  return `$${value.toLocaleString()}`;
+}
+
+function hasScreeningData(app: RentalApplication) {
+  return Boolean(
+    app.screening?.status ||
+    app.screening?.provider ||
+    app.screening?.reference ||
+    app.screening?.score !== undefined ||
+    app.screening?.notes
+  );
+}
 
 export default function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
   const router = useRouter();
   const { currentUser } = useAuthStore();
-  
+
   const { data: app, isLoading } = useRentalApplication(id);
   const { mutate: withdraw, isPending: withdrawing } = useWithdrawRentalApplication();
-  
+
   const isTenant = currentUser?.role === 'TENANT';
   const isOwner = ['PROPERTY_OWNER', 'ADMIN', 'SUPER_ADMIN'].includes(currentUser?.role || '');
 
   if (!currentUser) return null;
-  
-  if (isLoading) return (
-    <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>
-  );
-  
-  if (!app) return (
-    <div className="p-8 text-center text-red-500">Application not found</div>
-  );
 
-  const normalizedStatus = (app.status || '').toUpperCase();
-  const isActive = normalizedStatus !== 'WITHDRAWN' && normalizedStatus !== 'REJECTED';
-  const canReview = isOwner && isActive;
+  if (isLoading) {
+    return (
+      <div className="p-8 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-emerald-500" /></div>
+    );
+  }
+
+  if (!app) {
+    return <div className="p-8 text-center text-red-500">Application not found</div>;
+  }
+
+  const leaseId = getLeaseId(app);
+  const isWithdrawable = isTenant && app.status !== 'withdrawn' && app.status !== 'lease_created';
+  const canReview = isOwner && app.status !== 'withdrawn' && app.status !== 'rejected' && app.status !== 'lease_created';
+  const listingTitle = typeof app.listing === 'string' ? null : app.listing?.title;
 
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6 bg-gray-50/50 min-h-screen">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
         <div>
           <button onClick={() => router.back()} className="text-xs text-gray-500 hover:text-gray-900 mb-2 inline-block transition-colors">
             ← Back to Applications
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="p-2 bg-emerald-50 rounded-xl">
               <FileText className="w-6 h-6 text-emerald-500" />
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Application #{app.id.slice(-6)}</h1>
-            <span className={cn(
-              "px-3 py-1 text-xs font-medium uppercase rounded-full border",
-              normalizedStatus === 'APPROVED' ? "bg-emerald-50 border-emerald-200 text-emerald-700" :
-              normalizedStatus === 'REJECTED' || normalizedStatus === 'WITHDRAWN' ? "bg-red-50 border-red-200 text-red-700" :
-              "bg-amber-50 border-amber-200 text-amber-700"
-            )}>
-              {app.status.replace('_', ' ')}
+            <span className={cn('px-3 py-1 text-xs font-medium uppercase rounded-full border', statusBadgeClass(app.status))}>
+              {formatStatus(app.status)}
             </span>
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-2">
             <Home size={14} className="text-gray-400" />
-            <p className="text-sm text-gray-600">Listing ID: <span className="font-mono text-xs text-gray-900 bg-gray-100 px-2 py-0.5 rounded">{app.listingId}</span></p>
+            <p className="text-sm text-gray-600">
+              {listingTitle ? (
+                <>Listing: <span className="font-medium text-gray-900">{listingTitle}</span></>
+              ) : (
+                <>Listing ID: <span className="font-mono text-xs text-gray-900 bg-gray-100 px-2 py-0.5 rounded">{app.listingId}</span></>
+              )}
+            </p>
           </div>
         </div>
-        
-        {isTenant && isActive && normalizedStatus !== 'APPROVED' && (
-          <button 
+
+        {isWithdrawable && (
+          <button
             onClick={() => {
               if (confirm('Are you sure you want to withdraw this application?')) {
                 withdraw(app.id, { onSuccess: () => router.push('/applications') });
@@ -88,7 +144,6 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Left Column: Details */}
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
@@ -114,7 +169,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                   <DollarSign size={12} className="text-emerald-500" /> Monthly Income
                 </p>
-                <p className="text-sm font-bold text-gray-900">${app.monthlyIncome.toLocaleString()} / mo</p>
+                <p className="text-sm font-bold text-gray-900">{formatMoney(app.monthlyIncome)} / mo</p>
               </div>
               <div className="space-y-1">
                 <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -136,8 +191,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             )}
           </div>
 
-          {/* Screening Results View */}
-          {app.screeningProvider && (
+          {hasScreeningData(app) && (
             <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <div className="p-1.5 bg-emerald-50 rounded-lg">
@@ -147,22 +201,34 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-3 rounded-xl">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-sm font-medium text-gray-900">{app.screening?.status?.replace('_', ' ') || 'N/A'}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-xl">
                   <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Provider</p>
-                  <p className="text-sm font-medium text-gray-900">{app.screeningProvider}</p>
+                  <p className="text-sm font-medium text-gray-900">{app.screening?.provider || 'N/A'}</p>
                 </div>
                 <div className="bg-gray-50 p-3 rounded-xl">
                   <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Score</p>
-                  <p className="text-sm font-bold text-emerald-600">{app.screeningScore || 'N/A'}</p>
+                  <p className="text-sm font-bold text-emerald-600">{app.screening?.score ?? 'N/A'}</p>
+                </div>
+                <div className="bg-gray-50 p-3 rounded-xl">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Reference</p>
+                  <p className="text-sm font-medium text-gray-900">{app.screening?.reference || 'N/A'}</p>
                 </div>
               </div>
+              {app.screening?.notes && (
+                <div className="mt-4 bg-gray-50 p-3 rounded-xl">
+                  <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-1">Notes</p>
+                  <p className="text-sm text-gray-700">{app.screening.notes}</p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Right Column: Owner Actions */}
         <div className="space-y-6">
-          {/* View Lease Banner — visible to ALL roles when a lease exists */}
-          {(app.leaseId || (app as any).lease?.id) && (
+          {leaseId && (
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-lg border border-slate-700">
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-1.5 bg-emerald-500/20 rounded-lg">
@@ -174,22 +240,20 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 A formal lease agreement has been generated from this application.
               </p>
               <Link
-                href={`/leases/${app.leaseId || (app as any).lease?.id}`}
+                href={`/leases/${leaseId}`}
                 className="w-full block text-center py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold transition-all hover:shadow-lg"
               >
                 Open Lease →
               </Link>
-              <p className="text-[10px] text-slate-500 font-mono text-center mt-2">
-                ID: {app.leaseId || (app as any).lease?.id}
-              </p>
+              <p className="text-[10px] text-slate-500 font-mono text-center mt-2">ID: {leaseId}</p>
             </div>
           )}
 
-          {canReview && (
-             <OwnerActionsPanel app={app} />
-          )}
-          
-          {isTenant && normalizedStatus === 'APPROVED' && !(app.leaseId || (app as any).lease?.id) && (
+          {canReview && <OwnerActionsPanel app={app} />}
+
+          {isTenant && app.status === 'screening' && !leaseId && <TenantAppointmentPanel app={app} />}
+
+          {isTenant && app.status === 'approved' && !leaseId && (
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 p-6 rounded-2xl shadow-sm text-center">
               <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 className="w-8 h-8 text-emerald-500" />
@@ -201,13 +265,13 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
 
-          {!isOwner && app.adminNote && (
+          {!isOwner && app.reviewNote && (
             <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 p-5 rounded-2xl shadow-sm">
               <div className="flex items-center gap-2 mb-2">
                 <Mail size={14} className="text-amber-600" />
                 <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Message from Owner</h4>
               </div>
-              <p className="text-sm text-amber-900">{app.adminNote}</p>
+              <p className="text-sm text-amber-900">{app.reviewNote}</p>
             </div>
           )}
         </div>
@@ -216,21 +280,67 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   );
 }
 
-// ─── Owner Actions Panel ──────────────────────────────────────────────────────
+function TenantAppointmentPanel({ app }: { app: RentalApplication }) {
+  const { mutate: updateAppointment, isPending } = useUpdateAppointment();
+  const appointment = app.appointment;
 
-function OwnerActionsPanel({ app }: { app: any }) {
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 bg-amber-50 rounded-lg">
+          <Calendar size={16} className="text-amber-600" />
+        </div>
+        <h3 className="text-sm font-semibold text-gray-900">Viewing Appointment</h3>
+      </div>
+
+      {appointment?.status === 'scheduled' ? (
+        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
+          <p className="text-xs font-semibold text-emerald-800 mb-1">Viewing scheduled</p>
+          <p className="text-sm text-emerald-700">{formatDateTime(appointment.scheduledFor)}</p>
+          {appointment.locationNote && <p className="text-xs text-emerald-700 mt-1">📍 {appointment.locationNote}</p>}
+        </div>
+      ) : appointment?.status === 'requested' ? (
+        <div className="space-y-3">
+          <div className="bg-amber-50 p-4 rounded-xl border border-amber-200">
+            <p className="text-xs font-semibold text-amber-800">Viewing request sent</p>
+            <p className="text-sm text-amber-700 mt-1">The landlord can now schedule a time.</p>
+          </div>
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => updateAppointment({ id: app.id, payload: { status: 'cancelled' } })}
+            className="w-full py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl text-xs font-semibold disabled:opacity-50"
+          >
+            {isPending ? 'Updating...' : 'Cancel viewing request'}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => updateAppointment({ id: app.id, payload: { status: 'requested' } })}
+          className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-semibold disabled:opacity-50"
+        >
+          {isPending ? 'Submitting...' : 'Request viewing appointment'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function OwnerActionsPanel({ app }: { app: RentalApplication }) {
   const router = useRouter();
   const { mutate: review, isPending: reviewing } = useReviewRentalApplication();
   const { mutate: updateScreening, isPending: screening } = useUpdateScreening();
   const { mutate: updateAppointment, isPending: updatingAppointment } = useUpdateAppointment();
   const { mutate: createLease, isPending: leasing } = useCreateLeaseFromApplication();
 
-  const [note, setNote] = React.useState('');
+  const [note, setNote] = React.useState(app.reviewNote || '');
   const [showLeaseForm, setShowLeaseForm] = React.useState(false);
   const [showAppointmentForm, setShowAppointmentForm] = React.useState(false);
   const [appointmentForm, setAppointmentForm] = React.useState({
-    scheduledFor: '',
-    locationNote: '',
+    scheduledFor: app.appointment?.scheduledFor || '',
+    locationNote: app.appointment?.locationNote || '',
   });
   const [leaseForm, setLeaseForm] = React.useState({
     monthlyRent: '',
@@ -241,9 +351,25 @@ function OwnerActionsPanel({ app }: { app: any }) {
     terms: 'Standard residential lease agreement terms apply. Tenant agrees to maintain the property in good condition.',
   });
 
-  const normalizedStatus = (app.status || '').toUpperCase();
+  const appointment = app.appointment;
 
-  if (normalizedStatus === 'APPROVED') {
+  const scheduleAppointment = () => {
+    updateAppointment(
+      {
+        id: app.id,
+        payload: {
+          status: 'scheduled',
+          scheduledFor: appointmentForm.scheduledFor,
+          locationNote: appointmentForm.locationNote || undefined,
+        }
+      },
+      {
+        onSuccess: () => setShowAppointmentForm(false)
+      }
+    );
+  };
+
+  if (app.status === 'approved') {
     return (
       <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
@@ -257,7 +383,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
         </p>
 
         {!showLeaseForm ? (
-          <button 
+          <button
             onClick={() => setShowLeaseForm(true)}
             className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg"
           >
@@ -266,7 +392,7 @@ function OwnerActionsPanel({ app }: { app: any }) {
         ) : (
           <div className="pt-4 border-t border-gray-100 space-y-4">
             <p className="text-[10px] uppercase tracking-widest font-semibold text-gray-400">Lease Terms</p>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs font-medium text-gray-500 mb-1.5 block">Monthly Rent</label>
@@ -329,32 +455,35 @@ function OwnerActionsPanel({ app }: { app: any }) {
                 className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none transition-all"
               />
             </div>
-            
+
             <div className="flex gap-2 pt-2">
-              <button 
+              <button
                 onClick={() => setShowLeaseForm(false)}
                 className="flex-1 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold rounded-xl transition-all"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={() => {
                   if (!leaseForm.monthlyRent || !leaseForm.depositAmount) {
                     return;
                   }
-                  createLease({
-                    id: app.id,
-                    payload: {
-                      monthlyRent: Number(leaseForm.monthlyRent),
-                      depositAmount: Number(leaseForm.depositAmount),
-                      currency: leaseForm.currency,
-                      startDate: leaseForm.startDate,
-                      endDate: leaseForm.endDate,
-                      terms: leaseForm.terms,
+                  createLease(
+                    {
+                      id: app.id,
+                      payload: {
+                        monthlyRent: Number(leaseForm.monthlyRent),
+                        depositAmount: Number(leaseForm.depositAmount),
+                        currency: leaseForm.currency,
+                        startDate: leaseForm.startDate,
+                        endDate: leaseForm.endDate,
+                        terms: leaseForm.terms,
+                      }
+                    },
+                    {
+                      onSuccess: (lease) => router.push(`/leases/${lease.id}`)
                     }
-                  }, {
-                    onSuccess: (lease) => router.push(`/leases/${lease.id}`)
-                  });
+                  );
                 }}
                 disabled={leasing || !leaseForm.monthlyRent || !leaseForm.depositAmount}
                 className="flex-1 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-xs font-semibold rounded-xl disabled:opacity-50 transition-all hover:shadow-lg"
@@ -371,34 +500,34 @@ function OwnerActionsPanel({ app }: { app: any }) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <h3 className="text-sm font-semibold text-gray-900">Owner Review</h3>
-      
-      {normalizedStatus !== 'APPROVED' && normalizedStatus !== 'SCREENING' && (
+
+      {app.status !== 'screening' && (
         <div className="space-y-3">
-          <textarea 
+          <textarea
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Optional note to tenant..."
             className="w-full p-3 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 resize-none h-20"
           />
           <div className="grid grid-cols-2 gap-2">
-            <button 
+            <button
               disabled={reviewing}
-              onClick={() => review({ id: app.id, payload: { status: 'screening', note }})}
+              onClick={() => review({ id: app.id, payload: { status: 'screening', note: note.trim() || undefined } })}
               className="py-2.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl text-xs font-semibold transition-all"
             >
               Start Screening
             </button>
-            <button 
+            <button
               disabled={reviewing}
-              onClick={() => review({ id: app.id, payload: { status: 'approved', note }})}
+              onClick={() => review({ id: app.id, payload: { status: 'approved', note: note.trim() || undefined } })}
               className="py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-semibold transition-all"
             >
               Direct Approve
             </button>
           </div>
-          <button 
+          <button
             disabled={reviewing}
-            onClick={() => review({ id: app.id, payload: { status: 'rejected', note }})}
+            onClick={() => review({ id: app.id, payload: { status: 'rejected', note: note.trim() || undefined } })}
             className="w-full py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-semibold transition-all"
           >
             Reject Application
@@ -406,37 +535,45 @@ function OwnerActionsPanel({ app }: { app: any }) {
         </div>
       )}
 
-      {normalizedStatus === 'SCREENING' && (
+      {app.status === 'screening' && (
         <div className="space-y-3">
           <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded-xl flex gap-2 items-center">
             <div className="p-1 bg-blue-100 rounded-full">
               <ShieldCheck size={12} className="text-blue-600" />
             </div>
-            Awaiting background screening results.
+            {app.screening?.status ? `Screening status: ${app.screening.status.replace('_', ' ')}` : 'Awaiting background screening results.'}
           </div>
           <button
             disabled={screening}
-            onClick={() => updateScreening({ id: app.id, payload: { status: 'passed', provider: 'TransUnion', score: 750, reference: 'REF-' + Date.now(), notes: 'Background check cleared successfully' }})}
+            onClick={() => updateScreening({
+              id: app.id,
+              payload: {
+                status: 'passed',
+                provider: 'Manual Review',
+                score: app.screening?.score ?? 750,
+                reference: app.screening?.reference || `REF-${Date.now()}`,
+                notes: app.screening?.notes || 'Background check cleared successfully',
+              }
+            })}
             className="w-full py-2.5 bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-900 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-all hover:shadow-lg"
           >
             {screening ? <Loader2 size={14} className="animate-spin inline mr-2" /> : null}
             {screening ? 'Updating...' : 'Update Screening (Passed)'}
           </button>
 
-          {/* Viewing Appointment Section */}
           <div className="pt-4 border-t border-gray-100 mt-2 space-y-2">
             <p className="text-[10px] uppercase font-semibold tracking-wider text-gray-400 mb-2">Viewing Appointment</p>
-            {app.appointmentStatus === 'scheduled' ? (
+            {appointment?.status === 'scheduled' ? (
               <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar size={14} className="text-emerald-600" />
                   <p className="text-xs font-semibold text-emerald-800">Appointment Scheduled</p>
                 </div>
-                <p className="text-xs text-emerald-700 mb-1">{new Date(app.scheduledFor).toLocaleString()}</p>
-                {app.locationNote && <p className="text-xs text-emerald-600">📍 {app.locationNote}</p>}
+                <p className="text-xs text-emerald-700 mb-1">{formatDateTime(appointment.scheduledFor)}</p>
+                {appointment.locationNote && <p className="text-xs text-emerald-600">📍 {appointment.locationNote}</p>}
               </div>
-            ) : app.appointmentStatus === 'requested' ? (
-              <div className="bg-amber-50 p-3 rounded-xl border border-amber-200">
+            ) : appointment?.status === 'requested' ? (
+              <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-2">
                 <div className="flex items-center gap-2 mb-2">
                   <Clock size={14} className="text-amber-600" />
                   <p className="text-xs font-semibold text-amber-800">Tenant Requested Viewing</p>
@@ -449,55 +586,23 @@ function OwnerActionsPanel({ app }: { app: any }) {
                     Schedule Appointment
                   </button>
                 ) : (
-                  <div className="space-y-2 mt-2">
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Date & Time</label>
-                      <input
-                        type="datetime-local"
-                        value={appointmentForm.scheduledFor}
-                        onChange={e => setAppointmentForm(f => ({ ...f, scheduledFor: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-600 mb-1 block">Location Note</label>
-                      <input
-                        type="text"
-                        value={appointmentForm.locationNote}
-                        onChange={e => setAppointmentForm(f => ({ ...f, locationNote: e.target.value }))}
-                        placeholder="e.g., Meet at lobby"
-                        className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setShowAppointmentForm(false)}
-                        className="flex-1 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-semibold transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={() => {
-                          updateAppointment({
-                            id: app.id,
-                            payload: {
-                              status: 'scheduled',
-                              scheduledFor: appointmentForm.scheduledFor,
-                              locationNote: appointmentForm.locationNote,
-                            }
-                          }, {
-                            onSuccess: () => setShowAppointmentForm(false)
-                          });
-                        }}
-                        disabled={updatingAppointment || !appointmentForm.scheduledFor}
-                        className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-all"
-                      >
-                        {updatingAppointment ? 'Scheduling...' : 'Confirm'}
-                      </button>
-                    </div>
-                  </div>
+                  <AppointmentSchedulerForm
+                    appointmentForm={appointmentForm}
+                    setAppointmentForm={setAppointmentForm}
+                    onCancel={() => setShowAppointmentForm(false)}
+                    onSubmit={scheduleAppointment}
+                    isPending={updatingAppointment}
+                  />
                 )}
               </div>
+            ) : showAppointmentForm ? (
+              <AppointmentSchedulerForm
+                appointmentForm={appointmentForm}
+                setAppointmentForm={setAppointmentForm}
+                onCancel={() => setShowAppointmentForm(false)}
+                onSubmit={scheduleAppointment}
+                isPending={updatingAppointment}
+              />
             ) : (
               <button
                 onClick={() => setShowAppointmentForm(true)}
@@ -513,14 +618,14 @@ function OwnerActionsPanel({ app }: { app: any }) {
             <div className="grid grid-cols-2 gap-2">
               <button
                 disabled={reviewing}
-                onClick={() => review({ id: app.id, payload: { status: 'approved', note: 'Screening passed, application approved.' }})}
+                onClick={() => review({ id: app.id, payload: { status: 'approved', note: 'Screening passed, application approved.' } })}
                 className="py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-xl text-xs font-semibold transition-all"
               >
                 Approve Application
               </button>
               <button
                 disabled={reviewing}
-                onClick={() => review({ id: app.id, payload: { status: 'rejected', note: 'Screening failed.' }})}
+                onClick={() => review({ id: app.id, payload: { status: 'rejected', note: 'Screening failed.' } })}
                 className="py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-xs font-semibold transition-all"
               >
                 Reject Application
@@ -529,6 +634,59 @@ function OwnerActionsPanel({ app }: { app: any }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AppointmentSchedulerForm({
+  appointmentForm,
+  setAppointmentForm,
+  onCancel,
+  onSubmit,
+  isPending,
+}: {
+  appointmentForm: { scheduledFor: string; locationNote: string };
+  setAppointmentForm: React.Dispatch<React.SetStateAction<{ scheduledFor: string; locationNote: string }>>;
+  onCancel: () => void;
+  onSubmit: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="space-y-2 mt-2">
+      <div>
+        <label className="text-xs font-medium text-gray-600 mb-1 block">Date & Time</label>
+        <input
+          type="datetime-local"
+          value={appointmentForm.scheduledFor}
+          onChange={e => setAppointmentForm(f => ({ ...f, scheduledFor: e.target.value }))}
+          className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+        />
+      </div>
+      <div>
+        <label className="text-xs font-medium text-gray-600 mb-1 block">Location Note</label>
+        <input
+          type="text"
+          value={appointmentForm.locationNote}
+          onChange={e => setAppointmentForm(f => ({ ...f, locationNote: e.target.value }))}
+          placeholder="e.g., Meet at lobby"
+          className="w-full px-3 py-2 text-sm text-gray-900 rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500"
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={onCancel}
+          className="flex-1 py-2 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-semibold transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={onSubmit}
+          disabled={isPending || !appointmentForm.scheduledFor}
+          className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold disabled:opacity-50 transition-all"
+        >
+          {isPending ? 'Scheduling...' : 'Confirm'}
+        </button>
+      </div>
     </div>
   );
 }

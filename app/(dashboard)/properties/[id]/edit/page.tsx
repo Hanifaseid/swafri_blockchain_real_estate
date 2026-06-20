@@ -1,18 +1,21 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Loader2 } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { ArrowLeft, MapPin, Loader2, Crosshair, Search } from 'lucide-react';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 import { useAuthStore } from '@/stores/auth.store';
 import { useListing, useUpdateListing } from '@/features/listings/queries/listing.queries';
 import { inputClass, inputErrorClass } from '@/components/forms/styles';
 import { cn } from '@/lib/utils';
+import { geocode, reverseGeocode, type GeoResult } from '@/features/geo/services/geo.service';
 
 const editSchema = z.object({
   title:            z.string().min(5).max(200),
@@ -51,18 +54,75 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
   const { currentUser } = useAuthStore();
   const { data: listing, isLoading } = useListing(id);
   const { mutate: update, isPending } = useUpdateListing(id);
+  
+  const [showMap, setShowMap] = useState(false);
+  const [mapCenterOverride, setMapCenterOverride] = useState<[number, number] | null>(null);
+  const [locationSearchOverride, setLocationSearchOverride] = useState<string | null>(null);
+  const [locationSuggestions, setLocationSuggestions] = useState<GeoResult[]>([]);
+  const [gettingLocation, setGettingLocation] = useState(false);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const [locationSearchTouched, setLocationSearchTouched] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const mapCenterRef = useRef<[number, number]>([9.1450, 40.4897]);
+  const searchRequestIdRef = useRef(0);
 
-  const { register, handleSubmit, setValue, reset, watch, formState: { errors } } = useForm({
-    resolver: zodResolver(editSchema),
+  const listingMapCenter: [number, number] = listing?.location?.coordinates
+    ? [listing.location.coordinates[1], listing.location.coordinates[0]]
+    : [9.1450, 40.4897];
+  const mapCenter = mapCenterOverride ?? listingMapCenter;
+  const listingLocationLabel = listing
+    ? [listing.address.street, listing.address.city, listing.address.country].filter(Boolean).join(', ')
+    : '';
+  const locationSearch = locationSearchOverride ?? listingLocationLabel;
+
+  const { register, handleSubmit, control, setValue, reset, watch, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(editSchema) as any,
     defaultValues: {
       listingType: 'rent' as const,
+      currency: 'USD',
+      areaUnit: 'sqm',
     },
   });
 
-  // Watch listingType from form state instead of using a separate state
-  const listingType = watch('listingType');
+  const listingType = watch('listingType') ?? 'rent';
 
-  // Populate form once listing loads - only call reset, no setState
+  const updateMapMarker = useCallback((lat: number, lng: number) => {
+    const nextCenter: [number, number] = [lat, lng];
+    mapCenterRef.current = nextCenter;
+    setMapCenterOverride(nextCenter);
+
+    if (mapRef.current) {
+      mapRef.current.setView([lat, lng], 15);
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lng]);
+      } else {
+        markerRef.current = L.marker([lat, lng]).addTo(mapRef.current);
+      }
+    }
+  }, []);
+
+  const applyGeoResult = useCallback((result: GeoResult | null, lat: number, lng: number) => {
+    setValue('latitude', lat);
+    setValue('longitude', lng);
+    updateMapMarker(lat, lng);
+
+    if (!result) return;
+
+    setLocationSearchTouched(false);
+    setLocationSearchOverride(result.label);
+    const address = result.address ?? {};
+    const street = [address.house_number, address.road].filter(Boolean).join(' ').trim();
+
+    if (street) setValue('street', street);
+    if (address.city || address.town || address.village) setValue('city', address.city || address.town || address.village || '');
+    if (address.state || address.region || address.county) setValue('region', address.state || address.region || address.county || '');
+    if (address.country) setValue('country', address.country);
+    if (address.postcode) setValue('postalCode', address.postcode);
+  }, [setValue, updateMapMarker]);
+
+  // Populate form once listing loads
   useEffect(() => {
     if (!listing) return;
     
@@ -96,6 +156,88 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     });
   }, [listing, reset]);
 
+  useEffect(() => {
+    mapCenterRef.current = mapCenter;
+  }, [mapCenter]);
+
+  useEffect(() => {
+    if (showMap && mapContainerRef.current && !mapRef.current) {
+      const container = mapContainerRef.current;
+      container.style.height = '300px';
+      container.style.width = '100%';
+
+      const map = L.map(container).setView(mapCenterRef.current, 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map);
+
+      if (listing?.location?.coordinates) {
+        const [lng, lat] = listing.location.coordinates;
+        markerRef.current = L.marker([lat, lng]).addTo(map);
+      }
+
+      map.on('click', async (e) => {
+        const { lat, lng } = e.latlng;
+        applyGeoResult(null, lat, lng);
+
+        try {
+          const result = await reverseGeocode(lat, lng);
+          applyGeoResult(result, lat, lng);
+        } catch {
+          toast.error('Failed to look up address for the selected point.');
+        }
+      });
+
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+
+      mapRef.current = map;
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+      }
+    };
+  }, [showMap, listing?.location?.coordinates, applyGeoResult]);
+
+  useEffect(() => {
+    const query = locationSearch.trim();
+
+    if (!locationSearchTouched || query.length < 3) {
+      return;
+    }
+
+    const requestId = searchRequestIdRef.current + 1;
+    searchRequestIdRef.current = requestId;
+
+    const timeoutId = window.setTimeout(async () => {
+      setSearchingLocation(true);
+      try {
+        const results = await geocode(query);
+        if (searchRequestIdRef.current !== requestId) return;
+        setLocationSuggestions(results.slice(0, 5));
+      } catch {
+        if (searchRequestIdRef.current !== requestId) return;
+        toast.error('Failed to search location. Please try again.');
+        setLocationSuggestions([]);
+      } finally {
+        if (searchRequestIdRef.current === requestId) {
+          setSearchingLocation(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [locationSearch, locationSearchTouched]);
+
   if (!currentUser) return null;
 
   if (isLoading) {
@@ -106,17 +248,61 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
     return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-2 inline-block">← Back</Link></div>;
   }
 
-  // Only allow editing draft or rejected listings (by owner)
-  if (listing.status !== 'draft' && listing.status !== 'rejected') {
+  const isAdmin = currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN';
+  const isOwner = listing.createdBy === currentUser.id;
+  const canEdit = isAdmin || (isOwner && (listing.status === 'draft' || listing.status === 'rejected'));
+
+  if (!canEdit) {
     return (
       <div className="p-8 text-center">
-        <p className="text-sm text-black/40">This listing cannot be edited in its current status ({listing.status}).</p>
+        <p className="text-sm text-black/40">
+          {isOwner
+            ? `This listing cannot be edited in its current status (${listing.status}).`
+            : 'You do not have permission to edit this listing.'}
+        </p>
         <Link href={`/properties/${id}`} className="text-emerald-500 text-sm mt-2 inline-block">← Back to listing</Link>
       </div>
     );
   }
 
-  const onSubmit = (data: FormValues) => {
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        applyGeoResult(null, latitude, longitude);
+
+        try {
+          const result = await reverseGeocode(latitude, longitude);
+          applyGeoResult(result, latitude, longitude);
+        } catch {
+          toast.error('Location captured, but address lookup failed.');
+        }
+
+        toast.success('Location captured successfully');
+        setGettingLocation(false);
+      },
+      () => {
+        toast.error('Failed to get location. Please enable location services.');
+        setGettingLocation(false);
+      }
+    );
+  };
+
+  const handleSelectLocation = (suggestion: GeoResult) => {
+    const [lon, lat] = suggestion.location.coordinates;
+    searchRequestIdRef.current += 1;
+    setSearchingLocation(false);
+    applyGeoResult(suggestion, lat, lon);
+    setLocationSuggestions([]);
+  };
+
+  const onSubmit = (data: FormValues): void => {
     const input = {
       title:            data.title,
       description:      data.description,
@@ -166,7 +352,7 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6" noValidate>
 
         {/* Listing type */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6">
@@ -279,7 +465,78 @@ export default function EditListingPage({ params }: { params: Promise<{ id: stri
 
         {/* Coordinates */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-          <div className="flex items-center gap-2"><MapPin size={14} className="text-black/40" /><p className="text-[10px] font-mono uppercase tracking-widest text-black/35">GPS Coordinates</p></div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2"><MapPin size={14} className="text-black/40" /><p className="text-[10px] font-mono uppercase tracking-widest text-black/35">GPS Coordinates</p></div>
+            <button
+              type="button"
+              onClick={() => setShowMap(!showMap)}
+              className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+            >
+              {showMap ? 'Hide Map' : 'Show Map'}
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleGetCurrentLocation}
+              disabled={gettingLocation}
+              className="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400 text-black/60 px-3 py-2 rounded-lg transition-colors"
+            >
+              {gettingLocation ? <Loader2 size={12} className="animate-spin" /> : <Crosshair size={12} />}
+              Use Current Location
+            </button>
+          </div>
+
+          <div className="relative">
+            <div className="relative">
+              {searchingLocation ? (
+                <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 animate-spin pointer-events-none" />
+              ) : (
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30 pointer-events-none" />
+              )}
+              <input
+                type="text"
+                value={locationSearch}
+                onChange={(e) => {
+                  const nextValue = e.target.value;
+                  setLocationSearchTouched(true);
+                  setLocationSearchOverride(nextValue);
+
+                  if (nextValue.trim().length < 3) {
+                    searchRequestIdRef.current += 1;
+                    setSearchingLocation(false);
+                    setLocationSuggestions([]);
+                  }
+                }}
+                placeholder="Search location (e.g., Bole, Addis Ababa)"
+                className="w-full h-11 rounded-2xl border border-gray-200 pl-10 pr-3 text-sm text-black/70 placeholder:text-black/25 focus:outline-none focus:border-emerald-400"
+              />
+            </div>
+            {(locationSuggestions.length > 0 || (locationSearchTouched && locationSearch.trim().length >= 3 && !searchingLocation)) && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden max-h-60 overflow-y-auto">
+                {locationSuggestions.length > 0 ? locationSuggestions.map((suggestion, index) => (
+                  <button
+                    key={`${suggestion.label}-${index}`}
+                    type="button"
+                    onClick={() => handleSelectLocation(suggestion)}
+                    className="w-full text-left px-4 py-3 text-sm text-black/70 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="font-medium">{suggestion.label}</div>
+                  </button>
+                )) : (
+                  <div className="px-4 py-3 text-sm text-black/45">No matching locations found.</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {showMap && (
+            <div className="h-[300px] rounded-xl overflow-hidden border border-gray-200">
+              <div ref={mapContainerRef} className="w-full h-full" />
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <F label="Longitude" error={errors.longitude?.message} required>
               <input type="number" step="any" {...register('longitude', { valueAsNumber: true })} className={cn(inputClass, errors.longitude && inputErrorClass)} />

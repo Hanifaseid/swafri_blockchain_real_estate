@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { DashboardSidebar } from '@/components/layout/dashboard/DashboardSidebar';
 import { DashboardTopbar } from '@/components/layout/dashboard/DashboardTopbar';
 import { getNavItems } from '@/config/dashboard-nav.config';
+import { useWalletListeners } from '@/features/wallet/hooks/useWalletListeners';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -14,6 +15,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { currentUser, setUser, setLoading } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  // Wallet listeners for MetaMask account/network changes
+  useWalletListeners();
 
   useEffect(() => {
     // Defer all state updates out of the synchronous effect body

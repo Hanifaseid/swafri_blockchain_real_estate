@@ -104,3 +104,16 @@ export interface BrokerLicensesParams {
   page?: number;
   limit?: number;
 }
+
+// ─── Compliance Case Notes ─────────────────────────────────────────────────────
+
+export interface ComplianceNote {
+  id: string;
+  author: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface CreateNoteInput {
+  body: string;
+}

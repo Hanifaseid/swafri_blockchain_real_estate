@@ -10,7 +10,7 @@ import {
   updateAppointment,
   createLeaseFromApplication
 } from '../services/rental-application.service';
-import type { 
+import type {
   SubmitRentalApplicationPayload,
   ReviewApplicationPayload,
   ScreeningUpdatePayload,
@@ -36,10 +36,11 @@ export function useSubmitRentalApplication() {
   });
 }
 
-export function useMyRentalApplications() {
+export function useMyRentalApplications(enabled = true) {
   return useQuery({
     queryKey: rentalAppKeys.mine(),
     queryFn: getMyRentalApplications,
+    enabled,
   });
 }
 
@@ -67,7 +68,7 @@ export function useWithdrawRentalApplication() {
 export function useReviewRentalApplication() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: ReviewApplicationPayload }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: ReviewApplicationPayload }) =>
       reviewRentalApplication(id, payload),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: rentalAppKeys.detail(id) });
@@ -81,7 +82,7 @@ export function useReviewRentalApplication() {
 export function useUpdateScreening() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: ScreeningUpdatePayload }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: ScreeningUpdatePayload }) =>
       updateScreening(id, payload),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: rentalAppKeys.detail(id) });
@@ -94,7 +95,7 @@ export function useUpdateScreening() {
 export function useUpdateAppointment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: AppointmentUpdatePayload }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: AppointmentUpdatePayload }) =>
       updateAppointment(id, payload),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: rentalAppKeys.detail(id) });
@@ -107,12 +108,11 @@ export function useUpdateAppointment() {
 export function useCreateLeaseFromApplication() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: CreateLeasePayload }) => 
+    mutationFn: ({ id, payload }: { id: string; payload: CreateLeasePayload }) =>
       createLeaseFromApplication(id, payload),
-    onSuccess: (lease, { id }) => {
+    onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: rentalAppKeys.detail(id) });
       qc.invalidateQueries({ queryKey: rentalAppKeys.mine() });
-      // also bust lease queries so the new lease appears immediately in /leases
       qc.invalidateQueries({ queryKey: ['leases'] });
       toast.success('Lease draft created! Redirecting…');
     },

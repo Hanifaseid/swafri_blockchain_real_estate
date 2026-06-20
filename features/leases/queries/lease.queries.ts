@@ -6,14 +6,18 @@ import {
   getAllLeases,
   getLease,
   proposeLease,
+  signLease,
   fundLease,
   activateLease,
   cancelLease,
   completeLease,
   terminateLease,
   disputeLease,
+  respondToDispute,
   resolveDispute,
   getEscrowVerification,
+  getLeaseTimeline,
+  getTenantRoster,
 } from '../services/lease.service';
 import { CreateLeasePayload, ResolveDisputePayload } from '../types/lease.types';
 
@@ -22,6 +26,8 @@ export const leaseKeys = {
   mine: () => [...leaseKeys.all, 'mine'] as const,
   detail: (id: string) => [...leaseKeys.all, 'detail', id] as const,
   escrow: (id: string) => [...leaseKeys.all, 'escrow', id] as const,
+  timeline: (id: string) => [...leaseKeys.all, 'timeline', id] as const,
+  tenants: () => [...leaseKeys.all, 'tenants'] as const,
 };
 
 export function useCreateLease() {
@@ -160,11 +166,58 @@ export function useResolveDispute() {
   });
 }
 
-export function useEscrowVerification(id: string) {
+export function useEscrowVerification(id: string, enabled = true) {
   return useQuery({
     queryKey: leaseKeys.escrow(id),
     queryFn: () => getEscrowVerification(id),
+    enabled: !!id && enabled,
+    retry: false,
+    refetchInterval: enabled ? 10000 : false,
+  });
+}
+
+// ─── Lease Sub-features ───────────────────────────────────────────────────────
+
+export function useSignLease() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload?: { tenantSignature?: string } }) =>
+      signLease(id, payload),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
+      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      toast.success('Lease signed successfully');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useLeaseTimeline(id: string) {
+  return useQuery({
+    queryKey: leaseKeys.timeline(id),
+    queryFn: () => getLeaseTimeline(id),
     enabled: !!id,
-    refetchInterval: 10000, // Polling every 10 seconds for on-chain status
+  });
+}
+
+export function useRespondToDispute() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, response }: { id: string; response: string }) =>
+      respondToDispute(id, { response }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
+      toast.success('Dispute response submitted');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useTenantRoster(params?: { ownerId?: string }) {
+  return useQuery({
+    queryKey: [...leaseKeys.tenants(), params],
+    queryFn: () => getTenantRoster(params),
   });
 }

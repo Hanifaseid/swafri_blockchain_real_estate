@@ -21,16 +21,25 @@ import {
 import { useAuthStore } from "@/stores/auth.store";
 import {
   useListings,
+  useListingClusters,
   useMyListings,
   useAdminListings,
   useAdminListingsStats,
   useDeleteListing,
   useTransitionListing,
-  useSavedSearches,
-  useUpdateSavedSearch,
-  useDeleteSavedSearch,
-  useSaveSearch,
 } from "@/features/listings/queries/listing.queries";
+import {
+  useSavedSearches,
+  useDeleteSavedSearch,
+  useCreateSavedSearch as useSaveSearch,
+} from "@/features/saved-searches/queries/saved-search.queries";
+import type { SavedSearch } from "@/features/saved-searches/types/saved-search.types";
+import {
+  buildSavedSearchPills,
+  buildSavedSearchQuery,
+  hasSavedSearchFilters,
+  hasSpatialFilters,
+} from "@/features/saved-searches/utils/saved-search.utils";
 import { listingToSummary } from "@/features/listings/types/listing.types";
 import type {
   Listing,
@@ -55,14 +64,70 @@ export default function PropertiesPage() {
   return <AdminView />;
 }
 
-function fuzzySearchMatch(value: string, query: string) {
-  let searchIndex = 0;
-  for (let i = 0; i < value.length && searchIndex < query.length; i += 1) {
-    if (value[i] === query[searchIndex]) {
-      searchIndex += 1;
-    }
+function parsePolygonParam(
+  value: string | null,
+): [number, number][] | undefined {
+  if (!value) return undefined;
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as [number, number][]) : undefined;
+  } catch {
+    return undefined;
   }
-  return searchIndex === query.length;
+}
+
+function parseAmenitiesParams(searchParams: {
+  get: (name: string) => string | null;
+  getAll: (name: string) => string[];
+}): string | string[] | undefined {
+  const values = searchParams
+    .getAll("amenities")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  if (values.length === 0) return undefined;
+  return values.length === 1 ? values[0] : values;
+}
+
+function hasTenantSearchFilters(filters: Partial<ListingFilters>) {
+  const amenities = Array.isArray(filters.amenities)
+    ? filters.amenities
+    : filters.amenities
+      ? [filters.amenities]
+      : [];
+
+  return Boolean(
+    filters.listingType ||
+    filters.category ||
+    filters.propertyType ||
+    filters.minPrice != null ||
+    filters.maxPrice != null ||
+    filters.minBedrooms != null ||
+    filters.minBathrooms != null ||
+    filters.minArea != null ||
+    filters.maxArea != null ||
+    filters.verifiedOnly ||
+    filters.availabilityStatus ||
+    amenities.length > 0,
+  );
+}
+
+function isClusterCompatible(filters: ListingFilters) {
+  const amenities = Array.isArray(filters.amenities)
+    ? filters.amenities
+    : filters.amenities
+      ? [filters.amenities]
+      : [];
+
+  return !(
+    filters.q ||
+    filters.minBedrooms != null ||
+    filters.minBathrooms != null ||
+    filters.minArea != null ||
+    filters.maxArea != null ||
+    amenities.length > 0
+  );
 }
 
 // ─── Tenant: Browse published listings ────────────────────────────────────────
@@ -70,16 +135,21 @@ function fuzzySearchMatch(value: string, query: string) {
 function TenantView() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const initialPolygon = parsePolygonParam(searchParams.get("polygon"));
+  const initialAmenities = parseAmenitiesParams(searchParams);
 
   const [filters, setFilters] = useState<ListingFilters>(() => ({
     limit: 20,
     page: 1,
-    sort: "newest",
+    sort: (searchParams.get("sort") as ListingFilters["sort"]) || "newest",
+    q: searchParams.get("q")?.trim().toLowerCase() || undefined,
     listingType:
       (searchParams.get("listingType") as ListingFilters["listingType"]) ||
       undefined,
     category:
       (searchParams.get("category") as ListingFilters["category"]) || undefined,
+    propertyType:
+      (searchParams.get("propertyType") as PropertyType) || undefined,
     minPrice: searchParams.get("minPrice")
       ? Number(searchParams.get("minPrice"))
       : undefined,
@@ -92,28 +162,109 @@ function TenantView() {
     minBathrooms: searchParams.get("minBathrooms")
       ? Number(searchParams.get("minBathrooms"))
       : undefined,
+    minArea: searchParams.get("minArea")
+      ? Number(searchParams.get("minArea"))
+      : undefined,
+    maxArea: searchParams.get("maxArea")
+      ? Number(searchParams.get("maxArea"))
+      : undefined,
+    verifiedOnly:
+      searchParams.get("verifiedOnly") === "true" ? true : undefined,
+    availabilityStatus:
+      (searchParams.get(
+        "availabilityStatus",
+      ) as ListingFilters["availabilityStatus"]) || undefined,
+    amenities: initialAmenities,
+    swLng: searchParams.get("swLng")
+      ? Number(searchParams.get("swLng"))
+      : undefined,
+    swLat: searchParams.get("swLat")
+      ? Number(searchParams.get("swLat"))
+      : undefined,
+    neLng: searchParams.get("neLng")
+      ? Number(searchParams.get("neLng"))
+      : undefined,
+    neLat: searchParams.get("neLat")
+      ? Number(searchParams.get("neLat"))
+      : undefined,
+    lng: searchParams.get("lng") ? Number(searchParams.get("lng")) : undefined,
+    lat: searchParams.get("lat") ? Number(searchParams.get("lat")) : undefined,
+    radius: searchParams.get("radius")
+      ? Number(searchParams.get("radius"))
+      : undefined,
+    polygon: initialPolygon,
   }));
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const [showFilters, setShowFilters] = useState(
-    !!(
-      searchParams.get("listingType") ||
-      searchParams.get("category") ||
-      searchParams.get("minPrice") ||
-      searchParams.get("maxPrice") ||
-      searchParams.get("minBedrooms") ||
-      searchParams.get("minBathrooms")
-    )
+    hasTenantSearchFilters({
+      listingType:
+        (searchParams.get("listingType") as ListingFilters["listingType"]) ||
+        undefined,
+      category:
+        (searchParams.get("category") as ListingFilters["category"]) ||
+        undefined,
+      propertyType:
+        (searchParams.get("propertyType") as PropertyType) || undefined,
+      minPrice: searchParams.get("minPrice")
+        ? Number(searchParams.get("minPrice"))
+        : undefined,
+      maxPrice: searchParams.get("maxPrice")
+        ? Number(searchParams.get("maxPrice"))
+        : undefined,
+      minBedrooms: searchParams.get("minBedrooms")
+        ? Number(searchParams.get("minBedrooms"))
+        : undefined,
+      minBathrooms: searchParams.get("minBathrooms")
+        ? Number(searchParams.get("minBathrooms"))
+        : undefined,
+      minArea: searchParams.get("minArea")
+        ? Number(searchParams.get("minArea"))
+        : undefined,
+      maxArea: searchParams.get("maxArea")
+        ? Number(searchParams.get("maxArea"))
+        : undefined,
+      verifiedOnly:
+        searchParams.get("verifiedOnly") === "true" ? true : undefined,
+      availabilityStatus:
+        (searchParams.get(
+          "availabilityStatus",
+        ) as ListingFilters["availabilityStatus"]) || undefined,
+      amenities: initialAmenities,
+    }),
   );
-  const [showMap, setShowMap] = useState(false);
-  const [mapMode, setMapMode] = useState<MapSearchMode>("viewport");
-  const [mapCenter, setMapCenter] = useState<[number, number]>([40.4897, 9.1450]); // Ethiopia center
-  const [mapRadius, setMapRadius] = useState(5000); // 5km
-  const [mapPolygon, setMapPolygon] = useState<[number, number][]>([]);
+  const [showMap, setShowMap] = useState(
+    Boolean(
+      searchParams.get("swLng") ||
+      searchParams.get("lng") ||
+      searchParams.get("polygon"),
+    ),
+  );
+  const [mapMode, setMapMode] = useState<MapSearchMode>(
+    searchParams.get("polygon")
+      ? "polygon"
+      : searchParams.get("lng") && searchParams.get("radius")
+        ? "radius"
+        : "viewport",
+  );
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    searchParams.get("lat") ? Number(searchParams.get("lat")) : 9.145,
+    searchParams.get("lng") ? Number(searchParams.get("lng")) : 40.4897,
+  ]);
+  const [mapZoom, setMapZoom] = useState(
+    searchParams.get("zoom") ? Number(searchParams.get("zoom")) : 12,
+  );
+  const [mapRadius, setMapRadius] = useState(
+    searchParams.get("radius") ? Number(searchParams.get("radius")) : 5000,
+  );
+  const [mapPolygon, setMapPolygon] = useState<[number, number][]>(
+    initialPolygon ?? [],
+  );
   const [showRecentSearches, setShowRecentSearches] = useState(false);
-  const [showSavedSearches, setShowSavedSearches] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+
     try {
-      const saved = localStorage.getItem("recentSearches");
+      const saved = window.localStorage.getItem("recentSearches");
       if (saved) {
         const parsed = JSON.parse(saved);
         return Array.isArray(parsed) ? parsed : [];
@@ -126,6 +277,11 @@ function TenantView() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalName, setSaveModalName] = useState("");
   const [saveModalAlert, setSaveModalAlert] = useState(false);
+  const [amenitiesInput, setAmenitiesInput] = useState(
+    Array.isArray(initialAmenities)
+      ? initialAmenities.join(", ")
+      : (initialAmenities ?? ""),
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search → push into filters.q after 800ms to avoid 429 rate limit
@@ -141,83 +297,106 @@ function TenantView() {
   }, [search]);
 
   const { data: listingsData, isLoading } = useListings(filters);
+  const listings = listingsData?.items ?? [];
+  const filteredListings = listings;
+  const previewListings = listings.slice(0, 5);
 
-  // Client-side filtering for radius search to ensure correct display
-  const listings = useMemo(() => {
-    const allListings = listingsData?.items ?? [];
-
-    // If radius search is active, filter listings by distance
-    if (filters.lng && filters.lat && filters.radius) {
-      const centerLat = filters.lat;
-      const centerLng = filters.lng;
-      const radiusMeters = filters.radius;
-
-      return allListings.filter((listing) => {
-        if (!listing.location?.coordinates) return false;
-        const [listingLng, listingLat] = listing.location.coordinates;
-
-        // Calculate distance using Haversine formula
-        const R = 6371000; // Earth's radius in meters
-        const dLat = ((listingLat - centerLat) * Math.PI) / 180;
-        const dLng = ((listingLng - centerLng) * Math.PI) / 180;
-        const a =
-          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos((centerLat * Math.PI) / 180) *
-            Math.cos((listingLat * Math.PI) / 180) *
-            Math.sin(dLng / 2) *
-            Math.sin(dLng / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        const distance = R * c;
-
-        return distance <= radiusMeters;
-      });
+  const clusterFilters = useMemo(() => {
+    if (
+      !showMap ||
+      mapMode !== "viewport" ||
+      filters.swLng == null ||
+      filters.swLat == null ||
+      filters.neLng == null ||
+      filters.neLat == null ||
+      !isClusterCompatible(filters)
+    ) {
+      return undefined;
     }
 
-    return allListings;
-  }, [listingsData?.items, filters.lng, filters.lat, filters.radius]);
-  const normalizedSearch = search.trim().toLowerCase();
+    return {
+      swLng: filters.swLng,
+      swLat: filters.swLat,
+      neLng: filters.neLng,
+      neLat: filters.neLat,
+      zoom: mapZoom,
+      listingType: filters.listingType,
+      category: filters.category,
+      propertyType: filters.propertyType,
+      minPrice: filters.minPrice,
+      maxPrice: filters.maxPrice,
+      verifiedOnly: filters.verifiedOnly,
+      availabilityStatus: filters.availabilityStatus,
+    };
+  }, [filters, mapMode, mapZoom, showMap]);
 
-  const filteredListings = useMemo(() => {
-    return listings.filter((listing) => {
-      const priceValue = listing.price ?? listing.monthlyRent ?? 0;
-      if (filters.minPrice != null && priceValue < filters.minPrice)
-        return false;
-      if (filters.maxPrice != null && priceValue > filters.maxPrice)
-        return false;
+  const shouldUseClusters = Boolean(clusterFilters);
+  const { data: clusterData = [] } = useListingClusters(
+    clusterFilters,
+    shouldUseClusters,
+  );
 
-      if (!normalizedSearch) return true;
-      const normalizedTitle = listing.title?.toLowerCase() ?? "";
-      const normalizedType = listing.propertyType?.toLowerCase() ?? "";
-      const normalizedCategory = listing.category?.toLowerCase() ?? "";
-      const normalizedCity = listing.address?.city?.toLowerCase() ?? "";
-      const normalizedStreet = listing.address?.street?.toLowerCase() ?? "";
-      const normalizedId = listing.id?.toLowerCase() ?? "";
+  const mapListings = useMemo(
+    () =>
+      listings
+        .filter(
+          (listing) =>
+            Array.isArray(listing.location?.coordinates) &&
+            listing.location.coordinates.length === 2,
+        )
+        .map((listing) => ({
+          id: listing.id,
+          lat: listing.location.coordinates[1],
+          lng: listing.location.coordinates[0],
+          title: listing.title,
+          price: listing.price ?? listing.monthlyRent ?? 0,
+        })),
+    [listings],
+  );
 
-      return (
-        normalizedTitle.includes(normalizedSearch) ||
-        fuzzySearchMatch(normalizedTitle, normalizedSearch) ||
-        normalizedType.includes(normalizedSearch) ||
-        fuzzySearchMatch(normalizedType, normalizedSearch) ||
-        normalizedCategory.includes(normalizedSearch) ||
-        fuzzySearchMatch(normalizedCategory, normalizedSearch) ||
-        normalizedCity.includes(normalizedSearch) ||
-        fuzzySearchMatch(normalizedCity, normalizedSearch) ||
-        normalizedStreet.includes(normalizedSearch) ||
-        fuzzySearchMatch(normalizedStreet, normalizedSearch) ||
-        normalizedId.includes(normalizedSearch) ||
-        fuzzySearchMatch(normalizedId, normalizedSearch)
-      );
-    });
-  }, [normalizedSearch, listings, filters.minPrice, filters.maxPrice]);
+  const mapClusters = useMemo(
+    () =>
+      clusterData
+        .filter(
+          (cluster) =>
+            Array.isArray(cluster.center?.coordinates) &&
+            cluster.center.coordinates.length === 2,
+        )
+        .map((cluster) => ({
+          id: cluster.id,
+          lat: cluster.center.coordinates[1],
+          lng: cluster.center.coordinates[0],
+          count: cluster.count,
+          minPrice: cluster.minPrice,
+          maxPrice: cluster.maxPrice,
+        })),
+    [clusterData],
+  );
 
   const { data: savedSearchesData } = useSavedSearches();
   const savedSearches = savedSearchesData ?? [];
+  const currentSavedSearchQuery = useMemo(
+    () => buildSavedSearchQuery(filters),
+    [filters],
+  );
+  const currentSavedSearchPills = useMemo(
+    () => buildSavedSearchPills(currentSavedSearchQuery),
+    [currentSavedSearchQuery],
+  );
+  const canSaveCurrentSearch = hasSavedSearchFilters(currentSavedSearchQuery);
 
   const { mutate: deleteSavedSearch } = useDeleteSavedSearch();
   const { mutate: saveSearch, isPending: savingSearch } = useSaveSearch();
 
   // Map event handlers
-  const handleViewportChange = (bounds: { swLng: number; swLat: number; neLng: number; neLat: number }) => {
+  const handleViewportChange = (bounds: {
+    swLng: number;
+    swLat: number;
+    neLng: number;
+    neLat: number;
+    zoom: number;
+  }) => {
+    setMapZoom(bounds.zoom);
     setFilters((f) => ({
       ...f,
       swLng: bounds.swLng,
@@ -237,9 +416,9 @@ function TenantView() {
     setMapRadius(radius);
     setFilters((f) => ({
       ...f,
-      lng: center[0],
-      lat: center[1],
-      radius: radius,
+      lat: center[0],
+      lng: center[1],
+      radius,
       swLng: undefined,
       swLat: undefined,
       neLng: undefined,
@@ -276,7 +455,7 @@ function TenantView() {
     ].slice(0, 8);
     setRecentSearches(updated);
     try {
-      localStorage.setItem("recentSearches", JSON.stringify(updated));
+      window.localStorage.setItem("recentSearches", JSON.stringify(updated));
     } catch {
       // Ignore storage errors
     }
@@ -287,7 +466,7 @@ function TenantView() {
     const updated = recentSearches.filter((s) => s !== query);
     setRecentSearches(updated);
     try {
-      localStorage.setItem("recentSearches", JSON.stringify(updated));
+      window.localStorage.setItem("recentSearches", JSON.stringify(updated));
     } catch {
       // Ignore storage errors
     }
@@ -317,30 +496,73 @@ function TenantView() {
     searchInputRef.current?.blur();
   };
 
-  const applySavedSearch = (savedSearch: any) => {
+  const applySavedSearch = (savedSearch: SavedSearch) => {
     const q = savedSearch.query ?? {};
-    setSearch(savedSearch.name);
-    setFilters((f) => ({
-      ...f,
+    const hasViewport =
+      q.swLng != null && q.swLat != null && q.neLng != null && q.neLat != null;
+    const hasRadius = q.lng != null && q.lat != null && q.radius != null;
+    const hasPolygon = Boolean(q.polygon?.length);
+    const nextAmenities = Array.isArray(q.amenities)
+      ? q.amenities
+      : q.amenities
+        ? [q.amenities]
+        : [];
+
+    setSearch("");
+    setAmenitiesInput(nextAmenities.join(", "));
+    setFilters({
+      limit: 20,
+      page: 1,
+      sort: "newest",
       q: undefined,
-      listingType: q.listingType || undefined,
-      category: q.category || undefined,
+      listingType: q.listingType ?? undefined,
+      category: q.category ?? undefined,
+      propertyType: q.propertyType ?? undefined,
       minPrice: q.minPrice ?? undefined,
       maxPrice: q.maxPrice ?? undefined,
       minBedrooms: q.minBedrooms ?? undefined,
       minBathrooms: q.minBathrooms ?? undefined,
-      page: 1,
-    }));
-    if (
-      q.listingType ||
-      q.category ||
-      q.minPrice ||
-      q.maxPrice ||
-      q.minBedrooms ||
-      q.minBathrooms
-    ) {
-      setShowFilters(true);
+      minArea: q.minArea ?? undefined,
+      maxArea: q.maxArea ?? undefined,
+      verifiedOnly: q.verifiedOnly ?? undefined,
+      availabilityStatus: q.availabilityStatus ?? undefined,
+      amenities:
+        nextAmenities.length === 0
+          ? undefined
+          : nextAmenities.length === 1
+            ? nextAmenities[0]
+            : nextAmenities,
+      swLng: q.swLng ?? undefined,
+      swLat: q.swLat ?? undefined,
+      neLng: q.neLng ?? undefined,
+      neLat: q.neLat ?? undefined,
+      lng: q.lng ?? undefined,
+      lat: q.lat ?? undefined,
+      radius: q.radius ?? undefined,
+      polygon: q.polygon?.length ? q.polygon : undefined,
+    });
+
+    if (hasRadius) {
+      setMapMode("radius");
+      setMapCenter([q.lat as number, q.lng as number]);
+      setMapRadius(q.radius as number);
+      setMapPolygon([]);
+    } else if (hasPolygon) {
+      setMapMode("polygon");
+      setMapPolygon(q.polygon as [number, number][]);
+    } else {
+      setMapMode("viewport");
+      setMapPolygon([]);
+      if (hasViewport) {
+        setMapCenter([
+          ((q.swLat as number) + (q.neLat as number)) / 2,
+          ((q.swLng as number) + (q.neLng as number)) / 2,
+        ]);
+      }
     }
+
+    setShowFilters(hasTenantSearchFilters(q));
+    setShowMap(hasSpatialFilters(q));
     setShowRecentSearches(false);
     searchInputRef.current?.blur();
   };
@@ -353,25 +575,19 @@ function TenantView() {
   };
 
   const handleSaveCurrentSearch = () => {
+    if (!canSaveCurrentSearch) return;
     setSaveModalName(search.trim() || "My saved search");
     setSaveModalAlert(false);
     setShowSaveModal(true);
   };
 
   const confirmSave = () => {
-    if (!saveModalName.trim()) return;
+    if (!saveModalName.trim() || !canSaveCurrentSearch) return;
     saveSearch(
       {
         name: saveModalName.trim(),
         alertEnabled: saveModalAlert,
-        query: {
-          listingType: filters.listingType ?? undefined,
-          category: (filters as any).category ?? undefined,
-          minPrice: filters.minPrice ?? undefined,
-          maxPrice: filters.maxPrice ?? undefined,
-          minBedrooms: filters.minBedrooms ?? undefined,
-          minBathrooms: filters.minBathrooms ?? undefined,
-        },
+        query: currentSavedSearchQuery,
       },
       { onSuccess: () => setShowSaveModal(false) },
     );
@@ -500,7 +716,7 @@ function TenantView() {
                       <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-black/40 bg-gray-50 border-b border-gray-100">
                         Saved Searches
                       </div>
-                      {savedSearches.map((savedSearch: any) => (
+                      {savedSearches.map((savedSearch: SavedSearch) => (
                         <button
                           key={savedSearch.id}
                           type="button"
@@ -541,11 +757,15 @@ function TenantView() {
         <button
           type="button"
           onClick={handleSaveCurrentSearch}
-          disabled={savingSearch}
+          disabled={savingSearch || !canSaveCurrentSearch}
           className="inline-flex items-center gap-1.5 h-11 px-4 rounded-2xl text-xs font-medium transition-colors border border-gray-200 bg-white text-black/60 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <BookmarkPlus size={14} />
-          {savingSearch ? "Saving…" : "Save search"}
+          {savingSearch
+            ? "Saving…"
+            : canSaveCurrentSearch
+              ? "Save search"
+              : "Add filters to save"}
         </button>
         <button
           type="button"
@@ -731,35 +951,49 @@ function TenantView() {
       {showMap && (
         <div className="bg-white border border-gray-200 rounded-2xl p-5 mb-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Map Search</p>
+            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">
+              Map Search
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setMapMode('viewport')}
-                className={cn('text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors',
-                  mapMode === 'viewport' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}
+                onClick={() => setMapMode("viewport")}
+                className={cn(
+                  "text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors",
+                  mapMode === "viewport"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-gray-100 text-black/50 hover:bg-gray-200",
+                )}
               >
                 Viewport
               </button>
               <button
                 type="button"
-                onClick={() => setMapMode('radius')}
-                className={cn('text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors',
-                  mapMode === 'radius' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}
+                onClick={() => setMapMode("radius")}
+                className={cn(
+                  "text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors",
+                  mapMode === "radius"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-gray-100 text-black/50 hover:bg-gray-200",
+                )}
               >
                 Radius
               </button>
               <button
                 type="button"
-                onClick={() => setMapMode('polygon')}
-                className={cn('text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors',
-                  mapMode === 'polygon' ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-black/50 hover:bg-gray-200')}
+                onClick={() => setMapMode("polygon")}
+                className={cn(
+                  "text-[10px] font-mono uppercase px-3 py-1.5 rounded-lg transition-colors",
+                  mapMode === "polygon"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-gray-100 text-black/50 hover:bg-gray-200",
+                )}
               >
                 Polygon
               </button>
             </div>
           </div>
-          {mapMode === 'radius' && (
+          {mapMode === "radius" && (
             <div className="mb-4">
               <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">
                 Search Radius (meters)
@@ -781,7 +1015,7 @@ function TenantView() {
               onViewportChange={handleViewportChange}
               onRadiusChange={handleRadiusChange}
               onPolygonChange={handlePolygonChange}
-              listings={listings.map(l => ({
+              listings={listings.map((l) => ({
                 id: l.id,
                 lat: l.location.coordinates[1] ?? 0,
                 lng: l.location.coordinates[0] ?? 0,
@@ -820,7 +1054,7 @@ function TenantView() {
       ) : (
         <>
           <p className="text-xs text-black/35 font-mono mb-4">
-            {normalizedSearch
+            {search
               ? filteredListings.length
               : (listingsData?.total ?? listings.length)}{" "}
             properties found
@@ -838,7 +1072,7 @@ function TenantView() {
           {/* Pagination */}
           {listingsData &&
             listingsData.total > listingsData.limit &&
-            !normalizedSearch && (
+            !search && (
               <div className="flex items-center justify-center gap-3 mt-8">
                 <button
                   onClick={() =>
@@ -893,22 +1127,7 @@ function TenantView() {
 
             {/* Active filters summary */}
             <div className="mb-4 flex flex-wrap gap-1.5">
-              {(
-                [
-                  filters.listingType &&
-                    (filters.listingType === "sale" ? "For Sale" : "For Rent"),
-                  filters.category &&
-                    (filters.category === "residential"
-                      ? "Residential"
-                      : "Commercial"),
-                  filters.minBedrooms != null && `${filters.minBedrooms}+ beds`,
-                  filters.minPrice != null &&
-                    `From $${filters.minPrice.toLocaleString()}`,
-                  filters.maxPrice != null &&
-                    `Up to $${filters.maxPrice.toLocaleString()}`,
-                  search.trim() && `"${search.trim()}"`,
-                ].filter(Boolean) as string[]
-              ).map((pill) => (
+              {currentSavedSearchPills.map((pill) => (
                 <span
                   key={pill}
                   className="text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full"
@@ -916,16 +1135,11 @@ function TenantView() {
                   {pill}
                 </span>
               ))}
-              {!filters.listingType &&
-                !filters.category &&
-                !filters.minBedrooms &&
-                !filters.minPrice &&
-                !filters.maxPrice &&
-                !search.trim() && (
-                  <span className="text-[10px] text-gray-400 font-mono">
-                    No filters — matches all listings
-                  </span>
-                )}
+              {!canSaveCurrentSearch && (
+                <span className="text-[10px] text-gray-400 font-mono">
+                  Add at least one filter or map area to save this search
+                </span>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -968,7 +1182,11 @@ function TenantView() {
                 <button
                   type="button"
                   onClick={confirmSave}
-                  disabled={savingSearch || !saveModalName.trim()}
+                  disabled={
+                    savingSearch ||
+                    !saveModalName.trim() ||
+                    !canSaveCurrentSearch
+                  }
                   className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold py-2.5 rounded-xl transition-colors"
                 >
                   {savingSearch ? (
@@ -1139,12 +1357,20 @@ function OwnerListingsTable({
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded',
-                    l.verificationStatus === 'verified' ? 'bg-emerald-50 text-emerald-600' :
-                    l.verificationStatus === 'pending'  ? 'bg-amber-50 text-amber-600' :
-                    l.verificationStatus === 'requires_more_info' ? 'bg-blue-50 text-blue-600' :
-                    l.verificationStatus === 'rejected' ? 'bg-red-50 text-red-500' :
-                    'bg-gray-100 text-gray-400')}>
+                  <span
+                    className={cn(
+                      "text-[10px] font-mono uppercase px-2 py-0.5 rounded",
+                      l.verificationStatus === "verified"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : l.verificationStatus === "pending"
+                          ? "bg-amber-50 text-amber-600"
+                          : l.verificationStatus === "requires_more_info"
+                            ? "bg-blue-50 text-blue-600"
+                            : l.verificationStatus === "rejected"
+                              ? "bg-red-50 text-red-500"
+                              : "bg-gray-100 text-gray-400",
+                    )}
+                  >
                     {l.verificationStatus}
                   </span>
                 </td>
@@ -1223,20 +1449,36 @@ function AdminView() {
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Total Listings</p>
-            <p className="text-2xl font-semibold text-black/80">{String(stats.total ?? 0)}</p>
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">
+              Total Listings
+            </p>
+            <p className="text-2xl font-semibold text-black/80">
+              {String(stats.total ?? 0)}
+            </p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Pending Review</p>
-            <p className="text-2xl font-semibold text-amber-600">{String(stats.pendingReview ?? 0)}</p>
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">
+              Pending Review
+            </p>
+            <p className="text-2xl font-semibold text-amber-600">
+              {String(stats.pendingReview ?? 0)}
+            </p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Published</p>
-            <p className="text-2xl font-semibold text-emerald-600">{String((stats.byStatus as any)?.published ?? 0)}</p>
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">
+              Published
+            </p>
+            <p className="text-2xl font-semibold text-emerald-600">
+              {String((stats.byStatus as any)?.published ?? 0)}
+            </p>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">Verified</p>
-            <p className="text-2xl font-semibold text-emerald-600">{String((stats.byVerification as any)?.verified ?? 0)}</p>
+            <p className="text-[10px] font-mono uppercase text-black/35 mb-1">
+              Verified
+            </p>
+            <p className="text-2xl font-semibold text-emerald-600">
+              {String((stats.byVerification as any)?.verified ?? 0)}
+            </p>
           </div>
         </div>
       )}
@@ -1319,12 +1561,20 @@ function AdminListingsTable({ listings }: { listings: Listing[] }) {
                   {l.listingType} / {l.propertyType}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded',
-                    l.verificationStatus === 'verified' ? 'bg-emerald-50 text-emerald-600' :
-                    l.verificationStatus === 'pending'  ? 'bg-amber-50 text-amber-600' :
-                    l.verificationStatus === 'requires_more_info' ? 'bg-blue-50 text-blue-600' :
-                    l.verificationStatus === 'rejected' ? 'bg-red-50 text-red-500' :
-                    'bg-gray-100 text-gray-400')}>
+                  <span
+                    className={cn(
+                      "text-[10px] font-mono uppercase px-2 py-0.5 rounded",
+                      l.verificationStatus === "verified"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : l.verificationStatus === "pending"
+                          ? "bg-amber-50 text-amber-600"
+                          : l.verificationStatus === "requires_more_info"
+                            ? "bg-blue-50 text-blue-600"
+                            : l.verificationStatus === "rejected"
+                              ? "bg-red-50 text-red-500"
+                              : "bg-gray-100 text-gray-400",
+                    )}
+                  >
                     {l.verificationStatus}
                   </span>
                 </td>

@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import type {
   CreateListingInput,
+  ListingClusterFilters,
   ListingFilters,
   TransitionInput,
-  CreateSavedSearchInput,
 } from "@/features/listings/types/listing.types";
 import {
   getListings,
+  getListingClusters,
   getMyListings,
   getListing,
   createListing,
@@ -19,6 +20,7 @@ import {
   getListingAnalytics,
   getListingDashboard,
   getListingDocuments,
+  uploadListingDocuments,
   getDocumentSignedUrl,
   reviewDocument,
   getListingDuplicates,
@@ -31,10 +33,12 @@ import {
   disputeTitle,
   clearTitleDispute,
   revokeTitle,
-  createSavedSearch,
-  getSavedSearches,
-  updateSavedSearch,
-  deleteSavedSearch,
+  getListingRentalYield,
+  getYieldDashboard,
+  createMaintenanceRecord,
+  getMaintenanceRecords,
+  getNeighborhoodAnalytics,
+  executeBulkActions,
 } from "@/features/listings/services/listing.service";
 
 const KEYS = {
@@ -43,13 +47,24 @@ const KEYS = {
   mine: () => ["listings", "mine"] as const,
   detail: (id: string) => ["listings", "detail", id] as const,
   adminList: (p: object) => ["listings", "admin", p] as const,
-  savedSearches: () => ["saved-searches"] as const,
+  rentalYield: (id: string) => ["listings", "rental-yield", id] as const,
+  yieldDashboard: () => ["listings", "yield-dashboard"] as const,
+  maintenance: (id: string, p?: object) => ["listings", "maintenance", id, p] as const,
+  neighborhoodAnalytics: (p?: object) => ["listings", "neighborhood-analytics", p] as const,
 };
 
 export function useListings(filters?: ListingFilters) {
   return useQuery({
     queryKey: KEYS.discover(filters ?? {}),
     queryFn: () => getListings(filters),
+  });
+}
+
+export function useListingClusters(filters?: ListingClusterFilters, enabled = true) {
+  return useQuery({
+    queryKey: ["listings", "clusters", filters ?? {}],
+    queryFn: () => getListingClusters(filters as ListingClusterFilters),
+    enabled: enabled && Boolean(filters),
   });
 }
 
@@ -82,49 +97,7 @@ export function useAdminListingsStats() {
   });
 }
 
-export function useSaveSearch() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: CreateSavedSearchInput) => createSavedSearch(input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
-      toast.success("Search saved successfully.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
 
-export function useSavedSearches() {
-  return useQuery({
-    queryKey: KEYS.savedSearches(),
-    queryFn: getSavedSearches,
-  });
-}
-
-export function useUpdateSavedSearch(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: Partial<CreateSavedSearchInput>) =>
-      updateSavedSearch(id, input),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
-      toast.success("Search updated.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
-
-export function useDeleteSavedSearch() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => deleteSavedSearch(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: KEYS.savedSearches() });
-      toast.success("Search deleted.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-}
 
 export function useCreateListing() {
   const qc = useQueryClient();
@@ -201,6 +174,20 @@ export function useListingDocuments(id: string) {
     queryKey: ["listings", "documents", id],
     queryFn: () => getListingDocuments(id),
     enabled: !!id,
+  });
+}
+
+export function useUploadListingDocuments(listingId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ type, files }: { type: Parameters<typeof uploadListingDocuments>[1]; files: File[] }) =>
+      uploadListingDocuments(listingId, type, files),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["listings", "documents", listingId] });
+      qc.invalidateQueries({ queryKey: KEYS.detail(listingId) });
+      toast.success("Documents uploaded.");
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }
 
@@ -344,5 +331,82 @@ export function useRevokeTitle(id: string) {
       toast.success("Title revoked. Listing archived.");
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ─── Rental Yield ───────────────────────────────────────────────────────────────
+
+export function useListingRentalYield(id: string) {
+  return useQuery({
+    queryKey: KEYS.rentalYield(id),
+    queryFn: () => getListingRentalYield(id),
+    enabled: !!id,
+  });
+}
+
+export function useYieldDashboard() {
+  return useQuery({
+    queryKey: KEYS.yieldDashboard(),
+    queryFn: () => getYieldDashboard(),
+  });
+}
+
+// ─── Maintenance Records ───────────────────────────────────────────────────────
+
+export function useMaintenanceRecords(listingId: string, params?: {
+  type?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}) {
+  return useQuery({
+    queryKey: KEYS.maintenance(listingId, params),
+    queryFn: () => getMaintenanceRecords(listingId, params),
+    enabled: !!listingId,
+  });
+}
+
+export function useCreateMaintenanceRecord() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ listingId, input }: { listingId: string; input: any }) =>
+      createMaintenanceRecord(listingId, input),
+    onSuccess: (data, { listingId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.maintenance(listingId) });
+      toast.success('Maintenance record created successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to create maintenance record';
+      toast.error(message);
+    },
+  });
+}
+
+// ─── Neighborhood Analytics ─────────────────────────────────────────────────────
+
+export function useNeighborhoodAnalytics(params?: { region?: string }) {
+  return useQuery({
+    queryKey: KEYS.neighborhoodAnalytics(params),
+    queryFn: () => getNeighborhoodAnalytics(params),
+  });
+}
+
+// ─── Bulk Actions ────────────────────────────────────────────────────────────────
+
+export function useExecuteBulkActions() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (actions: any[]) => executeBulkActions(actions),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEYS.all });
+      toast.success('Bulk actions completed successfully');
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to execute bulk actions';
+      toast.error(message);
+    },
   });
 }

@@ -1,17 +1,36 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth.store';
 import { useMyRentalApplications } from '@/features/rental-applications/queries/rental-application.queries';
+import type { RentalApplicationStatus } from '@/features/rental-applications/types/rental-application.types';
 import { FileText, Loader2, Calendar } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+function formatStatus(status: RentalApplicationStatus) {
+  return status.replace('_', ' ');
+}
+
+function statusClass(status: RentalApplicationStatus) {
+  switch (status) {
+    case 'approved':
+    case 'lease_created':
+      return 'bg-emerald-50 text-emerald-700';
+    case 'rejected':
+    case 'withdrawn':
+      return 'bg-red-50 text-red-700';
+    case 'screening':
+      return 'bg-blue-50 text-blue-700';
+    default:
+      return 'bg-amber-50 text-amber-700';
+  }
+}
 
 export default function ApplicationsPage() {
   const { currentUser } = useAuthStore();
-  const { data: applications = [], isLoading } = useMyRentalApplications();
+  const { data: applications = [], isLoading } = useMyRentalApplications(!!currentUser);
 
   const isTenant = currentUser?.role === 'TENANT';
-  const isOwner = currentUser?.role === 'PROPERTY_OWNER';
 
   if (!currentUser) return null;
 
@@ -38,38 +57,45 @@ export default function ApplicationsPage() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {applications.map((app) => (
-            <div key={app.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="font-medium text-black/80">Application #{app.id.slice(-6)}</h3>
-                  <p className="text-xs text-black/40">For Listing: {app.listingId}</p>
+          {applications.map((app) => {
+            const listingTitle = typeof app.listing === 'string' ? null : app.listing?.title;
+
+            return (
+              <div key={app.id} className="bg-white border border-gray-200 rounded-2xl p-5 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start mb-3 gap-3">
+                  <div>
+                    <h3 className="font-medium text-black/80">Application #{app.id.slice(-6)}</h3>
+                    <p className="text-xs text-black/40">
+                      {listingTitle ? `For ${listingTitle}` : `For Listing: ${app.listingId}`}
+                    </p>
+                  </div>
+                  <span className={cn('px-2.5 py-1 text-[10px] font-mono uppercase rounded-lg', statusClass(app.status))}>
+                    {formatStatus(app.status)}
+                  </span>
                 </div>
-                <span className="px-2.5 py-1 text-[10px] font-mono uppercase rounded-lg bg-gray-100 text-gray-600">
-                  {app.status.replace('_', ' ')}
-                </span>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-black/60">
+                  <div>
+                    <span className="block text-[10px] font-mono uppercase text-black/30 mb-1">Start Date</span>
+                    <div className="flex items-center gap-1.5"><Calendar size={13} /> {app.desiredStartDate}</div>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-mono uppercase text-black/30 mb-1">Occupants</span>
+                    {app.occupants}
+                  </div>
+                  <div>
+                    <span className="block text-[10px] font-mono uppercase text-black/30 mb-1">Monthly Income</span>
+                    ${app.monthlyIncome.toLocaleString()}
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <Link href={`/applications/${app.id}`} className="text-emerald-600 font-medium hover:text-emerald-700">
+                      View Details →
+                    </Link>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-black/60">
-                <div>
-                  <span className="block text-[10px] font-mono uppercase text-black/30 mb-1">Start Date</span>
-                  <div className="flex items-center gap-1.5"><Calendar size={13}/> {app.desiredStartDate}</div>
-                </div>
-                <div>
-                  <span className="block text-[10px] font-mono uppercase text-black/30 mb-1">Occupants</span>
-                  {app.occupants}
-                </div>
-                <div>
-                  <span className="block text-[10px] font-mono uppercase text-black/30 mb-1">Monthly Income</span>
-                  ${app.monthlyIncome?.toLocaleString()}
-                </div>
-                <div className="flex items-center justify-end">
-                  <Link href={`/applications/${app.id}`} className="text-emerald-600 font-medium hover:text-emerald-700">
-                    View Details →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

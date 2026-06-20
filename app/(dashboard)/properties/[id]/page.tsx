@@ -2,6 +2,7 @@
 
 import { use, useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft, Upload, CheckCircle2, XCircle, Clock, AlertCircle,
   Loader2, Building2, MapPin, Bed, Bath, Maximize2, Calendar,
@@ -12,7 +13,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { Modal } from '@/components/ui/Modal';
 import {
   useListing, useTransitionListing,
-  useListingDocuments, useDocumentSignedUrl, useReviewDocument,
+  useListingDocuments, useUploadListingDocuments, useDocumentSignedUrl, useReviewDocument,
   useListingDuplicates,
   useUploadPhotos, useDeletePhoto, useSetCoverPhoto, useReorderPhotos,
   useListingAnalytics, useListingTitle,
@@ -21,8 +22,7 @@ import {
 import { useSendInquiry } from '@/features/inquiries/queries/inquiry.queries';
 import { useSubmitOffer } from '@/features/offers/queries/offer.queries';
 import type { TransitionAction, RejectionReason } from '@/features/listings/types/listing.types';
-import { apiClient } from '@/lib/api/axios-client';
-import { ENDPOINTS } from '@/lib/api/endpoints';
+import type { ListingDocumentType } from '@/features/listings/services/listing.service';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { RentalApplicationCard } from '@/components/listing/RentalApplicationCard';
@@ -60,6 +60,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const { data: duplicates = [] } = useListingDuplicates(id);
   const { mutate: getDocUrl } = useDocumentSignedUrl();
   const { mutate: doReviewDocument } = useReviewDocument(id);
+  const { mutate: doUploadDocuments, isPending: uploadingDocuments } = useUploadListingDocuments(id);
   const { mutate: doUploadPhotos, isPending: uploadingPhotos } = useUploadPhotos(id);
   const { mutate: doDeletePhoto } = useDeletePhoto(id);
   const { mutate: doSetCover } = useSetCoverPhoto(id);
@@ -73,7 +74,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
-  const [docUploadType, setDocUploadType] = useState('title_deed');
+  const [docUploadType, setDocUploadType] = useState<ListingDocumentType>('title_deed');
   const [showDocReviewModal, setShowDocReviewModal] = useState(false);
   const [reviewDocId, setReviewDocId] = useState<string | null>(null);
   const [reviewDecision, setReviewDecision] = useState<'approve' | 'reject'>('approve');
@@ -83,9 +84,10 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const [rejectNote, setRejectNote] = useState('');
   const [showRequestInfoModal, setShowRequestInfoModal] = useState(false);
   const [requestInfoNote, setRequestInfoNote] = useState('');
+  const [showSuspendModal, setShowSuspendModal] = useState(false);
+  const [suspendNote, setSuspendNote] = useState('');
   const [titleAction, setTitleAction] = useState<'dispute' | 'clear' | 'revoke' | null>(null);
   const [titleReason, setTitleReason] = useState('');
-  const [uploadingDocs, setUploadingDocs] = useState(false);
   const [showInquiryForm, setShowInquiryForm] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState('');
   const [inquiryType, setInquiryType] = useState<'rent' | 'buy' | 'general'>('general');
@@ -156,12 +158,20 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const role = currentUser.role;
   const isOwner = role === 'PROPERTY_OWNER' || listing?.createdBy === currentUser.id;
   const isAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const canSubmitForReview = currentUser.kycStatus === 'verified' && currentUser.status === 'ACTIVE';
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
   if (!listing) return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
 
   const coverPhoto = photos.find((p) => p.isCover) ?? photos[0];
   const price = listing.listingType === 'rent' ? `$${listing.monthlyRent?.toLocaleString()}/mo` : `$${listing.price?.toLocaleString()}`;
+  const approvedTitleDeed = docs.find((doc) => doc.type === 'title_deed' && doc.status === 'approved');
+  const publishReadinessChecks = [
+    { label: 'Listing verification is verified', met: listing.verificationStatus === 'verified' },
+    { label: 'Approved title deed is on file', met: Boolean(approvedTitleDeed) },
+    { label: 'Ownership hash captured on approval', met: Boolean(approvedTitleDeed?.hash) },
+  ];
+  const canLikelyPublish = publishReadinessChecks.every((check) => check.met);
 
   const ownerActions: { action: TransitionAction; label: string; style: string }[] = [];
   if (isOwner) {
@@ -242,27 +252,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     }
   }
 
-  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    setUploadingDocs(true);
-    try {
-      const form = new FormData();
-      form.append('type', 'title_deed');
-      files.forEach((f) => form.append('documents', f));
-      await apiClient.post(ENDPOINTS.LISTINGS.UPLOAD_DOCS(id), form, { 
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 0 
-      });
-      toast.success('📄 Documents uploaded successfully!');
-      refetch();
-    } catch { 
-      toast.error('❌ Upload failed. Please try again.'); 
-    }
-    finally { 
-      setUploadingDocs(false); 
-      if (docInputRef.current) docInputRef.current.value = ''; 
-    }
+    doUploadDocuments({ files, type: docUploadType }, {
+      onSuccess: () => { refetch(); },
+    });
+    if (docInputRef.current) docInputRef.current.value = '';
   };
 
   return (
@@ -278,7 +274,17 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Cover + status + actions */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        {coverPhoto && <div className="h-56 overflow-hidden"><img src={coverPhoto.url} alt={listing.title} className="w-full h-full object-cover" /></div>}
+        {coverPhoto && (
+          <div className="relative h-56 overflow-hidden">
+            <Image
+              src={coverPhoto.url}
+              alt={listing.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 896px"
+              className="object-cover"
+            />
+          </div>
+        )}
         <div className="p-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -298,12 +304,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-wrap gap-2">
             {ownerActions.map(({ action, label, style }) => (
               <button key={action} type="button" disabled={transitioning}
-                onClick={() => { 
-                  if (action === 'submit' && currentUser.kycStatus !== 'verified') { 
-                    toast.error('🔒 KYC must be verified to submit.'); 
-                    return; 
-                  } 
-                  transition({ action }); 
+                onClick={() => {
+                  if (action === 'submit' && !canSubmitForReview) {
+                    toast.error('Your account must be active and KYC verified to submit for review.');
+                    return;
+                  }
+                  transition({ action });
                 }}
                 className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}>
                 {label}
@@ -319,14 +325,9 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     handlePublishClick();
                     return;
                   }
-                  if (action === 'reject') { 
-                    setShowRejectModal(true); 
-                    return; 
-                  }
-                  if (action === 'request_info') { 
-                    setShowRequestInfoModal(true); 
-                    return; 
-                  }
+                  if (action === 'reject') { setShowRejectModal(true); return; }
+                  if (action === 'request_info') { setShowRequestInfoModal(true); return; }
+                  if (action === 'suspend') { setShowSuspendModal(true); return; }
                   transition({ action });
                 }}
                 className={cn('text-xs font-semibold px-3 py-2 rounded-xl transition-colors disabled:opacity-50', style)}
@@ -348,8 +349,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     🏠 Apply to Rent
                   </button>
                 )}
-                {listing.listingType === 'sale' && (
-                  <button type="button" onClick={handleOpenOfferModal}
+                {listing.listingType === 'sale' && role === 'TENANT' && (
+                  <button type="button" onClick={() => { setOfferAmount(listing.price ?? 0); setShowOfferModal(true); }}
                     className="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
                     💰 Make Offer
                   </button>
@@ -496,10 +497,23 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
             disabled={creatingOffer || offerAmount <= 0}
             onClick={() => {
               if (!listing) return;
+              if (role !== 'TENANT') {
+                toast.error('Only tenant accounts can submit offers.');
+                return;
+              }
+              if (listing.listingType !== 'sale' || listing.status !== 'published') {
+                toast.error('Offers are only available on published sale listings.');
+                return;
+              }
+              if (!Number.isFinite(offerAmount) || offerAmount <= 0) {
+                toast.error('Enter a valid offer amount.');
+                return;
+              }
+
               submitOffer({
                 listingId: id,
                 offerPrice: offerAmount,
-                currency: listing.currency,
+                currency: listing.currency.toUpperCase(),
                 message: offerMessage.trim() || undefined,
               }, {
                 onSuccess: () => {
@@ -528,12 +542,12 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Inquiry form for all users */}
-      {listing.status === 'published' && (
+      {/* Inquiry form */}
+      {listing.status === 'published' && !isOwner && (
         <div data-inquiry-section className="bg-white rounded-2xl border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-3">
             <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Send an Inquiry</p>
-            <button type="button" onClick={() => { setShowInquiryForm((v) => !v); }}
+            <button type="button" onClick={() => setShowInquiryForm((v) => !v)}
               className="text-xs text-emerald-500 hover:text-emerald-600 font-medium">
               {showInquiryForm ? 'Cancel' : '+ Ask a question'}
             </button>
@@ -608,8 +622,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                     dragOverIdx === idx && dragIdx !== idx && 'ring-2 ring-emerald-400 ring-offset-2 scale-[1.02]',
                   )}
                 >
-                  <img src={photo.url} alt="" className="w-full h-full object-cover" />
-                  {photo.isCover && <span className="absolute top-1 left-1 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">⭐ COVER</span>}
+                  <Image
+                    src={photo.url}
+                    alt="Listing photo"
+                    fill
+                    sizes="(max-width: 640px) 33vw, 25vw"
+                    className="object-cover"
+                  />
+                  {photo.isCover && <span className="absolute top-1 left-1 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">COVER</span>}
                   {isOwner && (
                     <>
                       <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -625,7 +645,14 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               ))}
               {previewPhotos.map((preview, i) => (
                 <div key={`preview-${i}`} className="relative rounded-lg overflow-hidden aspect-square border border-gray-200">
-                  <img src={preview.url} alt="uploading" className="w-full h-full object-cover opacity-40 blur-[2px]" />
+                  <Image
+                    src={preview.url}
+                    alt="Uploading preview"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 640px) 33vw, 25vw"
+                    className="object-cover opacity-40 blur-[2px]"
+                  />
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
                     <Loader2 size={24} className="animate-spin text-emerald-600" />
                     <span className="text-[10px] font-bold text-white bg-black/60 px-2 py-1 rounded tracking-widest shadow-sm">UPLOADING...</span>
@@ -658,20 +685,22 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1.5 block">Document Type</label>
-                  <select value={docUploadType} onChange={(e) => setDocUploadType(e.target.value)}
+                  <select value={docUploadType} onChange={(e) => setDocUploadType(e.target.value as ListingDocumentType)}
                     className="w-full h-9 rounded-lg border border-gray-200 px-3 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400">
-                    <option value="title_deed">📄 Title Deed</option>
-                    <option value="tax_record">📊 Tax Record</option>
-                    <option value="utility_bill">💡 Utility Bill</option>
-                    <option value="ownership_certificate">📜 Ownership Certificate</option>
-                    <option value="other">📎 Other</option>
+                    <option value="title_deed">Title Deed</option>
+                    <option value="tax_record">Tax Record</option>
+                    <option value="utility_bill">Utility Bill</option>
+                    <option value="ownership_certificate">Ownership Certificate</option>
+                    <option value="lease_authority">Lease Authority</option>
+                    <option value="government_doc">Government Document</option>
+                    <option value="other">Other</option>
                   </select>
                 </div>
                 <div className="flex items-end">
-                  <button type="button" onClick={() => docInputRef.current?.click()} disabled={uploadingDocs}
+                  <button type="button" onClick={() => docInputRef.current?.click()} disabled={uploadingDocuments}
                     className="flex items-center gap-2 h-9 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white text-xs font-semibold rounded-xl transition-colors w-full justify-center">
-                    {uploadingDocs ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
-                    {uploadingDocs ? 'Uploading…' : 'Choose File'}
+                    {uploadingDocuments ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
+                    {uploadingDocuments ? 'Uploading…' : 'Choose File'}
                   </button>
                 </div>
               </div>
@@ -682,8 +711,71 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
 
           {/* Listing status banner */}
           {listing.status === 'draft' && isOwner && (
-            <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700 mb-3">
-              <AlertCircle size={13} className="shrink-0 mt-0.5" /> 
+            <div className="flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> This listing is in draft mode. Upload photos and documents, then submit for review when ready.
+            </div>
+          )}
+
+          {/* Verification status banner */}
+          {listing.verificationStatus === 'unverified' && isOwner && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Upload a title deed to start verification before submitting for review.
+            </div>
+          )}
+          {isOwner && !canSubmitForReview && (listing.status === 'draft' || listing.status === 'rejected') && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Submit for review requires an active account and verified KYC.
+            </div>
+          )}
+          {listing.verificationStatus === 'requires_more_info' && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Additional information requested. Please review admin notes and provide requested documents.
+            </div>
+          )}
+          {listing.verificationStatus === 'verified' && (
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-700 mb-3">
+              <CheckCircle2 size={13} /> Ownership verified. Listing is eligible for publishing once title-deed approval requirements are met.
+            </div>
+          )}
+          {isAdmin && listing.status === 'approved' && (
+            <div className={cn(
+              'rounded-xl border p-3 text-xs mb-3',
+              canLikelyPublish ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700',
+            )}>
+              <div className="flex items-center gap-2 font-medium mb-2">
+                {canLikelyPublish ? <CheckCircle2 size={13} /> : <AlertCircle size={13} className="shrink-0" />}
+                Publish readiness
+              </div>
+              <ul className="space-y-1.5">
+                {publishReadinessChecks.map((check) => (
+                  <li key={check.label} className="flex items-center gap-2">
+                    {check.met ? <CheckCircle2 size={12} className="shrink-0" /> : <XCircle size={12} className="shrink-0" />}
+                    <span>{check.label}</span>
+                  </li>
+                ))}
+              </ul>
+              {!canLikelyPublish && (
+                <p className="mt-2 text-[11px] text-current/80">
+                  The backend will still enforce publish preconditions and return 409 until every requirement is met.
+                </p>
+              )}
+            </div>
+          )}
+          {listing.verificationStatus === 'rejected' && (
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Verification rejected. Please review the rejection reason and address the issues before resubmitting.
+            </div>
+          )}
+          {listing.verificationStatus === 'suspended' && (
+            <div className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl p-3 text-xs text-orange-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" /> Verification suspended. Contact support for more information.
+            </div>
+          )}
+
+          {/* Duplicate detection hints */}
+          {isAdmin && duplicates.length > 0 && (
+            <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 mb-3">
+              <AlertCircle size={13} className="shrink-0 mt-0.5" />
               <div>
                 <p className="font-medium">📝 Draft Mode</p>
                 <p className="mt-0.5">Upload photos and documents, then submit for review when ready.</p>
@@ -734,11 +826,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       {analytics && (isOwner || isAdmin) && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
           <p className="text-[10px] font-mono uppercase tracking-widest text-black/35 mb-4 flex items-center gap-1.5"><BarChart2 size={10} /> Analytics</p>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             {[
               { label: 'Views', value: analytics.counts.view },
               { label: 'Favorites', value: analytics.counts.favorite },
               { label: 'Inquiries', value: analytics.counts.inquiry },
+              { label: 'Offers', value: analytics.counts.offer },
+              { label: 'Applications', value: analytics.counts.rental_application },
               { label: 'Leads', value: analytics.leadCount },
               { label: 'Conv.', value: `${(analytics.conversionRate * 100).toFixed(1)}%` },
             ].map(({ label, value }) => (
@@ -747,6 +841,20 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 <p className="text-[9px] font-mono uppercase text-black/35 mt-0.5">{label}</p>
               </div>
             ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-[9px] font-mono uppercase text-black/35 mb-1">Unique viewers</p>
+              <p className="text-sm font-semibold text-black/80">{analytics.uniqueViewers}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-[9px] font-mono uppercase text-black/35 mb-1">Last event</p>
+              <p className="text-sm font-semibold text-black/80">{analytics.lastEventAt ? new Date(analytics.lastEventAt).toLocaleString() : '—'}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+              <p className="text-[9px] font-mono uppercase text-black/35 mb-1">Token minted</p>
+              <p className="text-sm font-semibold text-black/80">{listing.tokenId ? `#${listing.tokenId}` : 'Not minted'}</p>
+            </div>
           </div>
         </div>
       )}
@@ -761,7 +869,13 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                 {titleInfo.verified ? <CheckCircle2 size={13} /> : <Clock size={13} />}
                 Token #{titleInfo.tokenId} — {titleInfo.verified ? '✅ Verified on-chain' : '⏳ Not verified'}
               </div>
-              <p className="text-[10px] font-mono text-black/40 break-all">Contract: {titleInfo.contractAddress}</p>
+              <div className="space-y-1 text-[10px] font-mono text-black/40 break-all">
+                <p>Contract: {titleInfo.contractAddress}</p>
+                <p>Owner: {titleInfo.owner}</p>
+                {titleInfo.status ? <p>Status: {titleInfo.status}</p> : null}
+                <p>On-chain hash: {titleInfo.onChainHash}</p>
+                <p>Off-chain hash: {titleInfo.offChainHash}</p>
+              </div>
               {isAdmin && (
                 <div className="flex flex-wrap gap-2 pt-1">
                   <button type="button" onClick={() => setTitleAction('dispute')} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100 transition-colors">⚠️ Dispute</button>
@@ -827,6 +941,28 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
                   onClick={() => { transition({ action: 'request_info', note: requestInfoNote.trim() }); setShowRequestInfoModal(false); setRequestInfoNote(''); }}
                   className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50 transition-colors">
                   Send Request
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Suspend modal */}
+      {showSuspendModal && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" onClick={() => setShowSuspendModal(false)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md bg-white rounded-2xl p-6 border border-gray-200 shadow-2xl">
+            <h3 className="text-sm font-semibold text-black mb-4">Suspend Listing</h3>
+            <div className="space-y-3">
+              <textarea value={suspendNote} onChange={(e) => setSuspendNote(e.target.value)} rows={4} placeholder="Reason for suspension…"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-orange-400 resize-none" />
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowSuspendModal(false)} className="text-xs text-black/40 px-4 py-2">Cancel</button>
+                <button type="button" disabled={transitioning || !suspendNote.trim()}
+                  onClick={() => { transition({ action: 'suspend', note: suspendNote.trim() }); setShowSuspendModal(false); setSuspendNote(''); }}
+                  className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold px-5 py-2 rounded-xl disabled:opacity-50">
+                  Suspend
                 </button>
               </div>
             </div>

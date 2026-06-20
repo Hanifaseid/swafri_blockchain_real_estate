@@ -11,6 +11,7 @@ interface ApiResp<T> {
   success: boolean;
   message: string;
   data: T;
+  errors?: Array<{ field?: string; message?: string }>;
 }
 
 
@@ -41,47 +42,46 @@ function normalizeOffer(offer: any): Offer {
 
   return {
     ...offer,
-
-    offerPrice:
-      offer.offerPrice ??
-      offer.amount ??
-      0,
-
-
-    listing:
-      typeof offer.listing === 'object'
-        ? offer.listing
-        : offer.listing,
-
-
-    offerer:
-      typeof offer.offerer === 'object'
-        ? offer.offerer
-        : offer.offerer,
+    listingId: offer.listingId ?? (typeof offer.listing === 'string' ? offer.listing : offer.listing?.id) ?? '',
+    amount: offer.amount ?? offer.offerPrice ?? 0,
+    buyer: offer.buyer ?? offer.offerer,
+    responseNote: offer.responseNote ?? offer.responseMessage,
+    counterAmount: offer.counterAmount ?? offer.counterOfferPrice,
   };
 }
 
+function extractOfferError(error: unknown, fallback: string): Error {
+  const axiosError = error as {
+    response?: {
+      data?: {
+        message?: string;
+        errors?: Array<{ field?: string; message?: string }>;
+      };
+    };
+  };
 
+  const apiError = axiosError.response?.data;
+  const fieldErrors = apiError?.errors
+    ?.map((item) => item?.message || item?.field)
+    .filter(Boolean);
 
-function normalizeArray<T>(
-  data: ApiResp<T[]> | ApiPaginatedResp<T>
-): T[] {
+  if (fieldErrors && fieldErrors.length > 0) {
+    return new Error(fieldErrors.join(', '));
+  }
 
+  return new Error(apiError?.message || fallback);
+}
+
+function normalizeArray<T>(data: ApiResp<T[]> | ApiPaginatedResp<T>): T[] {
   let items: T[] = [];
 
 
   if (isArrayPayload(data.data)) {
 
     items = data.data;
-
-  } 
-  else if ('items' in data && Array.isArray(data.items)) {
-
+  } else if ('items' in data && Array.isArray(data.items)) {
     items = data.items;
-
-  } 
-  else {
-
+  } else {
     const nested = data.data;
 
 
@@ -104,213 +104,68 @@ function normalizeArray<T>(
   return items;
 }
 
-
-
-
-export async function submitOffer(
-  input: CreateOfferInput
-): Promise<Offer> {
-
-
+export async function submitOffer(input: CreateOfferInput): Promise<Offer> {
   const payload = {
 
     listingId: input.listingId,
-
     amount: input.offerPrice,
-
     currency: input.currency,
 
     message: input.message,
-
   };
 
-
-
-  const { data } =
-    await apiClient.post<ApiResp<Offer>>(
-      ENDPOINTS.OFFERS.SUBMIT,
-      payload
-    );
-
-
-
-  if (!data.success) {
-
-    throw new Error(data.message);
-
-  }
-
-
-
-  return normalizeOffer(data.data);
-
-}
-
-
-
-
-
-
-export async function getMyOffers(): Promise<Offer[]> {
-
-
   try {
+    const { data } = await apiClient.post<ApiResp<Offer>>(ENDPOINTS.OFFERS.SUBMIT, payload);
 
-
-    const { data } =
-      await apiClient.get<
-        ApiResp<Offer[]> |
-        ApiPaginatedResp<Offer>
-      >(
-        ENDPOINTS.OFFERS.MINE
-      );
-
-
-
-    return normalizeArray<Offer>(data)
-      .map(normalizeOffer);
-
-
-
-  } catch {
-
-
-    return [];
-
-
-  }
-
-}
-
-
-
-
-
-
-export async function getReceivedOffers(): Promise<Offer[]> {
-
-
-  try {
-
-
-    const { data } =
-      await apiClient.get<
-        ApiResp<Offer[]> |
-        ApiPaginatedResp<Offer>
-      >(
-        ENDPOINTS.OFFERS.RECEIVED
-      );
-
-
-
-    return normalizeArray<Offer>(data)
-      .map(normalizeOffer);
-
-
-
-  } catch {
-
-
-    return [];
-
-
-  }
-
-}
-
-
-
-
-
-
-
-export async function respondOffer(
-  id: string,
-  input: RespondOfferInput
-): Promise<Offer> {
-  // Convert status to action
-  let action: string;
-  if (input.status === 'accepted') action = 'accept';
-  else if (input.status === 'rejected') action = 'reject';
-  else if (input.status === 'countered') action = 'counter';
-  else throw new Error('Invalid status');
-
-  // Build payload - TRY BOTH FORMATS
-  // Option A: Simple
-  const payload = { action };
-  
-  // Option B: With extra fields (uncomment to try)
-  // const payload: any = { action };
-  // if (input.responseMessage?.trim()) payload.responseNote = input.responseMessage.trim();
-  // if (input.status === 'countered' && input.counterOfferPrice) payload.counterAmount = input.counterOfferPrice;
-
-  console.log("=== TESTING RESPOND OFFER ===");
-  console.log("Offer ID:", id);
-  console.log("Status:", input.status);
-  console.log("Action:", action);
-  console.log("Payload:", JSON.stringify(payload, null, 2));
-  console.log("Full input:", input);
-
-  try {
-    const { data } = await apiClient.patch<ApiResp<Offer>>(
-      ENDPOINTS.OFFERS.RESPOND(id),
-      payload
-    );
-
-    if (!data.success) {
-      throw new Error(data.message);
-    }
+    if (!data.success) throw new Error(data.message);
 
     return normalizeOffer(data.data);
-  } catch (error: any) {
-    console.log("=== ERROR ===");
-    console.log("Status:", error.response?.status);
-    console.log("Data:", JSON.stringify(error.response?.data, null, 2));
-    
-    // Check if there are validation errors
-    if (error.response?.data?.errors) {
-      console.log("Validation errors:", JSON.stringify(error.response.data.errors, null, 2));
-    }
-    
-    throw error;
+  } catch (error) {
+    throw extractOfferError(error, 'Failed to submit offer.');
   }
 }
 
-
-
-
-
-
-
-export async function cancelOffer(
-  id: string
-): Promise<Offer> {
-
-
-  const { data } =
-    await apiClient.post<ApiResp<Offer>>(
-      ENDPOINTS.OFFERS.CANCEL(id)
-    );
-
-
-
-  if (!data.success) {
-
-    throw new Error(data.message);
-
+export async function getMyOffers(): Promise<Offer[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<Offer[]> | ApiPaginatedResp<Offer>>(ENDPOINTS.OFFERS.MINE);
+    return normalizeArray<Offer>(data).map(normalizeOffer);
+  } catch {
+    return [];
   }
-
-
-
-  return normalizeOffer(data.data);
-
 }
 
+export async function getReceivedOffers(): Promise<Offer[]> {
+  try {
+    const { data } = await apiClient.get<ApiResp<Offer[]> | ApiPaginatedResp<Offer>>(ENDPOINTS.OFFERS.RECEIVED);
+    return normalizeArray<Offer>(data).map(normalizeOffer);
+  } catch {
+    return [];
+  }
+}
 
+export async function respondOffer(id: string, input: RespondOfferInput): Promise<Offer> {
+  try {
+    const { data } = await apiClient.patch<ApiResp<Offer>>(ENDPOINTS.OFFERS.RESPOND(id), input);
 
+    if (!data.success) throw new Error(data.message);
 
+    return normalizeOffer(data.data);
+  } catch (error) {
+    throw extractOfferError(error, 'Failed to respond to offer.');
+  }
+}
 
+export async function cancelOffer(id: string): Promise<Offer> {
+  try {
+    const { data } = await apiClient.post<ApiResp<Offer>>(ENDPOINTS.OFFERS.CANCEL(id));
 
+    if (!data.success) throw new Error(data.message);
+
+    return normalizeOffer(data.data);
+  } catch (error) {
+    throw extractOfferError(error, 'Failed to cancel offer.');
+  }
+}
 export const offerService = {
 
   submitOffer,
@@ -322,5 +177,4 @@ export const offerService = {
   respondOffer,
 
   cancelOffer,
-
 };

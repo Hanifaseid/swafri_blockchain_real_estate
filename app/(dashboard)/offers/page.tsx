@@ -179,15 +179,16 @@ function OwnerOffersView() {
 
 function ReceivedOfferCard({ offer }: { offer: Offer }) {
   const [expanded, setExpanded] = useState(false);
-  const [responseMessage, setResponseMessage] = useState(offer.responseMessage || '');
+  const [responseNote, setResponseNote] = useState(offer.responseMessage || '');
   const [responseAction, setResponseAction] = useState<OfferResponseAction>('accepted');
-  const [counterPrice, setCounterPrice] = useState<number>(offer.counterOfferPrice ?? offer.offerPrice);
+  const [counterAmount, setCounterAmount] = useState<number>(offer.counterOfferPrice ?? offer.offerPrice);
   const { mutate: respond, isPending } = useRespondOffer();
 
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
-  const offerer = typeof offer.offerer === 'string' ? null : offer.offerer;
+  const buyer = typeof offer.offerer === 'string' ? null : offer.offerer;
 
-  const canSubmit = responseAction !== 'countered' || counterPrice > 0;
+  const canRespond = offer.status === 'pending' || offer.status === 'countered';
+  const canSubmit = responseAction !== 'countered' || counterAmount > 0;
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
@@ -204,7 +205,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Received</span>
           </div>
           <p className="text-sm font-medium text-black/80 truncate">{listing?.title ?? `Listing ${offer.listingId}`}</p>
-          <p className="text-xs text-black/50">{offerer?.name ?? offerer?.email ?? 'Buyer'}</p>
+          <p className="text-xs text-black/50">{buyer?.name ?? buyer?.email ?? 'Buyer'}</p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-emerald-700">{formatCurrency(offer.offerPrice, offer.currency)}</span>
@@ -258,8 +259,8 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
                   <input
                     type="number"
                     min={0}
-                    value={counterPrice}
-                    onChange={(event) => setCounterPrice(Number(event.target.value))}
+                    value={counterAmount}
+                    onChange={(event) => setCounterAmount(Number(event.target.value))}
                     className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-black/70 focus:outline-none focus:border-emerald-400"
                   />
                 </div>
@@ -270,8 +271,8 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
           <div>
             <label className="text-[10px] font-mono uppercase tracking-widest text-black/40 mb-1 block">Message</label>
             <textarea
-              value={responseMessage}
-              onChange={(event) => setResponseMessage(event.target.value)}
+              value={responseNote}
+              onChange={(event) => setResponseNote(event.target.value)}
               rows={3}
               placeholder="Write a response to the buyer…"
               className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm text-black/70 bg-white focus:outline-none focus:border-emerald-400 resize-none"
@@ -284,12 +285,12 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             </div>
             <button
               type="button"
-              disabled={isPending || !canSubmit}
+              disabled={isPending || !canRespond || !canSubmit}
               onClick={() => {
                 respond({ id: offer.id, payload: {
                   status: responseAction,
-                  responseMessage: responseMessage.trim() || undefined,
-                  counterOfferPrice: responseAction === 'countered' ? counterPrice : undefined,
+                  responseMessage: responseNote.trim() || undefined,
+                  counterOfferPrice: responseAction === 'countered' ? counterAmount : undefined,
                 } });
               }}
               className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 transition-colors"
@@ -306,7 +307,7 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
 
 function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOfferMutation: ReturnType<typeof useCancelOffer> }) {
   const [expanded, setExpanded] = useState(false);
-  const isCancelable = offer.status === 'pending';
+  const isCancelable = offer.status === 'pending' || offer.status === 'countered';
 
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
 
