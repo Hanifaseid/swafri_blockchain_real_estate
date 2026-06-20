@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle2,
 } from "lucide-react";
+import HealthPanel from "@/components/health/HealthPanel";
 
 // Dashboard overview page — role-aware content.
 // Each role sees their own summary cards.
@@ -154,50 +155,56 @@ function OwnerOverview() {
 
 function AdminOverview() {
   return (
-    <div className="grid md:grid-cols-3 gap-4">
-      <QuickCard
-        icon={<Users className="w-5 h-5 text-blue-400" />}
-        title="Manage Users"
-        desc="Review, suspend or reactivate user accounts"
-        href="/dashboard/users"
-      />
-      <QuickCard
-        icon={<BadgeCheck className="w-5 h-5 text-blue-400" />}
-        title="KYC Review"
-        desc="Review pending KYC submissions"
-        href="/dashboard/kyc"
-      />
-      <QuickCard
-        icon={<Activity className="w-5 h-5 text-blue-400" />}
-        title="Audit Logs"
-        desc="Monitor platform activity and actions"
-        href="/dashboard/audit"
-      />
+    <div className="space-y-6">
+      <div className="grid md:grid-cols-3 gap-4">
+        <QuickCard
+          icon={<Users className="w-5 h-5 text-blue-400" />}
+          title="Manage Users"
+          desc="Review, suspend or reactivate user accounts"
+          href="/dashboard/users"
+        />
+        <QuickCard
+          icon={<BadgeCheck className="w-5 h-5 text-blue-400" />}
+          title="KYC Review"
+          desc="Review pending KYC submissions"
+          href="/dashboard/kyc"
+        />
+        <QuickCard
+          icon={<Activity className="w-5 h-5 text-blue-400" />}
+          title="Audit Logs"
+          desc="Monitor platform activity and actions"
+          href="/dashboard/audit"
+        />
+      </div>
+      <HealthPanel />
     </div>
   );
 }
 
 function SuperAdminOverview() {
   return (
-    <div className="grid md:grid-cols-3 gap-4">
-      <QuickCard
-        icon={<ShieldCheck className="w-5 h-5 text-amber-400" />}
-        title="Manage Admins"
-        desc="Create and manage admin accounts"
-        href="/dashboard/users?role=ADMIN"
-      />
-      <QuickCard
-        icon={<Users className="w-5 h-5 text-amber-400" />}
-        title="All Users"
-        desc="View and control all platform users"
-        href="/dashboard/users"
-      />
-      <QuickCard
-        icon={<Clock className="w-5 h-5 text-amber-400" />}
-        title="Audit Logs"
-        desc="Full platform activity history"
-        href="/dashboard/audit"
-      />
+    <div className="space-y-6">
+      <div className="grid md:grid-cols-3 gap-4">
+        <QuickCard
+          icon={<ShieldCheck className="w-5 h-5 text-amber-400" />}
+          title="Manage Admins"
+          desc="Create and manage admin accounts"
+          href="/dashboard/users?role=ADMIN"
+        />
+        <QuickCard
+          icon={<Users className="w-5 h-5 text-amber-400" />}
+          title="All Users"
+          desc="View and control all platform users"
+          href="/dashboard/users"
+        />
+        <QuickCard
+          icon={<Clock className="w-5 h-5 text-amber-400" />}
+          title="Audit Logs"
+          desc="Full platform activity history"
+          href="/dashboard/audit"
+        />
+      </div>
+      <HealthPanel />
     </div>
   );
 }
