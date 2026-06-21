@@ -55,6 +55,7 @@ export function ConfirmDialog({
       <div className="mt-6 flex justify-end gap-3">
         <Button
           variant="outline"
+          className="border-border-primary bg-surface-input text-text-secondary hover:bg-surface-highlight hover:text-white"
           onClick={() => onOpenChange(false)}
           disabled={loading}
         >

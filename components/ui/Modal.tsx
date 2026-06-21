@@ -33,14 +33,14 @@ export function Modal({
       <Dialog.Portal>
         {/* Overlay */}
         <Dialog.Overlay
-          className="fixed inset-0 z-40 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         />
 
         {/* Panel */}
         <Dialog.Content
           className={cn(
             'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2',
-            'rounded-xl border border-gray-200 bg-white text-gray-900 p-6 shadow-xl',
+            'rounded-xl border border-border-primary bg-black p-6 text-white shadow-2xl shadow-black/60',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
             'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
@@ -53,12 +53,12 @@ export function Modal({
           {/* Header */}
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="text-base font-semibold text-gray-900">
+              <Dialog.Title className="text-base font-semibold text-white">
                 {title}
               </Dialog.Title>
 
               {description && (
-                <Dialog.Description className="mt-1 text-sm text-gray-600">
+                <Dialog.Description className="mt-1 text-sm text-text-muted">
                   {description}
                 </Dialog.Description>
               )}
@@ -66,14 +66,14 @@ export function Modal({
 
             <Dialog.Close
               aria-label="Close"
-              className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-md p-1 text-text-muted transition-colors hover:bg-white/10 hover:text-white"
             >
               <X size={18} />
             </Dialog.Close>
           </div>
 
           {/* Body wrapper ensures text visibility consistency */}
-          <div className="text-gray-900">
+          <div className="text-white">
             {children}
           </div>
         </Dialog.Content>

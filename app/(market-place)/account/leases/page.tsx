@@ -336,7 +336,11 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
               {lease.dispute.reason && (
                 <div>
                   <p className="mb-0.5 text-xs text-white/40">Reason</p>
-                  <p className="text-sm text-white/70">"{lease.dispute.reason}"</p>
+                  <p className="text-sm text-white/70">
+                    <span aria-hidden="true">&quot;</span>
+                    {lease.dispute.reason}
+                    <span aria-hidden="true">&quot;</span>
+                  </p>
                 </div>
               )}
               {lease.dispute.response ? (
@@ -344,7 +348,11 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                   <p className="mb-0.5 text-xs text-white/40">
                     Response {lease.dispute.respondedAt ? `· ${fmtDate(lease.dispute.respondedAt)}` : ''}
                   </p>
-                  <p className="text-sm text-white/70">"{lease.dispute.response}"</p>
+                  <p className="text-sm text-white/70">
+                    <span aria-hidden="true">&quot;</span>
+                    {lease.dispute.response}
+                    <span aria-hidden="true">&quot;</span>
+                  </p>
                 </div>
               ) : (
                 <p className="text-xs italic text-white/35">Awaiting counterparty response</p>
@@ -384,7 +392,7 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-red-400/40 text-red-300 hover:bg-red-400/10"
+                      className="border-red-400/40 bg-transparent text-red-300 hover:bg-red-400/10 hover:text-red-200"
                       onClick={() => setMode('respond')}
                     >
                       Respond to dispute
@@ -394,7 +402,7 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-orange-400/40 text-orange-300 hover:bg-orange-400/10"
+                      className="border-orange-400/40 bg-transparent text-orange-300 hover:bg-orange-400/10 hover:text-orange-200"
                       onClick={() => setMode('dispute')}
                     >
                       Report dispute
@@ -404,7 +412,7 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-white/15 text-white/45 hover:bg-white/5"
+                      className="border-white/15 bg-transparent text-white/45 hover:bg-white/5 hover:text-white"
                       onClick={() => setMode('cancel')}
                     >
                       Cancel lease
@@ -438,7 +446,12 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                     >
                       Submit dispute
                     </Button>
-                    <Button size="sm" variant="outline" onClick={resetMode}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-white/15 bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
+                      onClick={resetMode}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -450,7 +463,11 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-white">Respond to dispute</p>
                   {lease.dispute?.reason && (
-                    <p className="text-sm italic text-white/50">"{lease.dispute.reason}"</p>
+                    <p className="text-sm italic text-white/50">
+                      <span aria-hidden="true">&quot;</span>
+                      {lease.dispute.reason}
+                      <span aria-hidden="true">&quot;</span>
+                    </p>
                   )}
                   <textarea
                     className="w-full resize-none rounded-lg border border-border-primary bg-surface-base px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-white/30 focus:outline-none"
@@ -473,7 +490,12 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                     >
                       Submit response
                     </Button>
-                    <Button size="sm" variant="outline" onClick={resetMode}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-white/15 bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
+                      onClick={resetMode}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -498,7 +520,12 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
                     >
                       Confirm cancel
                     </Button>
-                    <Button size="sm" variant="outline" onClick={resetMode}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-white/15 bg-transparent text-white/60 hover:bg-white/5 hover:text-white"
+                      onClick={resetMode}
+                    >
                       Keep lease
                     </Button>
                   </div>
@@ -515,7 +542,7 @@ function LeaseCard({ lease, userId }: { lease: Lease; userId?: string }) {
           )}
           {lease.status === 'proposed' && escrowState === 'funded' && (
             <p className="rounded-lg border border-white/8 bg-white/4 px-4 py-3 text-xs text-white/40">
-              Escrow is funded. Platform will activate the lease and release the first month's rent to the landlord.
+              Escrow is funded. Platform will activate the lease and release the first month&apos;s rent to the landlord.
             </p>
           )}
           {lease.status === 'active' && (
