@@ -65,6 +65,7 @@ export function BasicInfoStep() {
         <FormField label="Price" error={errors.price?.message} required>
           <input
             type="number"
+            step="any"
             {...register("price", { valueAsNumber: true })}
             className={inputClass}
             placeholder="250000"

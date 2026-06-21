@@ -229,7 +229,7 @@ export default function NewListingPage() {
               </div>
               <div>
                 <span className={label}>{isSale ? 'Sale price (USD)' : 'Monthly rent (USD)'}</span>
-                <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" className={field} />
+                <input type="number" min={0} step="any" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="0" className={field} />
               </div>
             </div>
           </section>

@@ -14,15 +14,17 @@ export function NewListingClient() {
 
   async function handleSubmit(values: ListingFormValues) {
     try {
+      const isSale = values.listingType === 'sale';
+      const { price, ...rest } = values;
       const payload = {
-        ...values,
+        ...rest,
+        ...(isSale ? { price } : { monthlyRent: price }),
         amenities: values.amenityIds,
         address: {
           street: values.address,
           city: values.city,
           country: values.country,
         },
-        // ensure required CreateListingInput fields are present
         category: (values as any).category ?? 'general',
         propertyType: (values as any).propertyType ?? 'other',
         location: (values as any).location ?? { lat: 0, lng: 0 },

@@ -321,7 +321,7 @@ export default function AccountListingManagePage() {
 
           <div className="grid gap-4 md:grid-cols-4">
             <Field labelText={form.listingType === 'sale' ? 'Sale price' : 'Monthly rent'}>
-              <input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className={field} />
+              <input type="number" min={0} step="any" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className={field} />
             </Field>
             <Field labelText="Bedrooms">
               <input type="number" min={0} value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })} className={field} />
