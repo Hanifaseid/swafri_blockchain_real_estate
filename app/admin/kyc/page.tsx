@@ -11,7 +11,6 @@ import {
   FileText,
   Hourglass,
   Loader2,
-  RotateCcw,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -29,10 +28,11 @@ import {
   useStartKycReview,
 } from '@/features/kyc/queries/kyc.admin.queries';
 import { AdminPageLayout } from '@/components/admin/ui';
+import { StatusBadge } from '@/components/admin/ui/StatusBadge';
 import type { UserAccount, KycStatus } from '@/features/users/types/user.types';
 import type { KycDocument } from '@/features/kyc/services/kyc.service';
 
-// ── Status config ─────────────────────────────────────────────────────────────
+// ── Tabs ──────────────────────────────────────────────────────────────────────
 
 type TabStatus = KycStatus | 'all';
 
@@ -46,34 +46,11 @@ const TABS: { key: TabStatus; label: string; icon: React.ElementType }[] = [
   { key: 'expired',      label: 'Expired',      icon: ShieldAlert },
 ];
 
-const KYC_BADGE: Record<KycStatus, { label: string; bg: string; text: string }> = {
-  not_started:  { label: 'Not Started',  bg: 'bg-white/8',         text: 'text-white/40' },
-  pending:      { label: 'Pending',      bg: 'bg-amber-500/15',    text: 'text-amber-300' },
-  under_review: { label: 'Under Review', bg: 'bg-blue-500/15',     text: 'text-blue-300' },
-  verified:     { label: 'Verified',     bg: 'bg-emerald-500/15',  text: 'text-emerald-400' },
-  rejected:     { label: 'Rejected',     bg: 'bg-red-500/15',      text: 'text-red-400' },
-  expired:      { label: 'Expired',      bg: 'bg-orange-500/15',   text: 'text-orange-300' },
-};
-
-const ACCOUNT_BADGE: Record<string, { label: string; bg: string; text: string }> = {
-  ACTIVE:    { label: 'Active',    bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
-  PENDING:   { label: 'Pending',   bg: 'bg-amber-500/15',  text: 'text-amber-300' },
-  SUSPENDED: { label: 'Suspended', bg: 'bg-red-500/15',    text: 'text-red-400' },
-  BLOCKED:   { label: 'Blocked',   bg: 'bg-red-700/20',    text: 'text-red-500' },
-  REJECTED:  { label: 'Rejected',  bg: 'bg-white/8',       text: 'text-white/40' },
-};
-
 const DOC_TYPE_LABEL: Record<string, string> = {
-  national_id:      'National ID',
-  passport:         'Passport',
-  drivers_license:  'Driver\'s License',
-  other:            'Other Document',
-};
-
-const DOC_STATUS_BADGE: Record<string, { bg: string; text: string }> = {
-  pending:  { bg: 'bg-amber-500/15', text: 'text-amber-300' },
-  approved: { bg: 'bg-emerald-500/15', text: 'text-emerald-400' },
-  rejected: { bg: 'bg-red-500/15', text: 'text-red-400' },
+  national_id:     'National ID',
+  passport:        'Passport',
+  drivers_license: "Driver's License",
+  other:           'Other Document',
 };
 
 function relativeDate(d: string) {
@@ -89,62 +66,52 @@ function avatar(name: string) {
   return name?.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() || '?';
 }
 
-// ── Smaller components ────────────────────────────────────────────────────────
-
-function KycBadge({ status }: { status: KycStatus }) {
-  const b = KYC_BADGE[status] ?? KYC_BADGE.not_started;
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${b.bg} ${b.text}`}>
-      {b.label}
-    </span>
-  );
-}
-
-function AccountBadge({ status }: { status: string }) {
-  const b = ACCOUNT_BADGE[status] ?? ACCOUNT_BADGE.PENDING;
-  return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${b.bg} ${b.text}`}>
-      {b.label}
-    </span>
-  );
-}
+// ── Document row ──────────────────────────────────────────────────────────────
 
 function DocLink({ userId, doc }: { userId: string; doc: KycDocument }) {
   const { data: url, isLoading } = useAdminKycDocUrl(userId, doc.id);
-  const db = DOC_STATUS_BADGE[doc.status] ?? DOC_STATUS_BADGE.pending;
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-(--color-dash-border) bg-(--color-dash-card) p-3">
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
-          <FileText size={14} className="text-white/40" />
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-gray-200">
+          <FileText size={14} className="text-gray-400" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-white">
+          <p className="text-sm font-medium text-gray-900">
             {DOC_TYPE_LABEL[doc.type] ?? doc.type.replace(/_/g, ' ')}
           </p>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-white/40">
-            <span>Uploaded {relativeDate(doc.uploadedAt)}</span>
-            <span className={`rounded-full px-2 py-px text-[10px] font-semibold ${db.bg} ${db.text}`}>
-              {doc.status}
-            </span>
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="text-xs text-gray-500">Uploaded {relativeDate(doc.uploadedAt)}</span>
+            <StatusBadge status={doc.status} />
           </div>
         </div>
       </div>
       {isLoading ? (
-        <Loader2 size={14} className="shrink-0 animate-spin text-white/30" />
+        <Loader2 size={14} className="shrink-0 animate-spin text-gray-400" />
       ) : url ? (
         <a
           href={url}
           target="_blank"
           rel="noreferrer"
-          className="ml-3 flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20"
+          className="ml-3 flex shrink-0 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
         >
           <ExternalLink size={11} /> View
         </a>
       ) : (
-        <span className="ml-3 text-xs text-red-400">Unavailable</span>
+        <span className="ml-3 text-xs text-red-500">Unavailable</span>
       )}
+    </div>
+  );
+}
+
+// ── Info tile ─────────────────────────────────────────────────────────────────
+
+function InfoTile({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">{label}</p>
+      <div className="mt-1.5">{value}</div>
     </div>
   );
 }
@@ -165,32 +132,32 @@ function ReviewPanel({ user, onDone }: { user: UserAccount; onDone: () => void }
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 size={20} className="animate-spin text-emerald-400" />
+        <Loader2 size={20} className="animate-spin text-emerald-600" />
       </div>
     );
   }
 
   if (!kyc) {
-    return <p className="py-4 text-sm text-red-400">Failed to load KYC details.</p>;
+    return <p className="py-4 text-sm text-red-600">Failed to load KYC details.</p>;
   }
 
   return (
-    <div className="space-y-5 pt-4">
-      {/* KYC + Account status summary */}
+    <div className="space-y-4 pt-4">
+      {/* Summary tiles */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <InfoTile label="KYC status"     value={<KycBadge status={kycStatus as KycStatus} />} />
-        <InfoTile label="Account status" value={<AccountBadge status={user.status} />} />
-        <InfoTile label="Role"           value={<span className="text-sm font-medium text-white">{user.role.replace('_', ' ')}</span>} />
-        <InfoTile label="Registered"     value={<span className="text-sm text-white/60">{relativeDate(user.createdAt)}</span>} />
+        <InfoTile label="KYC Status"     value={<StatusBadge status={kycStatus} />} />
+        <InfoTile label="Account Status" value={<StatusBadge status={user.status} />} />
+        <InfoTile label="Role"           value={<span className="text-sm font-semibold text-gray-800 capitalize">{user.role.replace(/_/g, ' ').toLowerCase()}</span>} />
+        <InfoTile label="Registered"     value={<span className="text-sm text-gray-600">{relativeDate(user.createdAt)}</span>} />
       </div>
 
       {/* Documents */}
       <div>
-        <p className="mb-2 text-[10px] font-mono uppercase tracking-widest text-white/40">
+        <p className="mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Submitted Documents ({kyc.documents.length})
         </p>
         {kyc.documents.length === 0 ? (
-          <div className="flex items-center gap-2 rounded-xl border border-dashed border-white/10 px-4 py-5 text-sm text-white/30">
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-5 text-sm text-gray-400">
             <FileText size={15} /> No documents submitted yet.
           </div>
         ) : (
@@ -204,22 +171,22 @@ function ReviewPanel({ user, onDone }: { user: UserAccount; onDone: () => void }
 
       {/* Previous review note */}
       {kyc.reviewNote && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/8 p-4">
-          <p className="mb-1 text-[10px] font-mono uppercase tracking-widest text-amber-400/60">Previous review note</p>
-          <p className="text-sm leading-relaxed text-white/70">{kyc.reviewNote}</p>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="mb-1 text-[10px] font-mono uppercase tracking-widest text-amber-600">Previous review note</p>
+          <p className="text-sm leading-relaxed text-amber-900">{kyc.reviewNote}</p>
         </div>
       )}
 
-      {/* Actions */}
+      {/* Action panel */}
       {canReview && (
-        <div className="space-y-3 rounded-xl border border-(--color-dash-border) p-4">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-white/40">Admin decision</p>
+        <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin Decision</p>
 
           {canStartReview && (
             <button
               disabled={busy}
               onClick={() => startReview({ userId: user.id }, { onSuccess: onDone })}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 py-2.5 text-sm font-semibold text-blue-300 transition-colors hover:bg-blue-500/20 disabled:opacity-40"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 py-2.5 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100 disabled:opacity-50"
             >
               {starting ? <Loader2 size={14} className="animate-spin" /> : <Hourglass size={14} />}
               {starting ? 'Starting review…' : 'Start Review'}
@@ -231,14 +198,14 @@ function ReviewPanel({ user, onDone }: { user: UserAccount; onDone: () => void }
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             placeholder="Note to user (required for rejection, optional for approval)…"
-            className="w-full resize-none rounded-xl border border-(--color-dash-border) bg-(--color-dash-input,#1a1a2e) p-3 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/60 transition-colors"
+            className="w-full resize-none rounded-lg border border-gray-300 bg-white p-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
           />
 
           <div className="flex gap-2">
             <button
               disabled={busy}
               onClick={() => review({ userId: user.id, decision: 'approve', note: note || undefined }, { onSuccess: onDone })}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-40"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
             >
               {reviewing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
               Approve
@@ -247,24 +214,24 @@ function ReviewPanel({ user, onDone }: { user: UserAccount; onDone: () => void }
               disabled={busy || !note.trim()}
               title={!note.trim() ? 'A note is required for rejection' : ''}
               onClick={() => review({ userId: user.id, decision: 'reject', note }, { onSuccess: onDone })}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 py-2.5 text-sm font-semibold text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-40"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
             >
               {reviewing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
               Reject
             </button>
           </div>
           {!note.trim() && (
-            <p className="text-[11px] text-white/30">Add a note above to enable rejection.</p>
+            <p className="text-[11px] text-gray-400">Add a note above to enable rejection.</p>
           )}
         </div>
       )}
 
-      {/* Verified / expired view */}
+      {/* Verified / expired info */}
       {(kycStatus === 'verified' || kycStatus === 'expired') && (
-        <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm ${
+        <div className={`flex items-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium ${
           kycStatus === 'verified'
-            ? 'border-emerald-500/20 bg-emerald-500/8 text-emerald-300'
-            : 'border-orange-500/20 bg-orange-500/8 text-orange-300'
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            : 'border-orange-200 bg-orange-50 text-orange-800'
         }`}>
           {kycStatus === 'verified' ? <ShieldCheck size={15} /> : <ShieldAlert size={15} />}
           {kycStatus === 'verified'
@@ -276,76 +243,67 @@ function ReviewPanel({ user, onDone }: { user: UserAccount; onDone: () => void }
   );
 }
 
-function InfoTile({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-(--color-dash-border) bg-(--color-dash-card) p-3">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-white/30">{label}</p>
-      <div className="mt-1.5">{value}</div>
-    </div>
-  );
-}
-
-// ── User row ─────────────────────────────────────────────────────────────────
+// ── User row ──────────────────────────────────────────────────────────────────
 
 function UserRow({ user }: { user: UserAccount }) {
   const [open, setOpen] = useState(false);
-
   const kycStatus = user.kycStatus as KycStatus;
   const needsAction = kycStatus === 'pending' || kycStatus === 'under_review';
 
   return (
-    <div className={`rounded-2xl border transition-colors ${
-      needsAction
-        ? 'border-amber-500/25 bg-(--color-dash-card)'
-        : 'border-(--color-dash-border) bg-(--color-dash-card)'
+    <div className={`rounded-xl border bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md ${
+      needsAction ? 'border-amber-200' : 'border-gray-200'
     }`}>
-      {/* Header row */}
       <button
         className="flex w-full items-center gap-4 p-4 text-left"
         onClick={() => setOpen((v) => !v)}
       >
         {/* Avatar */}
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-sm font-bold text-emerald-400">
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+          needsAction
+            ? 'bg-amber-100 text-amber-700'
+            : 'bg-emerald-100 text-emerald-700'
+        }`}>
           {avatar(user.name)}
         </div>
 
         {/* Identity */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-white">{user.name}</span>
+            <span className="text-sm font-semibold text-gray-900">{user.name}</span>
             {needsAction && (
-              <span className="rounded-full bg-amber-500/15 px-2 py-px text-[10px] font-bold text-amber-300">
+              <span className="rounded-full bg-amber-100 px-2 py-px text-[10px] font-bold text-amber-700 border border-amber-200">
                 Action needed
               </span>
             )}
           </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-white/40">
+          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
             <span>{user.email}</span>
             {user.phone && <span>· {user.phone}</span>}
-            <span>· {user.role.replace(/_/g, ' ')}</span>
+            <span>· <span className="capitalize">{user.role.replace(/_/g, ' ').toLowerCase()}</span></span>
           </div>
         </div>
 
         {/* Badges */}
         <div className="hidden shrink-0 items-center gap-2 sm:flex">
-          <KycBadge status={kycStatus} />
-          <AccountBadge status={user.status} />
+          <StatusBadge status={kycStatus} />
+          <StatusBadge status={user.status} />
         </div>
 
-        <div className="shrink-0 text-white/30">
+        <div className="shrink-0 text-gray-400">
           {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </div>
       </button>
 
       {/* Mobile badges */}
-      <div className="flex flex-wrap gap-2 px-4 pb-2 sm:hidden">
-        <KycBadge status={kycStatus} />
-        <AccountBadge status={user.status} />
+      <div className="flex flex-wrap gap-2 px-4 pb-3 sm:hidden">
+        <StatusBadge status={kycStatus} />
+        <StatusBadge status={user.status} />
       </div>
 
-      {/* Expanded review panel */}
+      {/* Expanded panel */}
       {open && (
-        <div className="border-t border-(--color-dash-border) px-4 pb-4">
+        <div className="border-t border-gray-100 px-4 pb-4">
           <ReviewPanel user={user} onDone={() => setOpen(false)} />
         </div>
       )}
@@ -361,7 +319,7 @@ export default function AdminKycPage() {
   const [search, setSearch] = useState('');
 
   const { data: allUsers = [], isLoading } = useUsers(
-    activeTab === 'all' ? {} : { kycStatus: activeTab as any }
+    activeTab === 'all' ? {} : { kycStatus: activeTab as KycStatus }
   );
 
   const filtered = useMemo(() => {
@@ -371,12 +329,6 @@ export default function AdminKycPage() {
       (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
     );
   }, [allUsers, search]);
-
-  const tabCounts = useMemo(() => {
-    const counts: Partial<Record<TabStatus, number>> = {};
-    counts[activeTab] = allUsers.length;
-    return counts;
-  }, [allUsers, activeTab]);
 
   if (!currentUser) return null;
 
@@ -392,33 +344,34 @@ export default function AdminKycPage() {
       maxWidth="max-w-5xl"
     >
       <div className="space-y-5">
-        {/* Summary bar */}
+        {/* Alert bar */}
         {actionNeeded > 0 && (
-          <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/8 px-4 py-3 text-sm text-amber-300">
-            <Clock size={15} className="shrink-0" />
+          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <Clock size={15} className="shrink-0 text-amber-600" />
             <strong>{actionNeeded}</strong>&nbsp;submission{actionNeeded !== 1 ? 's' : ''} require review.
           </div>
         )}
 
         {/* Status tabs */}
-        <div className="flex flex-wrap gap-1 rounded-xl border border-(--color-dash-border) bg-(--color-dash-card) p-1">
+        <div className="flex flex-wrap gap-1 rounded-xl border border-gray-200 bg-gray-50 p-1">
           {TABS.map(({ key, label, icon: Icon }) => {
-            const count = tabCounts[key];
+            const isActive = activeTab === key;
+            const count = isActive ? allUsers.length : undefined;
             return (
               <button
                 key={key}
                 onClick={() => { setActiveTab(key); setSearch(''); }}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                  activeTab === key
-                    ? 'bg-(--color-dash-highlight,#1e2033) text-white'
-                    : 'text-white/40 hover:text-white/70'
+                  isActive
+                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/60'
                 }`}
               >
                 <Icon size={12} />
                 {label}
                 {count != null && count > 0 && (
-                  <span className={`ml-0.5 rounded-full px-1.5 text-[10px] font-bold ${
-                    activeTab === key ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/40'
+                  <span className={`ml-0.5 rounded-full px-1.5 py-px text-[10px] font-bold ${
+                    isActive ? 'bg-emerald-600 text-white' : 'bg-gray-200 text-gray-600'
                   }`}>
                     {count}
                   </span>
@@ -430,34 +383,36 @@ export default function AdminKycPage() {
 
         {/* Search */}
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name or email…"
-            className="h-10 w-full rounded-xl border border-(--color-dash-border) bg-(--color-dash-card) pl-9 pr-4 text-sm text-white placeholder:text-white/20 outline-none focus:border-emerald-500/60 transition-colors"
+            className="h-10 w-full rounded-xl border border-gray-300 bg-white pl-9 pr-4 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
           />
         </div>
 
         {/* List */}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 size={24} className="animate-spin text-emerald-400" />
+            <Loader2 size={24} className="animate-spin text-emerald-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-(--color-dash-border) bg-(--color-dash-card) py-16">
-            <BadgeCheck className="h-10 w-10 text-emerald-400/30" />
-            <p className="mt-3 font-medium text-white">
-              {search ? 'No users match your search' : `No users with ${activeTab === 'all' ? 'any' : activeTab.replace('_', ' ')} KYC status`}
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white py-16">
+            <BadgeCheck className="h-10 w-10 text-gray-300" />
+            <p className="mt-3 font-medium text-gray-700">
+              {search
+                ? 'No users match your search'
+                : `No users with ${activeTab === 'all' ? 'any' : activeTab.replace('_', ' ')} KYC status`}
             </p>
-            <p className="mt-1 text-sm text-white/30">
-              {activeTab === 'pending' ? 'All pending submissions have been reviewed.' : ''}
-            </p>
+            {activeTab === 'pending' && (
+              <p className="mt-1 text-sm text-gray-400">All pending submissions have been reviewed.</p>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-white/30">
+            <p className="text-xs text-gray-400">
               {filtered.length} user{filtered.length !== 1 ? 's' : ''}
               {search ? ` matching "${search}"` : ''}
             </p>
