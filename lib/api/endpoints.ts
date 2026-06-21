@@ -141,6 +141,7 @@ export const ENDPOINTS = {
     RESOLVE_DISPUTE: (id: string) => `/leases/${id}/dispute/resolve`,
     ESCROW:          (id: string) => `/leases/${id}/escrow`,
     TIMELINE:        (id: string) => `/leases/${id}/timeline`,
+    TENANTS:         '/leases/tenants',  // GET — Admin only, list tenant roster
   },
 
   // ── Rental Applications ───────────────────────────────────────────────────
@@ -157,14 +158,15 @@ export const ENDPOINTS = {
 
   // ── Purchase Transactions ─────────────────────────────────────────────────
   PURCHASES: {
-    LIST:          '/purchase-transactions',
-    DETAIL:        (id: string) => `/purchase-transactions/${id}`,
-    UPDATE_STATUS: (id: string) => `/purchase-transactions/${id}/status`,
-    FUND_ESCROW:   (id: string) => `/purchase-transactions/${id}/fund`,
-    RELEASE_ESCROW:(id: string) => `/purchase-transactions/${id}/release`,
-    REFUND_ESCROW: (id: string) => `/purchase-transactions/${id}/refund`,
-    DISPUTE:       (id: string) => `/purchase-transactions/${id}/dispute`,
+    LIST:           '/purchase-transactions',
+    DETAIL:         (id: string) => `/purchase-transactions/${id}`,
+    UPDATE_STATUS:  (id: string) => `/purchase-transactions/${id}/status`,
+    FUND_ESCROW:    (id: string) => `/purchase-transactions/${id}/fund`,
+    RELEASE_ESCROW: (id: string) => `/purchase-transactions/${id}/release`,
+    REFUND_ESCROW:  (id: string) => `/purchase-transactions/${id}/refund`,
+    DISPUTE:        (id: string) => `/purchase-transactions/${id}/dispute`,
     RESOLVE_DISPUTE:(id: string) => `/purchase-transactions/${id}/dispute/resolve`,
+    CLOSING_CHECKLIST: (id: string) => `/purchase-transactions/${id}/closing-checklist`,
   },
 
   // ── Admin — Users ─────────────────────────────────────────────────────────
@@ -179,6 +181,8 @@ export const ENDPOINTS = {
     USER_KYC:         (id: string) => `/admin/users/${id}/kyc`,
     USER_KYC_REVIEW:  (id: string) => `/admin/users/${id}/kyc/review`,
     USER_KYC_DOC_URL: (id: string, docId: string) => `/admin/users/${id}/kyc/documents/${docId}/url`,
+    USER_WALLET_REVOKE: (id: string) => `/admin/users/${id}/wallet/revoke`, // POST — Admin + SA
+    USER_RESTORE:     (id: string) => `/admin/users/${id}/restore`,          // POST — Super Admin only
 
     // Admins — super_admin only
     ADMINS:           '/admin/admins',                               // GET list + POST create

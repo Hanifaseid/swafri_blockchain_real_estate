@@ -1,43 +1,59 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useMyLeases, useAllLeases } from '@/features/leases/queries/lease.queries';
-import { useLeaseDetail } from '@/features/leases/queries/lease.queries';
+import {
+  useMyLeases,
+  useAllLeases,
+  useLeaseDetail,
+  useTenantRoster,
+} from '@/features/leases/queries/lease.queries';
 import { useAuthStore } from '@/stores/auth.store';
-import { FileSignature, Loader2, Calendar, FileText, Search, ArrowRight } from 'lucide-react';
+import {
+  FileSignature, Loader2, Calendar, FileText, Search, Users,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function statusBadgeClass(status: string) {
+  const s = status.toLowerCase();
+  if (s === 'draft' || s === 'proposed') return 'bg-amber-50 text-amber-700 border-amber-200';
+  if (s === 'funded') return 'bg-blue-50 text-blue-700 border-blue-200';
+  if (s === 'active' || s === 'completed') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  if (s === 'cancelled' || s === 'terminated' || s === 'disputed') return 'bg-red-50 text-red-700 border-red-200';
+  return 'bg-gray-100 text-gray-700 border-gray-200';
+}
+
+// ─── Lease Card ───────────────────────────────────────────────────────────────
 
 function LeaseCard({ lease }: { lease: any }) {
   const status = (lease.status || '').toLowerCase();
-  
-  let statusBadge = 'bg-gray-100 text-gray-700 border-gray-200';
-  if (status === 'draft' || status === 'proposed') statusBadge = 'bg-amber-50 text-amber-700 border-amber-200';
-  if (status === 'funded') statusBadge = 'bg-blue-50 text-blue-700 border-blue-200';
-  if (status === 'active' || status === 'completed') statusBadge = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-  if (status === 'cancelled' || status === 'terminated' || status === 'disputed') statusBadge = 'bg-red-50 text-red-700 border-red-200';
-
   return (
     <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
       <div className="space-y-4">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
-            <span className={cn("px-2 py-1 text-[10px] font-mono uppercase tracking-wider rounded-lg border", statusBadge)}>
+            <span className={cn('px-2 py-1 text-[10px] font-mono uppercase tracking-wider rounded-lg border', statusBadgeClass(status))}>
               {status}
             </span>
             <p className="text-xs text-gray-500 font-mono mt-2">Lease #{lease.id.slice(-8)}</p>
           </div>
           <FileText className="w-5 h-5 text-gray-300" />
         </div>
-        
+
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Rent</span>
-            <span className="font-semibold text-gray-900">{lease.monthlyRent?.toLocaleString()} {lease.currency}</span>
+            <span className="font-semibold text-gray-900">
+              {lease.monthlyRent?.toLocaleString()} {lease.currency}
+            </span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Deposit</span>
-            <span className="font-semibold text-gray-900">{lease.depositAmount?.toLocaleString()} {lease.currency}</span>
+            <span className="font-semibold text-gray-900">
+              {lease.depositAmount?.toLocaleString()} {lease.currency}
+            </span>
           </div>
         </div>
 
@@ -45,16 +61,20 @@ function LeaseCard({ lease }: { lease: any }) {
           <div className="pt-4 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-500">
             <Calendar className="w-3 h-3" />
             <span>
-              {lease.startDate ? new Date(lease.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-              {' - '}
-              {lease.endDate ? new Date(lease.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+              {lease.startDate
+                ? new Date(lease.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'N/A'}
+              {' – '}
+              {lease.endDate
+                ? new Date(lease.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                : 'N/A'}
             </span>
           </div>
         )}
       </div>
-      
+
       <div className="mt-6 pt-4 border-t border-gray-100">
-        <Link 
+        <Link
           href={`/leases/${lease.id}`}
           className="w-full block text-center py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-sm font-semibold transition-colors"
         >
@@ -65,10 +85,11 @@ function LeaseCard({ lease }: { lease: any }) {
   );
 }
 
-function AdminLeaseSearch() {
-  const [inputId, setInputId] = React.useState('');
-  const [searchId, setSearchId] = React.useState('');
+// ─── Admin Lease Search ───────────────────────────────────────────────────────
 
+function AdminLeaseSearch() {
+  const [inputId, setInputId] = useState('');
+  const [searchId, setSearchId] = useState('');
   const { data: lease, isLoading, isError } = useLeaseDetail(searchId);
 
   return (
@@ -81,8 +102,8 @@ function AdminLeaseSearch() {
         <input
           type="text"
           value={inputId}
-          onChange={e => setInputId(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && setSearchId(inputId.trim())}
+          onChange={(e) => setInputId(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && setSearchId(inputId.trim())}
           placeholder="e.g. 6a33017ce2831bdf0dd9ee8f"
           className="flex-1 px-4 py-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-emerald-500 font-mono"
         />
@@ -95,17 +116,14 @@ function AdminLeaseSearch() {
           Find
         </button>
       </div>
-
       {isLoading && searchId && (
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Loader2 className="w-4 h-4 animate-spin" /> Looking up lease…
         </div>
       )}
-
       {isError && searchId && (
         <p className="text-sm text-red-500">Lease not found. Check the ID and try again.</p>
       )}
-
       {lease && !isLoading && (
         <div className="pt-2">
           <LeaseCard lease={lease} />
@@ -115,58 +133,156 @@ function AdminLeaseSearch() {
   );
 }
 
-export default function LeasesDashboardPage() {
-  const { currentUser } = useAuthStore();
-  const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(currentUser?.role || '');
+// ─── Tenant Roster View ───────────────────────────────────────────────────────
 
-  const { data: myLeases = [], isLoading: myLoading } = useMyLeases();
-  const { data: allLeases = [], isLoading: allLoading } = useAllLeases();
-
-  // Admins see all leases (from /leases), tenants/owners see /leases/mine
-  const leases = isAdmin ? allLeases : myLeases;
-  const isLoading = isAdmin ? allLoading : myLoading;
+function TenantRosterView() {
+  const { data: tenants = [], isLoading } = useTenantRoster();
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-12">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      <div className="flex justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
+  if (tenants.length === 0) {
+    return (
+      <div className="p-8 text-center bg-white rounded-2xl border border-gray-100">
+        <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+        <p className="text-sm text-black/50">No tenant roster data available.</p>
+        <p className="text-xs text-black/35 mt-1">
+          This requires the <code className="font-mono text-xs">/leases/tenants</code> endpoint to be available.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <FileSignature className="w-6 h-6 text-emerald-600" />
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Leases & Escrow</h1>
-        {isAdmin && (
-          <span className="px-2 py-1 text-[10px] font-mono uppercase bg-purple-50 text-purple-700 border border-purple-200 rounded-lg">Admin View</span>
-        )}
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="grid grid-cols-[minmax(0,1fr)_160px_120px_100px] border-b border-gray-200 bg-gray-50 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-black/40">
+        <span>Tenant</span>
+        <span>Listing</span>
+        <span>Status</span>
+        <span>End Date</span>
       </div>
-
-      {/* Admin: Lease lookup tool (always visible for admins) */}
-      {isAdmin && (
-        <AdminLeaseSearch />
-      )}
-
-      {leases.length === 0 ? (
-        <div className="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <FileSignature className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <h2 className="text-xl font-semibold text-black/80">No Leases Found</h2>
-          <p className="text-sm text-black/50 mt-2 max-w-sm mx-auto">
-            {isAdmin
-              ? "No leases exist in the system yet, or the /leases endpoint is restricted. Use the search above to look up a specific lease by ID."
-              : "You don't have any active or drafted leases yet."}
+      {tenants.map((t) => (
+        <div
+          key={t.leaseId}
+          className="grid grid-cols-[minmax(0,1fr)_160px_120px_100px] items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 hover:bg-gray-50/50 transition-colors"
+        >
+          <div className="min-w-0">
+            <p className="font-medium text-black/80 truncate">{t.tenantName ?? 'Unknown'}</p>
+            <p className="text-xs text-black/40 font-mono truncate">{t.tenantEmail}</p>
+          </div>
+          <p className="text-xs text-black/60 truncate">{t.listingTitle ?? `Lease ${t.leaseId.slice(-6)}`}</p>
+          <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border w-fit', statusBadgeClass(t.status))}>
+            {t.status}
+          </span>
+          <p className="text-xs text-black/40 font-mono">
+            {t.endDate ? new Date(t.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
           </p>
         </div>
-      ) : (
+      ))}
+      <p className="px-4 py-2 text-xs text-black/25 font-mono border-t border-gray-100">
+        {tenants.length} tenant{tenants.length !== 1 ? 's' : ''}
+      </p>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+type TabId = 'leases' | 'tenants';
+
+export default function LeasesDashboardPage() {
+  const { currentUser } = useAuthStore();
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(currentUser?.role ?? '');
+
+  const [activeTab, setActiveTab] = useState<TabId>('leases');
+
+  const { data: myLeases = [], isLoading: myLoading } = useMyLeases();
+  const { data: allLeases = [], isLoading: allLoading } = useAllLeases();
+
+  const leases = isAdmin ? allLeases : myLeases;
+  const isLoading = isAdmin ? allLoading : myLoading;
+
+  const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
+    { id: 'leases', label: 'All Leases', icon: <FileSignature size={14} /> },
+    ...(isAdmin ? [{ id: 'tenants' as TabId, label: 'Tenant Roster', icon: <Users size={14} /> }] : []),
+  ];
+
+  return (
+    <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <FileSignature size={16} className="text-emerald-600" />
+        </div>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Leases & Escrow</h1>
+          {isAdmin && (
+            <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-violet-50 text-violet-700 border border-violet-200 rounded-md">
+              Admin View
+            </span>
+          )}
+        </div>
+      </div>
+
+      {isAdmin && (
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit border border-gray-200">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                activeTab === tab.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+              )}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tenant Roster tab */}
+      {activeTab === 'tenants' && isAdmin && <TenantRosterView />}
+
+      {/* Leases tab */}
+      {activeTab === 'leases' && (
         <>
-          {isAdmin && <p className="text-xs text-gray-500">{leases.length} lease(s) found in system</p>}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {leases.map(lease => (
-              <LeaseCard key={lease.id} lease={lease} />
-            ))}
-          </div>
+          {/* Admin lease search tool */}
+          {isAdmin && <AdminLeaseSearch />}
+
+          {isLoading ? (
+            <div className="flex justify-center p-12">
+              <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            </div>
+          ) : leases.length === 0 ? (
+            <div className="p-8 text-center bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <FileSignature className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <h2 className="text-xl font-semibold text-black/80">No Leases Found</h2>
+              <p className="text-sm text-black/50 mt-2 max-w-sm mx-auto">
+                {isAdmin
+                  ? 'No leases exist yet. Use the search above to look up a specific lease by ID.'
+                  : "You don't have any active or drafted leases yet."}
+              </p>
+            </div>
+          ) : (
+            <>
+              {isAdmin && (
+                <p className="text-xs text-gray-500 font-mono">{leases.length} lease(s) found in system</p>
+              )}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {leases.map((lease) => (
+                  <LeaseCard key={lease.id} lease={lease} />
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

@@ -11,6 +11,8 @@ import {
   refundPurchaseEscrow,
   disputePurchaseTransaction,
   resolvePurchaseDispute,
+  updateClosingChecklist,
+  type ClosingChecklistPayload,
 } from '@/features/transactions/services/transaction.service';
 import type {
   CreatePurchaseTransactionPayload,
@@ -130,4 +132,23 @@ export function useDisputePurchaseTransaction() {
 
 export function useResolvePurchaseDispute() {
   return usePurchaseEscrowMutation(resolvePurchaseDispute, 'Purchase dispute resolved.');
+}
+
+// ─── useUpdateClosingChecklist ────────────────────────────────────────────────
+// Admin only — updates purchase transaction closing checklist items.
+
+export function useUpdateClosingChecklist() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: ClosingChecklistPayload }) =>
+      updateClosingChecklist(id, payload),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: transactionKeys.lists() });
+      qc.invalidateQueries({ queryKey: transactionKeys.detail(data.id) });
+      toast.success('Closing checklist updated.');
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || error?.message || 'Failed to update closing checklist');
+    },
+  });
 }

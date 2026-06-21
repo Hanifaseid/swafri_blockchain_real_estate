@@ -27,10 +27,12 @@ export default function InquiriesPage() {
   return (
     <div className="p-6 md:p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <MessageSquare className="w-6 h-6 text-emerald-500 shrink-0" />
+        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <MessageSquare size={16} className="text-emerald-600" />
+        </div>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Communication</p>
-          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Inquiries</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Communication</p>
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Inquiries</h1>
         </div>
       </div>
 
@@ -77,12 +79,11 @@ function OwnerView() {
 
   return (
     <div>
-      {/* Tabs */}
-      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit border border-gray-200">
         {(['received', 'sent'] as const).map((tab) => (
           <button key={tab} type="button" onClick={() => setActiveTab(tab)}
             className={cn('text-xs font-medium px-4 py-2 rounded-lg capitalize transition-all',
-              activeTab === tab ? 'bg-white text-black shadow-sm' : 'text-black/50 hover:text-black/70')}>
+              activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700')}>
             {tab === 'received' ? 'Received' : 'Sent'}
           </button>
         ))}

@@ -11,6 +11,8 @@ import {
   reactivateUser,
   suspendAdmin,
   reactivateAdmin,
+  revokeUserWallet,
+  restoreUser,
 } from '@/features/users/services/users.service';
 import { useAuthStore } from '@/stores/auth.store';
 import { queryKeys } from '@/lib/query/query-keys';
@@ -133,6 +135,46 @@ export function useReactivateAdmin() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admins'] });
       toast.success('Admin reactivated.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── useRevokeUserWallet ──────────────────────────────────────────────────────
+// Admin + Super Admin — revokes a user's linked wallet.
+
+export function useRevokeUserWallet() {
+  const qc = useQueryClient();
+  const actor = useAuthStore((s) => s.currentUser);
+
+  return useMutation({
+    mutationFn: ({ userId, reason }: { userId: string; reason?: string }) => {
+      if (!actor) throw new Error('Not authenticated');
+      return revokeUserWallet(userId, actor, reason);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.users.all() });
+      toast.success('Wallet revoked.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+// ─── useRestoreUser ───────────────────────────────────────────────────────────
+// Super Admin only — restores a blocked/deleted user.
+
+export function useRestoreUser() {
+  const qc = useQueryClient();
+  const actor = useAuthStore((s) => s.currentUser);
+
+  return useMutation({
+    mutationFn: (userId: string) => {
+      if (!actor) throw new Error('Not authenticated');
+      return restoreUser(userId, actor);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.users.all() });
+      toast.success('User restored.');
     },
     onError: (err: Error) => toast.error(err.message),
   });

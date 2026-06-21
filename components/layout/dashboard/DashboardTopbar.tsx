@@ -75,13 +75,13 @@ export function DashboardTopbar({
         <button
           type="button"
           onClick={onMenuClick}
-          className="lg:hidden text-black/40 hover:text-black transition-colors p-1.5 rounded-lg hover:bg-black/5"
+          className="lg:hidden text-gray-400 hover:text-gray-700 transition-colors p-1.5 rounded-lg hover:bg-gray-100"
           aria-label="Open sidebar"
         >
           <Menu size={18} />
         </button>
         {pageTitle && (
-          <h1 className="text-sm font-medium text-black/70 hidden sm:block">
+          <h1 className="text-sm font-semibold text-gray-700 hidden sm:block">
             {pageTitle}
           </h1>
         )}

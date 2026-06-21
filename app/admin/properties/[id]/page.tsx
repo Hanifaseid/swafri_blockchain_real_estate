@@ -242,12 +242,44 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
         label: '⏸️ Suspend',   
         style: 'bg-orange-600 hover:bg-orange-700 text-white' 
       });
+      adminActions.push({
+        action: 'mark_rented',
+        label: '🏠 Mark Rented',
+        style: 'bg-sky-600 hover:bg-sky-700 text-white',
+      });
+      adminActions.push({
+        action: 'mark_sold',
+        label: '💰 Mark Sold',
+        style: 'bg-purple-600 hover:bg-purple-700 text-white',
+      });
     }
     if (listing.status === 'suspended') {
       adminActions.push({ 
         action: 'unsuspend', 
         label: '▶️ Unsuspend', 
         style: 'bg-gray-700 hover:bg-gray-800 text-white' 
+      });
+    }
+    if (listing.status === 'rented') {
+      adminActions.push({
+        action: 'unmark_rented',
+        label: '↩️ Unmark Rented',
+        style: 'border border-gray-300 text-black/60 hover:bg-gray-50',
+      });
+    }
+    if (listing.status === 'sold') {
+      adminActions.push({
+        action: 'unmark_sold',
+        label: '↩️ Unmark Sold',
+        style: 'border border-gray-300 text-black/60 hover:bg-gray-50',
+      });
+    }
+    // Admin can archive any non-archived listing
+    if (listing.status !== 'archived' && listing.status !== 'draft' && listing.status !== 'submitted') {
+      adminActions.push({
+        action: 'archive',
+        label: '📦 Archive',
+        style: 'border border-gray-300 text-red-500 hover:bg-red-50',
       });
     }
   }
@@ -267,8 +299,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex items-center gap-3">
         <Link href="/properties" className="text-black/30 hover:text-black/60"><ArrowLeft size={18} /></Link>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Listing Detail</p>
-          <h1 className="text-xl font-semibold text-[#0f172a] line-clamp-1">{listing.title}</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Listing Detail</p>
+          <h1 className="text-xl font-semibold text-gray-900 line-clamp-1">{listing.title}</h1>
         </div>
       </div>
 
