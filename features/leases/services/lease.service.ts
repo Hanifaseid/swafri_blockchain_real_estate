@@ -313,18 +313,17 @@ export async function getTenantRoster(
     const d = (data as any).data;
     const raw: any[] = Array.isArray(d) ? d : d?.items ?? d?.tenants ?? [];
 
-    // API returns populated user objects: { id, name, email, phone }
+    // API shape: [{ leaseId, tenant: { id, name, email }, listing: { id, title }, startDate, endDate, status, monthlyRent }]
     return raw.map((t: any) => ({
-      tenantId:    t.id ?? t._id ?? '',
-      tenantName:  t.name   ?? undefined,
-      tenantEmail: t.email  ?? undefined,
-      tenantPhone: t.phone  ?? undefined,
-      // These fields are not returned by this endpoint —
-      // the roster tab uses leaseId as a fallback display
-      leaseId:     t.id ?? t._id ?? '',
-      listingTitle: undefined,
-      status:      t.status ?? 'active',
-      endDate:     undefined,
+      tenantId:     t.tenant?.id    ?? t.tenant?._id ?? '',
+      tenantName:   t.tenant?.name  ?? undefined,
+      tenantEmail:  t.tenant?.email ?? undefined,
+      tenantPhone:  t.tenant?.phone ?? undefined,
+      leaseId:      t.leaseId ?? t.id ?? t._id ?? '',
+      listingTitle: t.listing?.title ?? undefined,
+      status:       t.status ?? 'active',
+      startDate:    t.startDate ?? undefined,
+      endDate:      t.endDate   ?? undefined,
     }));
   } catch {
     return [];
