@@ -5,10 +5,16 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ArrowRight, Check, FileText, ImagePlus, MapPin, Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ListingLocationPicker } from '@/components/map/ListingLocationPicker';
 import { cn } from '@/lib/utils';
 import { useGeocode, useCreateListing } from '@/features/listings/queries/listing.queries';
 import { uploadPhotos, uploadDocuments, transitionListing } from '@/features/listings/services/listing.service';
-import type { CreateListingInput, ListingType } from '@/features/listings/types/listing.types';
+import type {
+  CreateListingInput,
+  GeocodeResult,
+  ListingType,
+  ReverseGeocodeResult,
+} from '@/features/listings/types/listing.types';
 import { useAuthStore } from '@/stores/auth.store';
 
 const PROPERTY_TYPES = [
@@ -62,12 +68,27 @@ export default function NewListingPage() {
 
   const isSale = listingType === 'sale';
 
-  const pickPlace = (r: any) => {
+  const applyLocationResult = (r: GeocodeResult | ReverseGeocodeResult) => {
+    const address = r.address ?? {};
+    if (address.street) setStreet(address.street);
+    else if (!street && r.label) setStreet(String(r.label).split(',')[0]);
+    if (address.city) setCity(address.city);
+    if (address.country) setCountry(address.country);
+    setLocQuery(r.label ?? `${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`);
+  };
+
+  const pickPlace = (r: GeocodeResult) => {
     setCoords({ lng: r.lng, lat: r.lat });
-    if (r.address?.city) setCity(r.address.city);
-    if (r.address?.country) setCountry(r.address.country);
-    if (!street && r.label) setStreet(String(r.label).split(',')[0]);
-    setLocQuery(r.label ?? '');
+    applyLocationResult(r);
+  };
+
+  const pickMapLocation = (nextCoords: { lng: number; lat: number }, result?: ReverseGeocodeResult | null) => {
+    setCoords(nextCoords);
+    if (result) {
+      applyLocationResult(result);
+      return;
+    }
+    setLocQuery(`${nextCoords.lat.toFixed(5)}, ${nextCoords.lng.toFixed(5)}`);
   };
 
   const canCreate =
@@ -271,7 +292,7 @@ export default function NewListingPage() {
                 placeholder="Search an address or place to pin the property"
                 className={field}
               />
-              {geo.data && geo.data.length > 0 && locQuery.length >= 3 && !coords && (
+              {geo.data && geo.data.length > 0 && locQuery.length >= 3 && (
                 <div className="absolute z-10 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-border-primary bg-surface-input shadow-2xl">
                   {geo.data.map((r) => (
                     <button
@@ -286,6 +307,9 @@ export default function NewListingPage() {
                   ))}
                 </div>
               )}
+            </div>
+            <div className="mt-4">
+              <ListingLocationPicker coords={coords} onPick={pickMapLocation} />
             </div>
             {coords && (
               <p className="mt-2 flex items-center gap-2 text-xs text-emerald-400">

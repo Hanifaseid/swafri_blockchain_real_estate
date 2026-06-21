@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import {
@@ -9,6 +9,7 @@ import {
   BarChart3,
   Check,
   CheckCircle2,
+  ChevronDown,
   Clock,
   Eye,
   FileText,
@@ -106,6 +107,11 @@ const STATUS_COPY: Record<ListingStatus, { label: string; className: string; not
     note: 'Hidden from active workflows.',
   },
 };
+
+function getStatusOptionLabel(option: 'all' | ListingStatus) {
+  if (option === 'all') return 'All statuses';
+  return STATUS_COPY[option]?.label ?? option.replaceAll('_', ' ');
+}
 
 export default function AccountListingsPage() {
   const { currentUser } = useAuthStore();
@@ -246,23 +252,7 @@ function OwnerListingsContent() {
               className="h-11 w-full rounded-lg border border-border-primary bg-surface-input pl-10 pr-3 text-sm text-white outline-none placeholder:text-text-placeholder focus:border-accent-400"
             />
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 lg:max-w-[60%]">
-            {STATUS_OPTIONS.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setStatus(option)}
-                className={cn(
-                  'whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold capitalize transition-colors',
-                  status === option
-                    ? 'bg-amber-500 text-emerald-950'
-                    : 'bg-white/6 text-white/60 hover:bg-white/10 hover:text-white',
-                )}
-              >
-                {option.replaceAll('_', ' ')}
-              </button>
-            ))}
-          </div>
+          <StatusFilterDropdown value={status} onChange={setStatus} />
         </div>
       </section>
 
@@ -299,6 +289,79 @@ function OwnerListingsContent() {
               Create listing
             </Link>
           </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatusFilterDropdown({
+  value,
+  onChange,
+}: {
+  value: 'all' | ListingStatus;
+  onChange: (value: 'all' | ListingStatus) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative min-w-full lg:min-w-56" ref={menuRef}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={cn(
+          'flex h-11 w-full items-center justify-between gap-3 rounded-lg border border-border-primary bg-surface-input px-3 text-left text-sm font-semibold text-white outline-none transition-colors hover:border-accent-400 focus:border-accent-400 lg:w-56',
+          open && 'border-accent-400',
+        )}
+      >
+        <span className="truncate">{getStatusOptionLabel(value)}</span>
+        <ChevronDown size={16} className={cn('shrink-0 text-text-muted transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label="Filter listings by status"
+          className="absolute right-0 z-30 mt-2 max-h-72 w-full overflow-auto rounded-lg border border-border-primary bg-black p-1 shadow-2xl shadow-black/40 lg:w-56"
+        >
+          {STATUS_OPTIONS.map((option) => {
+            const selected = option === value;
+            return (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  onChange(option);
+                  setOpen(false);
+                }}
+                className={cn(
+                  'flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm font-semibold transition-colors',
+                  selected
+                    ? 'bg-amber-400 text-emerald-950'
+                    : 'text-white/75 hover:bg-white/8 hover:text-white',
+                )}
+              >
+                <span className="truncate">{getStatusOptionLabel(option)}</span>
+                {selected && <Check size={14} className="shrink-0" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
