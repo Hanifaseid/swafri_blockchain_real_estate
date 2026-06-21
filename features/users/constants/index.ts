@@ -24,12 +24,12 @@ export const KYC_STATUS_BADGE: Record<
   KycStatus,
   { label: string; color: string }
 > = {
-  not_started: { label: "Not Started", color: "bg-white/5 text-black/60" },
-  pending: { label: "Pending", color: "bg-amber-950/40 text-amber-900" },
-  // under_review: { label: "Under Review", color: "bg-blue-950/40 text-blue" },
-  verified: { label: "Verified", color: "bg-emerald-950/40 text-emerald" },
-  rejected: { label: "Rejected", color: "bg-red-950/40 text-red" },
-  // expired: { label: "Expired", color: "bg-gray-900/60 text-gray-500" },
+  not_started:  { label: "Not Started",  color: "bg-white/5 text-black/60" },
+  pending:      { label: "Pending",      color: "bg-amber-950/40 text-amber-900" },
+  under_review: { label: "Under Review", color: "bg-blue-950/40 text-blue-700" },
+  verified:     { label: "Verified",     color: "bg-emerald-950/40 text-emerald-700" },
+  rejected:     { label: "Rejected",     color: "bg-red-950/40 text-red-700" },
+  expired:      { label: "Expired",      color: "bg-gray-900/60 text-gray-500" },
 };
 
 // ─── Wallet Status ────────────────────────────────────────────────────────────
