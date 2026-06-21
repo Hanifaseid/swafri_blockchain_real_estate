@@ -247,8 +247,8 @@ export default function NewListingPage() {
                 <div>
                   <span className={label}>Unit</span>
                   <select value={areaUnit} onChange={(e) => setAreaUnit(e.target.value as 'sqm' | 'sqft')} className={field}>
-                    <option value="sqm">m²</option>
-                    <option value="sqft">ft²</option>
+                    <option value="sqm">sqm</option>
+                    <option value="sqft">sqft</option>
                   </select>
                 </div>
               </div>
@@ -354,7 +354,7 @@ export default function NewListingPage() {
             </h2>
             <p className="mb-4 text-sm text-text-muted">
               Upload your title deed (or equivalent proof). An admin reviews it before the listing is
-              published and its on-chain title is minted. Private — never shown publicly.
+              published and prepared for digital title anchoring. Private - never shown publicly.
             </p>
             <div className="grid gap-3 md:grid-cols-2">
               <div>
@@ -396,7 +396,7 @@ export default function NewListingPage() {
           <section className={card}>
             <h2 className="text-sm font-semibold text-white">Submit for review</h2>
             <p className="mt-1 text-sm text-text-muted">
-              An admin verifies your ownership document before the listing is published and its on-chain title is minted.
+              An admin verifies your ownership document before the listing is published and prepared for digital title anchoring.
               You can also finish later from <span className="text-accent-400">My Listings</span>.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">

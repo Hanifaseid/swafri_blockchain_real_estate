@@ -183,16 +183,31 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
             {/* DRAFT STATE */}
             {status === 'draft' && (isOwner || isAdmin) && (
               <div className="space-y-3">
-                <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                  The lease is currently a draft. Propose it to the tenant to move forward.
-                </p>
-                <button
-                  onClick={() => propose(lease.id)}
-                  disabled={proposing}
-                  className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl text-sm font-semibold transition-all hover:shadow-lg disabled:opacity-50"
-                >
-                  {proposing ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Propose Lease'}
-                </button>
+                {isOwner && currentUser.kycStatus !== 'verified' ? (
+                  <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center space-y-2">
+                    <AlertTriangle className="w-6 h-6 text-amber-500 mx-auto" />
+                    <p className="text-xs text-amber-700 font-medium">KYC verification is required to propose lease agreements.</p>
+                    <button
+                      onClick={() => router.push('/account/kyc')}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 underline"
+                    >
+                      Complete KYC verification
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                      The lease is currently a draft. Propose it to the tenant to move forward.
+                    </p>
+                    <button
+                      onClick={() => propose(lease.id)}
+                      disabled={proposing}
+                      className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white rounded-xl text-sm font-semibold transition-all hover:shadow-lg disabled:opacity-50"
+                    >
+                      {proposing ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Propose Lease'}
+                    </button>
+                  </>
+                )}
               </div>
             )}
 
@@ -261,7 +276,7 @@ export default function LeaseDetailPage({ params }: { params: Promise<{ id: stri
                 
                 <button
                   onClick={() => {
-                    if (confirm('Are you sure you want to flag a dispute?')) dispute(lease.id);
+                    if (confirm('Are you sure you want to flag a dispute?')) dispute({ id: lease.id });
                   }}
                   disabled={disputing}
                   className="w-full py-2.5 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"

@@ -13,11 +13,12 @@ import {
   completeLease,
   terminateLease,
   disputeLease,
+  respondToDispute,
   resolveDispute,
   getEscrowVerification,
   getLeaseTimeline,
 } from '../services/lease.service';
-import { CreateLeasePayload, ResolveDisputePayload } from '../types/lease.types';
+import type { CreateLeasePayload, ResolveDisputePayload } from '../types/lease.types';
 
 export const leaseKeys = {
   all: ['leases'] as const,
@@ -27,13 +28,19 @@ export const leaseKeys = {
   timeline: (id: string) => [...leaseKeys.all, 'timeline', id] as const,
 };
 
+function invalidateLeaseById(qc: ReturnType<typeof useQueryClient>, id: string) {
+  qc.invalidateQueries({ queryKey: leaseKeys.detail(id) });
+  qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+  qc.invalidateQueries({ queryKey: leaseKeys.timeline(id) });
+}
+
 export function useCreateLease() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: CreateLeasePayload) => createLease(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: leaseKeys.mine() });
-      toast.success('Lease draft created successfully.');
+      toast.success('Lease draft created.');
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -66,8 +73,7 @@ export function useProposeLease() {
   return useMutation({
     mutationFn: (id: string) => proposeLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      invalidateLeaseById(qc, data.id);
       toast.success('Lease proposed to tenant.');
     },
     onError: (err: Error) => toast.error(err.message),
@@ -79,8 +85,7 @@ export function useSignLease() {
   return useMutation({
     mutationFn: (id: string) => signLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      invalidateLeaseById(qc, data.id);
       toast.success('Lease signed.');
     },
     onError: (err: Error) => toast.error(err.message),
@@ -92,9 +97,8 @@ export function useFundLease() {
   return useMutation({
     mutationFn: (id: string) => fundLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
-      toast.success('Escrow funded successfully.');
+      invalidateLeaseById(qc, data.id);
+      toast.success('Escrow funded.');
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -105,9 +109,8 @@ export function useActivateLease() {
   return useMutation({
     mutationFn: (id: string) => activateLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
-      toast.success('Lease activated! First month rent released.');
+      invalidateLeaseById(qc, data.id);
+      toast.success('Lease activated — first month rent released.');
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -118,8 +121,7 @@ export function useCancelLease() {
   return useMutation({
     mutationFn: (id: string) => cancelLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      invalidateLeaseById(qc, data.id);
       toast.success('Lease cancelled. Escrow refunded if applicable.');
     },
     onError: (err: Error) => toast.error(err.message),
@@ -131,8 +133,7 @@ export function useCompleteLease() {
   return useMutation({
     mutationFn: (id: string) => completeLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      invalidateLeaseById(qc, data.id);
       toast.success('Lease completed. Deposit refunded to tenant.');
     },
     onError: (err: Error) => toast.error(err.message),
@@ -144,8 +145,7 @@ export function useTerminateLease() {
   return useMutation({
     mutationFn: (id: string) => terminateLease(id),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      qc.invalidateQueries({ queryKey: leaseKeys.mine() });
+      invalidateLeaseById(qc, data.id);
       toast.success('Lease terminated. Deposit released to landlord.');
     },
     onError: (err: Error) => toast.error(err.message),
@@ -155,10 +155,22 @@ export function useTerminateLease() {
 export function useDisputeLease() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => disputeLease(id),
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) => disputeLease(id, reason),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      toast.success('Dispute flagged.');
+      invalidateLeaseById(qc, data.id);
+      toast.success('Dispute flagged. Platform will review.');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+}
+
+export function useRespondToDispute() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, response }: { id: string; response: string }) => respondToDispute(id, response),
+    onSuccess: (data) => {
+      invalidateLeaseById(qc, data.id);
+      toast.success('Response submitted.');
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -167,9 +179,10 @@ export function useDisputeLease() {
 export function useResolveDispute() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: ResolveDisputePayload }) => resolveDispute(id, payload),
+    mutationFn: ({ id, payload }: { id: string; payload: ResolveDisputePayload }) =>
+      resolveDispute(id, payload),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
+      invalidateLeaseById(qc, data.id);
       toast.success('Dispute resolved.');
     },
     onError: (err: Error) => toast.error(err.message),
@@ -186,25 +199,10 @@ export function useEscrowVerification(id: string, enabled = true) {
   });
 }
 
-
 export function useLeaseTimeline(id: string) {
   return useQuery({
     queryKey: leaseKeys.timeline(id),
     queryFn: () => getLeaseTimeline(id),
     enabled: !!id,
-  });
-}
-
-
-export function useRespondToDispute() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: ResolveDisputePayload }) =>
-      resolveDispute(id, payload),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: leaseKeys.detail(data.id) });
-      toast.success('Dispute resolved.');
-    },
-    onError: (err: Error) => toast.error(err.message),
   });
 }

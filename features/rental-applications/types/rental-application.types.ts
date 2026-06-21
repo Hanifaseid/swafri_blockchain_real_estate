@@ -6,9 +6,19 @@ export type RentalApplicationStatus =
   | 'withdrawn'
   | 'lease_created';
 
-export type RentalApplicationScreeningStatus = 'pending' | 'passed' | 'failed' | 'manual_review';
+export type RentalApplicationScreeningStatus =
+  | 'not_started'
+  | 'pending'
+  | 'passed'
+  | 'failed'
+  | 'manual_review';
 
-export type RentalApplicationAppointmentStatus = 'requested' | 'scheduled' | 'cancelled';
+export type RentalApplicationAppointmentStatus =
+  | 'requested'
+  | 'scheduled'
+  | 'rescheduled'
+  | 'cancelled'
+  | 'completed';
 
 export interface RentalApplicationUser {
   id: string;
@@ -30,11 +40,13 @@ export interface RentalApplicationScreening {
   provider?: string;
   reference?: string;
   score?: number;
+  completedAt?: string;
   notes?: string;
 }
 
 export interface RentalApplicationAppointment {
   status?: RentalApplicationAppointmentStatus;
+  requestedAt?: string;
   scheduledFor?: string;
   locationNote?: string;
   note?: string;
@@ -86,7 +98,7 @@ export interface ReviewApplicationPayload {
 
 export interface ScreeningUpdatePayload {
   status: RentalApplicationScreeningStatus;
-  provider: string;
+  provider?: string;
   reference?: string;
   score?: number;
   notes?: string;
@@ -105,5 +117,5 @@ export interface CreateLeasePayload {
   currency: string;
   startDate: string;
   endDate: string;
-  terms: string;
+  terms?: string;
 }
