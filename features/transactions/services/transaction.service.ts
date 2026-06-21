@@ -40,15 +40,43 @@ export async function getPurchaseTransactions(
   status?: string,
   search?: string
 ): Promise<PaginatedTransactions> {
-  const params: Record<string, any> = {
-    page,
-    limit,
-  };
+  const params: Record<string, any> = { page, limit };
   if (status) params.status = status;
   if (search) params.q = search;
 
-  const response = await apiClient.get<PaginatedTransactions>(ENDPOINTS.PURCHASES.LIST, { params });
-  return response.data;
+  const response = await apiClient.get<any>(ENDPOINTS.PURCHASES.LIST, { params });
+  const body = response.data;
+
+  // API wraps paginated results: { success, message, data: { items, total, page, limit } }
+  const inner = body?.data ?? body;
+  const rawItems: any[] = Array.isArray(inner?.items) ? inner.items : Array.isArray(inner) ? inner : [];
+
+  // Normalize each transaction — API uses `amount` field, not `listingPrice`
+  const items: PurchaseTransaction[] = rawItems.map((t: any) => ({
+    id:           t.id ?? t._id ?? '',
+    listingId:    typeof t.listing === 'object' ? (t.listing?.id ?? t.listing?._id ?? '') : (t.listingId ?? t.listing ?? ''),
+    listingTitle: typeof t.listing === 'object' ? (t.listing?.title ?? 'Listing') : (t.listingTitle ?? ''),
+    listingPrice: t.amount ?? t.listingPrice ?? 0,
+    buyerId:      typeof t.buyer === 'object' ? (t.buyer?.id ?? t.buyer?._id ?? '') : (t.buyerId ?? t.buyer ?? ''),
+    sellerId:     typeof t.seller === 'object' ? (t.seller?.id ?? t.seller?._id ?? '') : (t.sellerId ?? t.seller ?? ''),
+    currency:     t.currency ?? 'USD',
+    status:       t.status,
+    depositAmount: t.depositAmount,
+    totalAmount:  t.totalAmount,
+    note:         t.note,
+    closingChecklist: t.closingChecklist,
+    createdAt:    t.createdAt ?? '',
+    updatedAt:    t.updatedAt ?? t.createdAt ?? '',
+    estimatedCloseDate: t.estimatedCloseDate,
+    actualCloseDate:    t.actualCloseDate,
+  }));
+
+  return {
+    items,
+    total: inner?.total ?? items.length,
+    page:  inner?.page  ?? page,
+    limit: inner?.limit ?? limit,
+  };
 }
 
 export async function getPurchaseTransactionDetail(id: string): Promise<PurchaseTransaction> {

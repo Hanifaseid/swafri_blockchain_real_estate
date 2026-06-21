@@ -69,6 +69,7 @@ const STATUS_MAP: Record<
 
   // ── Chain Transactions ────────────────────────────────────────────────────
   confirmed:      { label: 'Confirmed',       className: 'bg-sky-50    text-sky-700    border-sky-200' },
+  mined:          { label: 'Mined',           className: 'bg-sky-50    text-sky-700    border-sky-200' },
   reconciled:     { label: 'Reconciled',      className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   stale:          { label: 'Stale',           className: 'bg-red-50    text-red-600    border-red-200' },
   failed:         { label: 'Failed',          className: 'bg-gray-100  text-gray-500   border-gray-200' },

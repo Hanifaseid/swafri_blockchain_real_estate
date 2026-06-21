@@ -126,7 +126,6 @@ function OwnerOffersView() {
   const { data: receivedOffers = [], isLoading: loadingReceived, error: receivedError } = useReceivedOffers();
   const { data: sentOffers = [], isLoading: loadingSent, error: sentError } = useMyOffers();
   const cancelOfferMutation = useCancelOffer();
-
   const items = activeTab === 'received' ? receivedOffers : sentOffers;
   const isLoading = activeTab === 'received' ? loadingReceived : loadingSent;
   const error = activeTab === 'received' ? receivedError : sentError;

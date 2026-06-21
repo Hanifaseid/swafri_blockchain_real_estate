@@ -54,7 +54,6 @@ export function clearSession(): void {
   if (typeof window === 'undefined') return;
   clearLegacyUserCache();
   localStorage.removeItem(SESSION_KEYS.TOKEN);
-  console.log('Session cleared');
 }
 
 export function isAuthenticated(): boolean {
