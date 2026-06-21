@@ -81,7 +81,7 @@ export default function LandingPage() {
               </h2>
               <div className="mt-6 max-w-xl space-y-4 text-sm font-light leading-relaxed text-white/60">
                 <p>
-                  VEX connects listing discovery with the operational evidence
+                  EstateLedger connects listing discovery with the operational evidence
                   behind the property: KYC status, ownership documents, review
                   decisions, title records, and escrow activity.
                 </p>
@@ -128,7 +128,7 @@ export default function LandingPage() {
                     Review Ready
                   </div>
                   <div className="font-mono text-[10px] text-white/50">
-                    VEX-2026-0481 / Sepolia testnet
+                    EL-2026-0481 / Sepolia testnet
                   </div>
                 </div>
 

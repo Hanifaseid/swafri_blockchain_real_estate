@@ -27,7 +27,7 @@ export default function LandingCTA() {
         <div className="cert grain relative overflow-hidden rounded-2xl px-8 py-14 text-center md:px-16">
           <div className="relative z-[2]">
             <div className="mb-5 font-mono text-[10px] uppercase tracking-[0.3em] text-[#9d6f22]">
-              VEX Property Register
+              EstateLedger
             </div>
             <h3 className="mx-auto max-w-2xl font-display text-3xl font-semibold leading-[1.05] text-[#2c2415] md:text-5xl">
               Search the map. Check the title. Move with confidence.

@@ -32,7 +32,7 @@ export const FEATURED_PROPERTIES: Property[] = [
     area: 96,
     image:
       'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=70',
-    titleId: 'VEX-2026-0312',
+    titleId: 'EL-2026-0312',
     hash: '0x7b41...e9c2',
   },
   {
@@ -47,7 +47,7 @@ export const FEATURED_PROPERTIES: Property[] = [
     area: 54,
     image:
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=70',
-    titleId: 'VEX-2026-0427',
+    titleId: 'EL-2026-0427',
     hash: '0x3da8...1f70',
   },
   {
@@ -62,7 +62,7 @@ export const FEATURED_PROPERTIES: Property[] = [
     area: 410,
     image:
       'https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&w=800&q=70',
-    titleId: 'VEX-2026-0481',
+    titleId: 'EL-2026-0481',
     hash: '0x9f2c...a7e1',
   },
 ];
@@ -166,7 +166,7 @@ export function generateVerificationReceipt(titleId: string, action: string) {
     action,
     titleId,
     block: blockNum,
-    registrar: 'VEX Property Register',
+    registrar: 'EstateLedger',
     status: 'mining' as const,
   };
 }

@@ -97,7 +97,7 @@ export function TitleCertificatePanel({
         {/* Masthead */}
         <div className="text-center">
           <div className="font-mono text-[9px] uppercase tracking-[0.3em] text-[#9d6f22]">
-            VEX Property Register
+            EstateLedger
           </div>
           <div className="mt-1 font-display text-xl font-semibold leading-none text-[#2c2415]">
             Certificate of Title

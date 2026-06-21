@@ -6,7 +6,7 @@ import { Bot, Minimize2, Sparkles, RotateCcw, X, Send } from 'lucide-react';
 const INITIAL_MESSAGE = {
   role: 'assistant' as const,
   content:
-    'Welcome to VEX Property Register. I can help with map-based property discovery, digital title records, KYC review, lease escrow, rental applications, and purchase offers.',
+    'Welcome to EstateLedger. I can help with map-based property discovery, digital title records, KYC review, lease escrow, rental applications, and purchase offers.',
 };
 
 const QUICK_PROMPTS = [
@@ -86,7 +86,7 @@ export default function AiChat() {
       {/* FAB button */}
       <button
         onClick={() => setIsChatOpen((v) => !v)}
-        aria-label="VEX AI Assistant"
+        aria-label="EstateLedger AI Assistant"
         className="fixed bottom-8 right-8 z-50 w-14 h-14 rounded-full bg-emerald-600 shadow-2xl flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 transition-transform group"
         style={{ boxShadow: '0 12px 30px rgba(16,185,129,0.25)' }}
       >
@@ -122,7 +122,7 @@ export default function AiChat() {
                 <Sparkles className="w-4 h-4 text-emerald-400" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-white leading-none">VEX AI Advisor</p>
+                <p className="text-sm font-semibold text-white leading-none">EstateLedger AI Advisor</p>
                 <p className="text-[10px] text-emerald-400 font-mono mt-0.5 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                   Real Estate Intelligence

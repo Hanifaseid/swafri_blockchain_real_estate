@@ -119,7 +119,7 @@ export default function PrdDoc({ onBack }: PrdDocProps) {
             <FileText className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">VEX Compliance & PRD Manifest</h2>
+            <h2 className="text-xl font-bold text-slate-900">EstateLedger Compliance & PRD Manifest</h2>
             <p className="text-xs text-slate-500 font-mono">Trust, Blockchain, Escrow & Compliance specifications</p>
           </div>
         </div>
@@ -235,7 +235,7 @@ export default function PrdDoc({ onBack }: PrdDocProps) {
           <h4 className="text-xs font-bold uppercase font-mono tracking-widest">Prototype Definition of Done Verification Checklist</h4>
         </div>
         <p className="text-xs text-slate-500 leading-relaxed">
-          The following list represents fully satisfied, interactive compliance criteria currently running on the VEX real estate decentralized workspace:
+          The following list represents fully satisfied, interactive compliance criteria currently running on the EstateLedger Real Estate decentralized workspace:
         </p>
 
         <div className="grid md:grid-cols-2 gap-4 text-xs font-mono">

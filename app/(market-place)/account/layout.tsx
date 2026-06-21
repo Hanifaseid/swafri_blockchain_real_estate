@@ -3,7 +3,7 @@ import { AccountShell } from "@/components/layout/AccountShell";
 import { noIndexMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = noIndexMetadata(
-  "Account | VEX Property Register",
+  "Account | EstateLedger",
   "Private account workflows for profile, KYC, saved searches, applications, offers, leases, and owner property listings.",
 );
 

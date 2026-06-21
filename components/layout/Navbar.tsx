@@ -23,11 +23,11 @@ export function Navbar() {
     <header className="px-6 md:px-12 lg:px-16 pt-6 sticky top-0 z-50">
       <div className="liquid-glass rounded-xl px-4 py-2.5 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 select-none" aria-label="VEX home">
+        <Link href="/" className="flex items-center gap-2.5 select-none" aria-label="EstateLedger home">
           <div className="w-7 h-7 rounded bg-white flex items-center justify-center text-black font-extrabold text-sm">
             V
           </div>
-          <span className="text-xl font-semibold tracking-tight text-white">VEX</span>
+          <span className="text-xl font-semibold tracking-tight text-white">EstateLedger</span>
         </Link>
 
         {/* Desktop nav */}

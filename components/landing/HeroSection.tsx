@@ -123,7 +123,7 @@ function CertificateOfTitle() {
       <div className="cert-guilloche relative z-[2] -m-1 p-1">
         <div className="mb-4 text-center">
           <div className="font-mono text-[9px] uppercase tracking-[0.32em] text-[#9d6f22]">
-            VEX Property Register
+            EstateLedger
           </div>
           <div className="mt-1.5 font-display text-2xl font-semibold leading-none text-[#2c2415]">
             Title Review Record
@@ -146,7 +146,7 @@ function CertificateOfTitle() {
         </div>
 
         <dl className="space-y-2 text-[#5a4a2e]">
-          <Field icon={<Home className="h-3 w-3" />} label="Listing ID" value="VEX-2026-0481" />
+          <Field icon={<Home className="h-3 w-3" />} label="Listing ID" value="EL-2026-0481" />
           <Field icon={<MapPin className="h-3 w-3" />} label="Location" value="Verified Address" />
           <Field icon={<Hash className="h-3 w-3" />} label="Document Hash" value="0x9f2c...a7e1" mono />
         </dl>

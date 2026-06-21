@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { noIndexMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = noIndexMetadata(
-  "Secure Access | VEX Property Register",
-  "Sign in, register, or recover access to your VEX Property Register account.",
+  "Secure Access | EstateLedger",
+  "Sign in, register, or recover access to your EstateLedger account.",
 );
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {

@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
       model: 'gemini-3.5-flash',
       contents: contents,
       config: {
-        systemInstruction: `You are the VEX Property Register AI assistant for a Web3 real estate marketplace.
-VEX supports blockchain-enabled property listings, map-based discovery, KYC/compliance review, ERC-721 digital title verification, lease escrow, purchase escrow, rental applications, offers, saved searches, and admin oversight.
+        systemInstruction: `You are the EstateLedger AI assistant for a Web3 real estate marketplace.
+EstateLedger supports blockchain-enabled property listings, map-based discovery, KYC/compliance review, ERC-721 digital title verification, lease escrow, purchase escrow, rental applications, offers, saved searches, and admin oversight.
 
 Supported roles are exactly SUPER_ADMIN, ADMIN, PROPERTY_OWNER, and TENANT. TENANT means buyer or renter. PROPERTY_OWNER users can list and manage properties through account workflows. ADMIN and SUPER_ADMIN users use the operational dashboard.
 
@@ -55,10 +55,10 @@ Only describe supported marketplace features. Answer concisely and ground respon
     });
 
     return NextResponse.json({
-      text: response.text || "I'm processing your VEX real estate inquiry, please try again shortly.",
+      text: response.text || "I'm processing your EstateLedger Real Estate inquiry, please try again shortly.",
     });
   } catch (err: any) {
-    console.error('Error in VEX AI chat handler:', err);
+    console.error('Error in EstateLedger AI chat handler:', err);
     return NextResponse.json(
       { error: 'Failed to generate response. Ensure GEMINI_API_KEY is configured in Settings > Secrets.' },
       { status: 500 }

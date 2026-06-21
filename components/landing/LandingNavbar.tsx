@@ -26,7 +26,7 @@ import {
   UserRound,
   X,
 } from "lucide-react";
-import { clearSession } from "@/lib/auth/session";
+import { logout } from "@/features/auth/services/auth.service";
 import { useAuthStore } from "@/stores/auth.store";
 import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
 
@@ -144,6 +144,7 @@ export default function LandingNavbar() {
           icon: ClipboardList,
         },
         { href: "/account/offers", label: "Offers", icon: MessageSquare },
+        { href: "/account/purchases", label: "Purchases", icon: Compass },
         { href: "/account/leases", label: "Leases", icon: FileClock },
         { href: "/account/kyc", label: "KYC & Wallet", icon: FileCheck2 },
         { href: "/account/profile", label: "Profile", icon: UserRound },
@@ -159,6 +160,7 @@ export default function LandingNavbar() {
         icon: ClipboardList,
       },
       { href: "/account/offers", label: "My Offers", icon: MessageSquare },
+      { href: "/account/purchases", label: "My Purchases", icon: Compass },
       { href: "/account/leases", label: "My Leases", icon: FileClock },
       { href: "/account/kyc", label: "KYC & Wallet", icon: FileCheck2 },
       { href: "/account/profile", label: "Profile", icon: UserRound },
@@ -166,11 +168,10 @@ export default function LandingNavbar() {
   }, [currentUser, isAdmin, isOwner]);
 
   const handleSignOut = () => {
-    clearSession();
-    clearUser();
-    document.cookie = "vex_authed=; path=/; max-age=0";
-    document.cookie = "vex_user_role=; path=/; max-age=0";
-    window.location.href = "/";
+    void logout().finally(() => {
+      clearUser();
+      window.location.href = "/";
+    });
   };
 
   // ── Primary CTA button logic ────────────────────────────────────────────────
@@ -206,14 +207,14 @@ export default function LandingNavbar() {
           <Link
             href="/"
             className="group flex select-none items-center gap-3"
-            aria-label="VEX home"
+            aria-label="EstateLedger home"
           >
             <span className="relative grid h-9 w-9 place-items-center rounded-[8px] bg-linear-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-transform group-hover:scale-105">
               V
             </span>
             <span className="flex flex-col leading-none">
               <span className="font-display text-xl font-semibold tracking-tight text-white">
-                VEX
+                EstateLedger
               </span>
               <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.28em] text-amber-300/80">
                 Property Register

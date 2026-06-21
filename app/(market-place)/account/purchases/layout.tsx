@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { noIndexMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = noIndexMetadata(
-  "My Purchases | VEX Property Register",
+  "My Purchases | EstateLedger",
   "Track your active property purchase transactions and deal progress.",
 );
 

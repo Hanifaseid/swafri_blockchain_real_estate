@@ -32,14 +32,14 @@ export function Footer() {
           <Link
             href="/"
             className="mb-4 flex w-fit select-none items-center gap-3"
-            aria-label="VEX home"
+            aria-label="EstateLedger home"
           >
             <span className="grid h-9 w-9 place-items-center rounded-[8px] bg-linear-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)]">
               V
             </span>
             <span className="flex flex-col leading-none">
               <span className="font-display text-xl font-semibold tracking-tight text-white">
-                VEX
+                EstateLedger
               </span>
               <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.28em] text-amber-300/80">
                 Property Register

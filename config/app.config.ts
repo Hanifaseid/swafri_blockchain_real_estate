@@ -5,8 +5,8 @@ import { SESSION_KEYS } from "@/lib/auth/session";
 // Import from here instead of hardcoding strings in components.
 
 export const appConfig = {
-  name: "VEX Real Estate Blockchain Portal",
-  shortName: "VEX",
+  name: "EstateLedger Real Estate Blockchain Portal",
+  shortName: "EstateLedger",
   version: "0.1.0",
   locale: "en",
 

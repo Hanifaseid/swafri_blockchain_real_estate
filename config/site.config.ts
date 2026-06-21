@@ -1,7 +1,7 @@
 export const siteConfig = {
-  name: 'VEX Property Register',
-  shortName: 'VEX',
-  title: 'VEX Property Register - Web3 Real Estate Marketplace',
+  name: 'EstateLedger',
+  shortName: 'EstateLedger',
+  title: 'EstateLedger - Web3 Real Estate Marketplace',
   description:
     'A blockchain-enabled real estate marketplace for map-based property discovery, reviewed ownership records, KYC workflows, digital title data, lease escrow, and transparent property transactions.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
@@ -20,7 +20,7 @@ export const siteConfig = {
     'property owner listings',
   ],
   og: {
-    title: 'VEX Property Register - Blockchain-Enabled Property Listings',
+    title: 'EstateLedger - Blockchain-Enabled Property Listings',
     description:
       'Discover properties on a map-first marketplace with reviewed ownership evidence, digital title records, KYC review, and escrow-ready rental and purchase workflows.',
     image: '/og-image.png',
@@ -36,5 +36,5 @@ export const siteConfig = {
     linkedin: '',
     github: '',
   },
-  copyright: `Copyright ${new Date().getFullYear()} VEX Property Register. All rights reserved.`,
+  copyright: `Copyright ${new Date().getFullYear()} EstateLedger. All rights reserved.`,
 } as const;

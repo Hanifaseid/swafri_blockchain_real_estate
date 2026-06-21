@@ -75,7 +75,7 @@ export function RegisterForm() {
         <h2 className="text-lg font-medium text-white tracking-tight">
           Create your account
         </h2>
-        <p className="text-xs text-white/35">Join the VEX marketplace</p>
+        <p className="text-xs text-white/35">Join the EstateLedger marketplace</p>
       </div>
 
       {/* Server alerts */}
