@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { HERO_IMAGE, VIDEO_SRC } from './data';
+import React from "react";
+import { HERO_IMAGE, VIDEO_SRC } from "./data";
 
 interface HeroBackgroundProps {
   videoReady: boolean;
@@ -18,17 +18,22 @@ interface HeroBackgroundProps {
  *   3. Faint engraved ledger grid
  *   4. Film grain
  */
-export default function HeroBackground({ videoReady, heroImgLoaded, videoRef }: HeroBackgroundProps) {
+export default function HeroBackground({
+  videoReady,
+  heroImgLoaded,
+  videoRef,
+}: HeroBackgroundProps) {
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden canvas-warm grain">
+    <div className=" fixed inset-0 overflow-hidden canvas-warm grain">
       {/* Photograph — pushed right, duotone, feathered into the canvas */}
       <div
         className="absolute inset-y-0 right-0 w-full lg:w-[62%] transition-opacity duration-1000"
         style={{
           opacity: heroImgLoaded ? 1 : 0,
           WebkitMaskImage:
-            'linear-gradient(90deg, transparent 0%, #000 38%, #000 100%)',
-          maskImage: 'linear-gradient(90deg, transparent 0%, #000 38%, #000 100%)',
+            "linear-gradient(90deg, transparent 0%, #000 38%, #000 100%)",
+          maskImage:
+            "linear-gradient(90deg, transparent 0%, #000 38%, #000 100%)",
         }}
       >
         {/* LQIP */}
@@ -41,7 +46,10 @@ export default function HeroBackground({ videoReady, heroImgLoaded, videoRef }: 
         {/* Full image */}
         <div
           className="absolute inset-0 bg-cover bg-center duotone-warm transition-opacity duration-700"
-          style={{ backgroundImage: `url('${HERO_IMAGE}')`, opacity: heroImgLoaded ? 1 : 0 }}
+          style={{
+            backgroundImage: `url('${HERO_IMAGE}')`,
+            opacity: heroImgLoaded ? 1 : 0,
+          }}
         />
         {/* Video — warm-graded, fades in over the still */}
         <video
