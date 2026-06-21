@@ -1,9 +1,14 @@
-'use client';
+import type { Metadata } from "next";
+import LandingPage from "@/components/LandingPage";
+import { createSeoMetadata } from "@/lib/seo";
 
-// Home page. Lives in the (market-place) group so it shares the group layout's
-// navbar and footer — LandingPage no longer renders its own.
-
-import LandingPage from '@/components/LandingPage';
+export const metadata: Metadata = createSeoMetadata({
+  title: "Find Property With Proof Built In",
+  description:
+    "Search a map-first Web3 real estate marketplace with reviewed property listings, digital title records, KYC review, lease escrow, and transparent transaction workflows.",
+  path: "/",
+  keywords: ["web3 real estate", "blockchain property listings", "map real estate marketplace"],
+});
 
 export default function Home() {
   return <LandingPage />;

@@ -5,16 +5,39 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 
-// ─── Root Metadata ────────────────────────────────────────────────────────────
-
 export const metadata: Metadata = {
-  title: siteConfig.title,
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.shortName}`,
+  },
   description: siteConfig.description,
   keywords: [...siteConfig.keywords],
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  category: "Real Estate",
   openGraph: {
     title: siteConfig.og.title,
     description: siteConfig.og.description,
     type: "website",
+    siteName: siteConfig.name,
+    locale: siteConfig.locale,
+    images: [
+      {
+        url: siteConfig.og.image,
+        width: 1200,
+        height: 630,
+        alt: siteConfig.og.title,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.og.title,
+    description: siteConfig.og.description,
+    images: [siteConfig.og.image],
   },
 };
 
