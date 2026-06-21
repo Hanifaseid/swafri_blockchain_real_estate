@@ -10,7 +10,7 @@ export default function AboutPage() {
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-900/10 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[50%] h-[50%] rounded-full bg-blue-900/8 blur-[120px] pointer-events-none" />
 
-      <main className="max-w-4xl mx-auto px-6 md:px-12 py-16 relative z-10">
+      <main className="max-w-4xl py-16 relative z-10">
         {/* Header */}
         <div className="mb-14">
           <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-3 py-1.5 rounded-full">

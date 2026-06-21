@@ -86,13 +86,13 @@ export function ListingDetailView({ listing }: Props) {
   return (
     <div className="min-h-screen bg-[#0d0c0a]">
       {/* ── Breadcrumb ─────────────────────────────────────────────── */}
-      <div className="mx-auto max-w-7xl px-4 pt-6 lg:px-6">
+      <div className="pt-6">
         <Link href="/listings" className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-accent-400 transition-colors">
           <ArrowLeft size={14} /> Back to listings
         </Link>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 pb-16 pt-4 lg:px-6">
+      <div className="pb-16 pt-4">
         <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
           {/* ═══ LEFT COLUMN ═══ */}
           <div className="min-w-0 space-y-6">

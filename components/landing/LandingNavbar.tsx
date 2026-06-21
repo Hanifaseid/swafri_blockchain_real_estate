@@ -161,7 +161,7 @@ export default function LandingNavbar() {
 
       <div
         className={[
-          'flex items-center justify-between gap-4 px-5 transition-all duration-300 md:px-12 lg:px-16',
+          'mx-auto w-full max-w-7xl flex items-center justify-between gap-4 px-4 transition-all duration-300 lg:px-6',
           scrolled
             ? 'border-b border-white/10 bg-black py-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.7)]'
             : 'border-b border-transparent bg-black/15 py-5 backdrop-blur-[2px]',

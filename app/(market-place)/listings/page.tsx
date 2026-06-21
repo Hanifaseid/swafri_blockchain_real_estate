@@ -99,7 +99,7 @@ export default function ListingsPage() {
         {/* Subtle radial glow */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,rgba(189,139,39,0.08),transparent)]" />
 
-        <div className="relative mx-auto max-w-7xl px-4 pb-6 pt-10 lg:px-6">
+        <div className="relative pb-6 pt-10">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-400">
             Marketplace
           </p>
@@ -115,7 +115,7 @@ export default function ListingsPage() {
 
       {/* ═══ Filter bar ═══ */}
       <div className="sticky top-[72px] z-30 border-b border-border-primary bg-[#0d0c0a]/95 backdrop-blur-lg">
-        <div className="mx-auto max-w-7xl px-4 lg:px-6">
+        <div>
           <div className="flex flex-wrap items-center gap-2 py-3">
             {/* Search */}
             <div className="relative min-w-[180px] flex-1">
@@ -233,7 +233,7 @@ export default function ListingsPage() {
       </div>
 
       {/* ═══ Grid ═══ */}
-      <div className="mx-auto max-w-7xl px-4 py-8 lg:px-6">
+      <div className="py-8">
         {isLoading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (

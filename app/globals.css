@@ -581,3 +581,134 @@ body {
     transform: translateY(0);
   }
 }
+
+/* ── Full-bleed utility ─────────────────────────────────────────────────── */
+/* Breaks out of a max-w + px container to span the full viewport width.
+   Use on direct children of the marketplace <main> that need edge-to-edge. */
+.full-bleed {
+  width: 100vw;
+  max-width: none;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LEAFLET — Dark Theme Overrides
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* Hide default Leaflet controls (we render our own) */
+.leaflet-control-zoom,
+.leaflet-control-layers {
+  display: none !important;
+}
+
+/* Attribution — minimal, semi-transparent */
+.leaflet-control-attribution {
+  background: rgba(17, 16, 13, 0.6) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px 0 0 0 !important;
+  backdrop-filter: blur(4px);
+}
+.leaflet-control-attribution a {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ── Dark popups ────────────────────────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  background: rgba(17, 16, 13, 0.92) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px);
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 10px 14px !important;
+  font-family: var(--font-sans), sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+}
+.leaflet-popup-tip {
+  background: rgba(17, 16, 13, 0.92) !important;
+  box-shadow: none !important;
+}
+.leaflet-popup-close-button {
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-size: 16px !important;
+  top: 4px !important;
+  right: 6px !important;
+}
+.leaflet-popup-close-button:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Popup inner styling */
+.map-popup-dark strong {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 600;
+  font-size: 13px;
+}
+.map-popup-price {
+  color: #f4d38b;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* ── Cluster bubbles ────────────────────────────────────────────────────── */
+.map-cluster-marker {
+  background: none !important;
+  border: none !important;
+}
+.map-cluster-bubble {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #143d2b;
+  color: #f4d38b;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: var(--font-sans), sans-serif;
+  border: 2.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 0 0 3px rgba(20, 61, 43, 0.25),
+    0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+.map-cluster-bubble:hover {
+  transform: scale(1.12);
+}
+
+/* ── Listing pin dots ───────────────────────────────────────────────────── */
+.map-listing-pin {
+  background: none !important;
+  border: none !important;
+}
+.map-listing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f4d38b;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 0 0 3px rgba(244, 211, 139, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+.map-listing-dot:hover {
+  transform: scale(1.4);
+}
+
+/* Center pin — no default leaflet icon chrome */
+.map-center-pin {
+  background: none !important;
+  border: none !important;
+}

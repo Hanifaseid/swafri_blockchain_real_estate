@@ -52,7 +52,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-16 pt-8 lg:px-6">
+    <div className="pb-16 pt-8">
       {children}
     </div>
   );

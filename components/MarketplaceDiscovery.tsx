@@ -202,7 +202,7 @@ export function MarketplaceDiscovery() {
       {/* ═══ Filter bar ═══ */}
       <div className="z-30 shrink-0 border-b border-white/10 bg-[#11100d]">
         {/* primary filter row */}
-        <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 py-3">
           {/* search label */}
           <span className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-white/30 lg:inline">Search</span>
           <div className="relative min-w-[180px] flex-1">
@@ -290,7 +290,7 @@ export function MarketplaceDiscovery() {
 
         {/* Advanced filters (collapsible) */}
         {showFilters && (
-          <div className="border-t border-white/5 px-4 py-3">
+          <div className="border-t border-white/5 py-3">
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
               <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className={selectCls}>
                 <option value="">Any category</option>
@@ -379,7 +379,7 @@ export function MarketplaceDiscovery() {
         >
           {/* Neighbourhood analytics (when selected) */}
           {summary && (
-            <div className="shrink-0 border-b border-white/8 bg-[#11100d] px-4 py-3">
+            <div className="shrink-0 border-b border-white/8 bg-[#11100d] py-3">
               <div className="grid grid-cols-3 divide-x divide-white/8 rounded-xl border border-amber-400/20 bg-amber-400/[0.05] overflow-hidden">
                 <div className="px-4 py-3">
                   <p className="text-[10px] font-mono uppercase tracking-widest text-white/35">Listings</p>
@@ -397,7 +397,7 @@ export function MarketplaceDiscovery() {
             </div>
           )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin py-4">
             {listings.isLoading ? (
               <div className="grid grid-cols-1 gap-3">
                 {Array.from({ length: 6 }).map((_, i) => (
