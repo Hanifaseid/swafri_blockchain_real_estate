@@ -21,14 +21,18 @@ export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
 export type KycStatus =
   | 'not_started'
   | 'pending'
+  | 'under_review'
   | 'verified'
-  | 'rejected';
+  | 'rejected'
+  | 'expired';
 
 export const KYC_STATUS_LABELS: Record<KycStatus, string> = {
   not_started: 'Not Started',
-  pending: 'Pending',
-  verified: 'Verified',
-  rejected: 'Rejected',
+  pending:     'Pending',
+  under_review:'Under Review',
+  verified:    'Verified',
+  rejected:    'Rejected',
+  expired:     'Expired',
 };
 
 // ─── Wallet Status ────────────────────────────────────────────────────────────
