@@ -161,7 +161,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
   const canSubmitForReview = currentUser.kycStatus === 'verified' && currentUser.status === 'ACTIVE';
 
   if (isLoading) return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 text-emerald-500 animate-spin" /></div>;
-  if (!listing) return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
+  if (!listing) return <div className="p-8 text-center"><p className="text-sm text-black/40">Listing not found.</p><Link href="/admin/properties" className="text-emerald-500 text-sm mt-3 inline-block">← Back</Link></div>;
 
   const coverPhoto = photos.find((p) => p.isCover) ?? photos[0];
   const price = listing.listingType === 'rent' ? `$${listing.monthlyRent?.toLocaleString()}/mo` : `$${listing.price?.toLocaleString()}`;
@@ -297,7 +297,7 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
     <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-5">
       {/* Back + title */}
       <div className="flex items-center gap-3">
-        <Link href="/properties" className="text-black/30 hover:text-black/60"><ArrowLeft size={18} /></Link>
+        <Link href="/admin/properties" className="text-black/30 hover:text-black/60"><ArrowLeft size={18} /></Link>
         <div>
           <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Listing Detail</p>
           <h1 className="text-xl font-semibold text-gray-900 line-clamp-1">{listing.title}</h1>

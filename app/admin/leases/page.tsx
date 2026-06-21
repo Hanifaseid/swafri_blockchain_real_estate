@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   useMyLeases,
-  useAllLeases,
   useLeaseDetail,
   useTenantRoster,
 } from '@/features/leases/queries/lease.queries';
+import type { Lease } from '@/features/leases/types/lease.types';
 import { useAuthStore } from '@/stores/auth.store';
 import {
   FileSignature, Loader2, Calendar, FileText, Search, Users,
@@ -25,9 +25,10 @@ function statusBadgeClass(status: string) {
   return 'bg-gray-100 text-gray-700 border-gray-200';
 }
 
+
 // ─── Lease Card ───────────────────────────────────────────────────────────────
 
-function LeaseCard({ lease }: { lease: any }) {
+function LeaseCard({ lease }: { lease: Lease }) {
   const status = (lease.status || '').toLowerCase();
   return (
     <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow">
@@ -91,6 +92,7 @@ function AdminLeaseSearch() {
   const [inputId, setInputId] = useState('');
   const [searchId, setSearchId] = useState('');
   const { data: lease, isLoading, isError } = useLeaseDetail(searchId);
+ 
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4">
@@ -134,10 +136,10 @@ function AdminLeaseSearch() {
 }
 
 // ─── Tenant Roster View ───────────────────────────────────────────────────────
+// Uses GET /leases/tenants → returns [{ id, name, email, phone }]
 
 function TenantRosterView() {
   const { data: tenants = [], isLoading } = useTenantRoster();
-
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -150,9 +152,9 @@ function TenantRosterView() {
     return (
       <div className="p-8 text-center bg-white rounded-2xl border border-gray-100">
         <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-        <p className="text-sm text-black/50">No tenant roster data available.</p>
-        <p className="text-xs text-black/35 mt-1">
-          This requires the <code className="font-mono text-xs">/leases/tenants</code> endpoint to be available.
+        <p className="text-sm text-gray-500">No tenants found.</p>
+        <p className="text-xs text-gray-400 mt-1">
+          Tenants appear here once they have active leases on your properties.
         </p>
       </div>
     );
@@ -160,31 +162,36 @@ function TenantRosterView() {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div className="grid grid-cols-[minmax(0,1fr)_160px_120px_100px] border-b border-gray-200 bg-gray-50 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-black/40">
-        <span>Tenant</span>
-        <span>Listing</span>
-        <span>Status</span>
-        <span>End Date</span>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] border-b border-gray-200 bg-gray-50 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-gray-400">
+        <span>Name</span>
+        <span>Email</span>
+        <span>Phone</span>
       </div>
-      {tenants.map((t) => (
+
+      {tenants.map((t, i) => (
         <div
-          key={t.leaseId}
-          className="grid grid-cols-[minmax(0,1fr)_160px_120px_100px] items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 hover:bg-gray-50/50 transition-colors"
+          key={t.tenantId || i}
+          className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 hover:bg-gray-50/50 transition-colors"
         >
           <div className="min-w-0">
-            <p className="font-medium text-black/80 truncate">{t.tenantName ?? 'Unknown'}</p>
-            <p className="text-xs text-black/40 font-mono truncate">{t.tenantEmail}</p>
+            {t.tenantName ? (
+              <p className="font-medium text-gray-800 truncate">{t.tenantName}</p>
+            ) : (
+              <p className="text-gray-400 text-xs font-mono truncate">
+                {t.tenantId ? `…${t.tenantId.slice(-8)}` : '—'}
+              </p>
+            )}
           </div>
-          <p className="text-xs text-black/60 truncate">{t.listingTitle ?? `Lease ${t.leaseId.slice(-6)}`}</p>
-          <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border w-fit', statusBadgeClass(t.status))}>
-            {t.status}
-          </span>
-          <p className="text-xs text-black/40 font-mono">
-            {t.endDate ? new Date(t.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+          <p className="text-xs text-gray-500 font-mono truncate">
+            {t.tenantEmail ?? '—'}
+          </p>
+          <p className="text-xs text-gray-400 font-mono">
+            {(t as any).tenantPhone ?? '—'}
           </p>
         </div>
       ))}
-      <p className="px-4 py-2 text-xs text-black/25 font-mono border-t border-gray-100">
+
+      <p className="px-4 py-2 text-xs text-gray-400 font-mono border-t border-gray-100">
         {tenants.length} tenant{tenants.length !== 1 ? 's' : ''}
       </p>
     </div>
@@ -201,12 +208,8 @@ export default function LeasesDashboardPage() {
 
   const [activeTab, setActiveTab] = useState<TabId>('leases');
 
-  const { data: myLeases = [], isLoading: myLoading } = useMyLeases();
-  const { data: allLeases = [], isLoading: allLoading } = useAllLeases();
-
-  const leases = isAdmin ? allLeases : myLeases;
-  const isLoading = isAdmin ? allLoading : myLoading;
-
+  // /leases/mine returns leases where caller is landlord or tenant
+  const { data: leases = [], isLoading } = useMyLeases();
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'leases', label: 'All Leases', icon: <FileSignature size={14} /> },
     ...(isAdmin ? [{ id: 'tenants' as TabId, label: 'Tenant Roster', icon: <Users size={14} /> }] : []),
@@ -229,6 +232,7 @@ export default function LeasesDashboardPage() {
         </div>
       </div>
 
+      {/* Tabs — admin only */}
       {isAdmin && (
         <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit border border-gray-200">
           {tabs.map((tab) => (
@@ -254,7 +258,6 @@ export default function LeasesDashboardPage() {
       {/* Leases tab */}
       {activeTab === 'leases' && (
         <>
-          {/* Admin lease search tool */}
           {isAdmin && <AdminLeaseSearch />}
 
           {isLoading ? (
