@@ -29,8 +29,8 @@ export default function HeroSection() {
     :            { href: '/auth/login',            label: 'List Your Property', icon: KeyRound };
 
   return (
-    <section className="relative z-10 min-h-[92vh] flex items-center px-6 md:px-12 lg:px-16 pt-28 md:pt-24 pb-16">
-      <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+    <section className="relative z-10 flex min-h-[85vh] items-center pt-10 pb-16">
+      <div className="grid w-full items-center gap-10 lg:grid-cols-12 lg:gap-8">
         {/* ── Editorial column ───────────────────────────────────────────── */}
         <div className="lg:col-span-7">
           <FadeIn delay={0} duration={600}>

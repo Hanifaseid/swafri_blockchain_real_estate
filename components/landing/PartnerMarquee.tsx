@@ -5,7 +5,7 @@ import { PARTNERS } from './data';
 
 export default function PartnerMarquee() {
   return (
-    <section className="relative z-20 border-y border-white/10 bg-black/20 py-7 overflow-hidden">
+    <section className="relative left-1/2 z-20 w-screen -translate-x-1/2 overflow-hidden border-y border-white/10 bg-black/20 py-7">
       <div className="mb-5 text-center">
         <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/35">
           Backed by trusted registries, custody & identity partners

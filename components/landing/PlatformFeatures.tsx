@@ -15,8 +15,11 @@ const ICON_MAP = {
 
 export default function PlatformFeatures() {
   return (
-    <section id="features-section" className="py-24 border-y border-white/10 relative z-20">
-      <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-16">
+    <section
+      id="features-section"
+      className="relative left-1/2 z-20 w-screen -translate-x-1/2 overflow-hidden border-y border-white/10 py-24"
+    >
+      <div className="mx-auto max-w-7xl px-4 lg:px-6">
         <SectionHeading
           index="02"
           kicker="Why the Register"

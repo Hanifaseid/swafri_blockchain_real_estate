@@ -125,10 +125,7 @@ function Track({
 
 export default function HowItWorks() {
   return (
-    <section
-      id="how-it-works-section"
-      className="py-24 px-6 md:px-12 lg:px-16 max-w-7xl mx-auto z-10 relative"
-    >
+    <section id="how-it-works-section" className="relative z-10 py-24">
       <SectionHeading
         index="03"
         kicker="How It Works"

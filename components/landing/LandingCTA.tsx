@@ -20,7 +20,7 @@ export default function LandingCTA() {
     :            { href: '/auth/login',            label: 'List Your Property', icon: KeyRound };
 
   return (
-    <section className="relative z-10 mx-auto max-w-5xl px-6 py-24 md:px-12 lg:px-16">
+    <section className="relative z-10 mx-auto max-w-5xl py-24">
       <Reveal>
         <div className="cert grain relative overflow-hidden rounded-2xl px-8 py-14 text-center md:px-16">
           <div className="relative z-[2]">

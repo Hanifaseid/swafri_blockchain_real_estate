@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&display=swap");
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -220,6 +221,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color: var(--color-text-primary);
+  /* Dark canvas fallback. Lives on body (not the marketplace layout wrapper) so
+     the home page's fixed -z-10 HeroBackground stays visible behind content. */
+  background-color: var(--color-surface-base);
 }
 
 /* Display serif — opt-in via .font-display, applied to hero/editorial headings */

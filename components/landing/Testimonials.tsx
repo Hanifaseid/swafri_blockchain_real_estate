@@ -24,7 +24,7 @@ export default function Testimonials() {
 
   return (
     <section id="testimonials-section" className="relative z-20 overflow-hidden py-24">
-      <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-16">
+      <div>
         <SectionHeading
           index="04"
           kicker="On the Record"
