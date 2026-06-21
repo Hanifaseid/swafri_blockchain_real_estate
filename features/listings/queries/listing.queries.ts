@@ -153,6 +153,8 @@ export function useCreateListing() {
     mutationFn: (input: CreateListingInput) => createListing(input),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.mine() });
+      qc.invalidateQueries({ queryKey: ["listings", "dashboard"] });
+      qc.invalidateQueries({ queryKey: KEYS.yieldDashboard() });
       toast.success("Listing created as draft.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -167,6 +169,8 @@ export function useUpdateListing(id: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.mine() });
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: ["listings", "dashboard"] });
+      qc.invalidateQueries({ queryKey: KEYS.yieldDashboard() });
       toast.success("Listing updated.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -179,6 +183,8 @@ export function useDeleteListing() {
     mutationFn: (id: string) => deleteListing(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.mine() });
+      qc.invalidateQueries({ queryKey: ["listings", "dashboard"] });
+      qc.invalidateQueries({ queryKey: KEYS.yieldDashboard() });
       toast.success("Listing deleted.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -192,6 +198,8 @@ export function useTransitionListing(id: string) {
     onSuccess: (listing) => {
       qc.invalidateQueries({ queryKey: KEYS.mine() });
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: ["listings", "dashboard"] });
+      qc.invalidateQueries({ queryKey: KEYS.yieldDashboard() });
       toast.success(`Listing ${listing.status}.`);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -262,6 +270,7 @@ export function useUploadListingDocuments(listingId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["listings", "documents", listingId] });
       qc.invalidateQueries({ queryKey: KEYS.detail(listingId) });
+      qc.invalidateQueries({ queryKey: KEYS.mine() });
       toast.success("Documents uploaded.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -306,6 +315,7 @@ export function useUploadPhotos(id: string) {
     mutationFn: (files: File[]) => uploadPhotos(id, files),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: KEYS.mine() });
       toast.success("Photos uploaded.");
     },
     onError: (error: any) => {
@@ -321,6 +331,7 @@ export function useDeletePhoto(id: string) {
     mutationFn: (publicId: string) => deletePhoto(id, publicId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: KEYS.mine() });
       toast.success("Photo removed.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -333,6 +344,7 @@ export function useSetCoverPhoto(id: string) {
     mutationFn: (publicId: string) => setCoverPhoto(id, publicId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: KEYS.mine() });
       toast.success("Cover photo updated.");
     },
     onError: (e: Error) => toast.error(e.message),
@@ -345,6 +357,7 @@ export function useReorderPhotos(id: string) {
     mutationFn: (order: string[]) => reorderPhotos(id, order),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEYS.detail(id) });
+      qc.invalidateQueries({ queryKey: KEYS.mine() });
       toast.success("Photos reordered.");
     },
     onError: (e: Error) => toast.error(e.message),

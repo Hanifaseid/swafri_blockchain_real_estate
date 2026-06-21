@@ -10,17 +10,17 @@ export default function AboutPage() {
       <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-900/10 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[50%] h-[50%] rounded-full bg-blue-900/8 blur-[120px] pointer-events-none" />
 
-      <main className="max-w-4xl mx-auto px-6 md:px-12 py-16 relative z-10">
+      <main className="max-w-4xl py-16 relative z-10">
         {/* Header */}
         <div className="mb-14">
           <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-3 py-1.5 rounded-full">
-            About TerraChain
+            About VEX
           </span>
           <h1 className="text-4xl md:text-5xl font-light text-white mt-5 mb-4 leading-tight tracking-tight">
             Real Estate Ownership,<br />Rebuilt on the Blockchain.
           </h1>
           <p className="text-base text-white/60 max-w-2xl leading-relaxed font-light">
-            TerraChain is a blockchain-enabled real estate marketplace that makes listings,
+            VEX is a blockchain-enabled real estate marketplace that makes listings,
             ownership review, lease escrow, and purchase workflows transparent. We connect
             verified property owners with tenants, buyers, and administrators through smart
             contract-backed records and operational compliance tools.

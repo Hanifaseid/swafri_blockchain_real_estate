@@ -1,25 +1,70 @@
-export type LeaseStatus = 
+export type LeaseStatus =
   | 'draft'
   | 'proposed'
-  | 'funded'
+  | 'funded'        // not a backend status — kept so legacy checks compile; backend uses proposed + escrow.state=funded
   | 'active'
   | 'cancelled'
   | 'completed'
   | 'terminated'
   | 'disputed';
 
+export type EscrowState = 'none' | 'funded' | 'active' | 'closed';
+
+export interface LeaseUser {
+  id: string;
+  name?: string;
+  email?: string;
+}
+
+export interface LeaseListing {
+  id: string;
+  title?: string;
+  listingType?: string;
+  monthlyRent?: number;
+  currency?: string;
+}
+
+export interface LeaseEscrow {
+  escrowId?: string;
+  contractAddress?: string;
+  token?: string;
+  state: EscrowState;
+  fundTxHash?: string;
+  activateTxHash?: string;
+  settleTxHash?: string;
+  landlordWallet?: string;
+  tenantWallet?: string;
+}
+
+export interface LeaseDispute {
+  openedBy?: string;
+  openedAt?: string;
+  reason?: string;
+  response?: string;
+  respondedBy?: string;
+  respondedAt?: string;
+}
+
 export interface Lease {
   id: string;
-  listing: string;
-  landlord: string;
-  tenant: string;
+  listing: LeaseListing | string;
+  landlord: LeaseUser | string;
+  tenant: LeaseUser | string;
   status: LeaseStatus;
   monthlyRent: number;
   depositAmount: number;
+  escrowAmount?: number;
   currency: string;
   startDate: string;
   endDate: string;
-  terms: string;
+  terms?: string;
+  termsHash?: string;
+  signedByTenantAt?: string;
+  tenantSignature?: string;
+  escrow?: LeaseEscrow;
+  dispute?: LeaseDispute;
+  createdBy?: string;
+  // Legacy aliases kept for backward compat
   escrowTxHash?: string;
   disputeNote?: string;
   createdAt: string;
@@ -34,7 +79,11 @@ export interface CreateLeasePayload {
   currency: string;
   startDate: string;
   endDate: string;
-  terms: string;
+  terms?: string;
+}
+
+export interface RespondToDisputePayload {
+  response: string;
 }
 
 export interface ResolveDisputePayload {
@@ -52,21 +101,21 @@ export interface EscrowVerification {
 
 export interface LeaseTimelineEvent {
   id?: string;
-  key: string;          // unique key for React list rendering
+  key: string;
   type: string;
-  label: string;        // human-readable label
-  status: string;       // completed | active | pending | etc.
+  label: string;
+  status: string;       // 'completed' | 'active' | 'pending'
   description?: string;
   txHash?: string;
-  at?: string;          // ISO datetime when event occurred
-  occurredAt?: string;  // fallback from API
+  at?: string;
+  occurredAt?: string;
   actorId?: string;
   metadata?: Record<string, unknown>;
 }
 
 export interface LeaseTimeline {
   leaseId: string;
-  currentStatus: string;  // current lease status
-  escrowState: string;    // current escrow state
+  currentStatus: string;
+  escrowState: string;
   events: LeaseTimelineEvent[];
 }

@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   User,
   Mail,
@@ -13,22 +13,25 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { registerSchema, type RegisterFormValues } from '@/features/auth/schemas/auth.schema';
-import { useRegister } from '@/features/auth/queries/auth.queries';
-import { AuthServiceError } from '@/features/auth/services/auth.service';
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "@/features/auth/schemas/auth.schema";
+import { useRegister } from "@/features/auth/queries/auth.queries";
+import { AuthServiceError } from "@/features/auth/services/auth.service";
 
 // Shared UI components
-import { Button } from '@/components/ui/Button';
-import { FormField } from '@/components/ui/FormField';
+import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/ui/FormField";
 import {
   darkInputWithIconClass,
   darkInputPasswordClass,
   darkInputErrorClass,
-} from '@/components/forms/styles';
-import { RoleSelector } from './RoleSelector';
-import { cn } from '@/lib/utils';
+} from "@/components/forms/styles";
+import { RoleSelector } from "./RoleSelector";
+import { cn } from "@/lib/utils";
 
 // ─── RegisterForm ─────────────────────────────────────────────────────────────
 
@@ -46,24 +49,24 @@ export function RegisterForm() {
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      confirmPassword: '',
-      role: 'TENANT',
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      role: "TENANT",
     },
   });
 
-  const selectedRole = watch('role');
+  const selectedRole = watch("role");
   const onSubmit = (data: RegisterFormValues) => registerFn(data);
 
   const serverError =
     error instanceof AuthServiceError
       ? error.message
       : error
-      ? 'Something went wrong. Please try again.'
-      : null;
+        ? "Something went wrong. Please try again."
+        : null;
 
   return (
     <div className="space-y-5 p-6 md:p-8">
@@ -72,9 +75,7 @@ export function RegisterForm() {
         <h2 className="text-lg font-medium text-white tracking-tight">
           Create your account
         </h2>
-        <p className="text-xs text-white/35">
-          Join the TerraChain marketplace
-        </p>
+        <p className="text-xs text-white/35">Join the VEX marketplace</p>
       </div>
 
       {/* Server alerts */}
@@ -89,7 +90,10 @@ export function RegisterForm() {
       )}
       {isSuccess && (
         <div className="flex items-start gap-2.5 bg-emerald-500/10 border border-emerald-500/20 p-3.5 rounded-xl text-emerald-300 text-xs">
-          <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+          <CheckCircle2
+            className="w-4 h-4 shrink-0 mt-0.5"
+            aria-hidden="true"
+          />
           <span>Account created. Redirecting to dashboard…</span>
         </div>
       )}
@@ -124,10 +128,10 @@ export function RegisterForm() {
               type="text"
               placeholder="e.g. John Doe"
               autoComplete="name"
-              {...register('name')}
+              {...register("name")}
               className={cn(
                 darkInputWithIconClass,
-                errors.name && darkInputErrorClass
+                errors.name && darkInputErrorClass,
               )}
             />
           </div>
@@ -149,10 +153,10 @@ export function RegisterForm() {
               type="email"
               placeholder="e.g. john@example.com"
               autoComplete="email"
-              {...register('email')}
+              {...register("email")}
               className={cn(
                 darkInputWithIconClass,
-                errors.email && darkInputErrorClass
+                errors.email && darkInputErrorClass,
               )}
             />
           </div>
@@ -174,10 +178,10 @@ export function RegisterForm() {
               type="tel"
               placeholder="e.g. +1 (555) 000-1234"
               autoComplete="tel"
-              {...register('phone')}
+              {...register("phone")}
               className={cn(
                 darkInputWithIconClass,
-                errors.phone && darkInputErrorClass
+                errors.phone && darkInputErrorClass,
               )}
             />
           </div>
@@ -197,22 +201,26 @@ export function RegisterForm() {
               aria-hidden="true"
             />
             <input
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="new-password"
-              {...register('password')}
+              {...register("password")}
               className={cn(
                 darkInputPasswordClass,
-                errors.password && darkInputErrorClass
+                errors.password && darkInputErrorClass,
               )}
             />
             <button
               type="button"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((v) => !v)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors cursor-pointer"
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
         </FormField>
@@ -230,33 +238,40 @@ export function RegisterForm() {
               aria-hidden="true"
             />
             <input
-              type={showConfirm ? 'text' : 'password'}
+              type={showConfirm ? "text" : "password"}
               placeholder="••••••••"
               autoComplete="new-password"
-              {...register('confirmPassword')}
+              {...register("confirmPassword")}
               className={cn(
                 darkInputPasswordClass,
-                errors.confirmPassword && darkInputErrorClass
+                errors.confirmPassword && darkInputErrorClass,
               )}
             />
             <button
               type="button"
-              aria-label={showConfirm ? 'Hide password' : 'Show password'}
+              aria-label={showConfirm ? "Hide password" : "Show password"}
               onClick={() => setShowConfirm((v) => !v)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors cursor-pointer"
             >
-              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showConfirm ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
             </button>
           </div>
         </FormField>
 
         {/* Property owner notice */}
-        {selectedRole === 'PROPERTY_OWNER' && (
+        {selectedRole === "PROPERTY_OWNER" && (
           <div className="flex items-start gap-2.5 bg-emerald-950/30 border border-emerald-900/40 p-3.5 rounded-xl">
-            <Sparkles className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" aria-hidden="true" />
+            <Sparkles
+              className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5"
+              aria-hidden="true"
+            />
             <p className="text-[11px] text-emerald-400 font-mono leading-relaxed">
-              Your account starts as <strong>PENDING</strong> and requires admin review before
-              you can publish verified properties.
+              Your account starts as <strong>PENDING</strong> and requires admin
+              review before you can publish verified properties.
             </p>
           </div>
         )}
@@ -269,7 +284,7 @@ export function RegisterForm() {
           className="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-black py-3.5 rounded-xl text-xs font-bold tracking-widest uppercase shadow-lg shadow-amber-500/20"
           size="lg"
         >
-          {isSuccess ? 'Redirecting…' : 'Create Account'}
+          {isSuccess ? "Redirecting…" : "Create Account"}
         </Button>
       </form>
     </div>

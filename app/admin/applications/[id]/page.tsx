@@ -26,6 +26,7 @@ import {
   Mail,
   User,
   Home,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -330,6 +331,7 @@ function TenantAppointmentPanel({ app }: { app: RentalApplication }) {
 
 function OwnerActionsPanel({ app }: { app: RentalApplication }) {
   const router = useRouter();
+  const { currentUser } = useAuthStore();
   const { mutate: review, isPending: reviewing } = useReviewRentalApplication();
   const { mutate: updateScreening, isPending: screening } = useUpdateScreening();
   const { mutate: updateAppointment, isPending: updatingAppointment } = useUpdateAppointment();
@@ -370,6 +372,9 @@ function OwnerActionsPanel({ app }: { app: RentalApplication }) {
   };
 
   if (app.status === 'approved') {
+    const isOwner = currentUser?.role === 'PROPERTY_OWNER';
+    const isUnverifiedOwner = isOwner && currentUser?.kycStatus !== 'verified';
+
     return (
       <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
@@ -382,7 +387,18 @@ function OwnerActionsPanel({ app }: { app: RentalApplication }) {
           This tenant has been approved. Draft and send the formal lease agreement to proceed.
         </p>
 
-        {!showLeaseForm ? (
+        {isUnverifiedOwner ? (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl text-center space-y-2">
+            <AlertTriangle className="w-6 h-6 text-amber-500 mx-auto" />
+            <p className="text-xs text-amber-700 font-medium">KYC verification is required to draft lease agreements.</p>
+            <button
+              onClick={() => router.push('/account/kyc')}
+              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 underline"
+            >
+              Complete KYC verification
+            </button>
+          </div>
+        ) : !showLeaseForm ? (
           <button
             onClick={() => setShowLeaseForm(true)}
             className="w-full py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-sm font-medium rounded-xl transition-all hover:shadow-lg"

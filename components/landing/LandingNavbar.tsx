@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
@@ -25,10 +25,10 @@ import {
   ShieldCheck,
   UserRound,
   X,
-} from 'lucide-react';
-import { clearSession } from '@/lib/auth/session';
-import { useAuthStore } from '@/stores/auth.store';
-import { WalletConnectButton } from '@/components/ui/WalletConnectButton';
+} from "lucide-react";
+import { clearSession } from "@/lib/auth/session";
+import { useAuthStore } from "@/stores/auth.store";
+import { WalletConnectButton } from "@/components/ui/WalletConnectButton";
 
 // ─── Navigation items ─────────────────────────────────────────────────────────
 // Top-level nav: visible to everyone. Mix of page links and in-page scroll targets.
@@ -38,11 +38,11 @@ type NavScrollItem = { label: string; id: string };
 type NavItem = NavLinkItem | NavScrollItem;
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Home', href: '/' },
-  { label: 'Discover', href: '/discovery' },
-  { label: 'Listings', href: '/listings' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: "Home", href: "/" },
+  { label: "Discover", href: "/discovery" },
+  { label: "Listings", href: "/listings" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ] as const;
 
 export default function LandingNavbar() {
@@ -51,6 +51,19 @@ export default function LandingNavbar() {
   const [progress, setProgress] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -63,14 +76,18 @@ export default function LandingNavbar() {
       setProgress(max > 0 ? Math.min(1, y / max) : 0);
     };
     onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
-    return () => window.removeEventListener('scroll', onScroll, { capture: true });
+    window.addEventListener("scroll", onScroll, {
+      passive: true,
+      capture: true,
+    });
+    return () =>
+      window.removeEventListener("scroll", onScroll, { capture: true });
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [mobileOpen]);
 
@@ -84,7 +101,7 @@ export default function LandingNavbar() {
       closeMenus();
       const target = document.getElementById(id);
       if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
+        target.scrollIntoView({ behavior: "smooth" });
       } else {
         window.location.href = `/#${id}`;
       }
@@ -92,8 +109,9 @@ export default function LandingNavbar() {
     [closeMenus],
   );
 
-  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'SUPER_ADMIN';
-  const isOwner = currentUser?.role === 'PROPERTY_OWNER';
+  const isAdmin =
+    currentUser?.role === "ADMIN" || currentUser?.role === "SUPER_ADMIN";
+  const isOwner = currentUser?.role === "PROPERTY_OWNER";
 
   // ── Account dropdown links (role-specific) ──────────────────────────────────
   const accountLinks = useMemo(() => {
@@ -102,52 +120,64 @@ export default function LandingNavbar() {
     // Admin / Super Admin → full admin dashboard
     if (isAdmin) {
       return [
-        { href: '/admin/dashboard', label: 'Admin Dashboard', icon: LayoutDashboard },
-        { href: '/admin/users', label: 'Manage Users', icon: UserRound },
-        { href: '/admin/kyc', label: 'KYC Review', icon: BadgeCheck },
-        { href: '/admin/compliance', label: 'Compliance', icon: Shield },
-        { href: '/admin/transactions', label: 'Transactions', icon: KeyRound },
-        { href: '/admin/profile', label: 'Profile', icon: UserRound },
+        {
+          href: "/admin/dashboard",
+          label: "Admin Dashboard",
+          icon: LayoutDashboard,
+        },
+        { href: "/admin/users", label: "Manage Users", icon: UserRound },
+        { href: "/admin/kyc", label: "KYC Review", icon: BadgeCheck },
+        { href: "/admin/compliance", label: "Compliance", icon: Shield },
+        { href: "/admin/transactions", label: "Transactions", icon: KeyRound },
+        { href: "/admin/profile", label: "Profile", icon: UserRound },
       ];
     }
 
     // Property Owner → marketplace-first, account section for management
     if (isOwner) {
       return [
-        { href: '/account/listings', label: 'My Listings', icon: Building2 },
-        { href: '/account/listings/new', label: 'List a Property', icon: Plus },
-        { href: '/account/applications', label: 'Applications', icon: ClipboardList },
-        { href: '/account/offers', label: 'Offers', icon: MessageSquare },
-        { href: '/account/leases', label: 'Leases', icon: FileClock },
-        { href: '/account/kyc', label: 'KYC & Wallet', icon: FileCheck2 },
-        { href: '/account/profile', label: 'Profile', icon: UserRound },
+        { href: "/account/listings", label: "My Listings", icon: Building2 },
+        { href: "/account/listings/new", label: "List a Property", icon: Plus },
+        {
+          href: "/account/applications",
+          label: "Applications",
+          icon: ClipboardList,
+        },
+        { href: "/account/offers", label: "Offers", icon: MessageSquare },
+        { href: "/account/leases", label: "Leases", icon: FileClock },
+        { href: "/account/kyc", label: "KYC & Wallet", icon: FileCheck2 },
+        { href: "/account/profile", label: "Profile", icon: UserRound },
       ];
     }
 
     // Tenant → marketplace-first, account section for saved/applications
     return [
-      { href: '/account/saved', label: 'Saved Searches', icon: Heart },
-      { href: '/account/applications', label: 'My Applications', icon: ClipboardList },
-      { href: '/account/offers', label: 'My Offers', icon: MessageSquare },
-      { href: '/account/leases', label: 'My Leases', icon: FileClock },
-      { href: '/account/kyc', label: 'KYC & Wallet', icon: FileCheck2 },
-      { href: '/account/profile', label: 'Profile', icon: UserRound },
+      { href: "/account/saved", label: "Saved Searches", icon: Heart },
+      {
+        href: "/account/applications",
+        label: "My Applications",
+        icon: ClipboardList,
+      },
+      { href: "/account/offers", label: "My Offers", icon: MessageSquare },
+      { href: "/account/leases", label: "My Leases", icon: FileClock },
+      { href: "/account/kyc", label: "KYC & Wallet", icon: FileCheck2 },
+      { href: "/account/profile", label: "Profile", icon: UserRound },
     ];
   }, [currentUser, isAdmin, isOwner]);
 
   const handleSignOut = () => {
     clearSession();
     clearUser();
-    document.cookie = 'vex_authed=; path=/; max-age=0';
-    document.cookie = 'vex_user_role=; path=/; max-age=0';
-    window.location.href = '/';
+    document.cookie = "vex_authed=; path=/; max-age=0";
+    document.cookie = "vex_user_role=; path=/; max-age=0";
+    window.location.href = "/";
   };
 
   // ── Primary CTA button logic ────────────────────────────────────────────────
   // Unauthenticated → "Get Started" link
   // Any authenticated user → WalletConnectButton (always shown next to profile)
   const primaryAction = !currentUser
-    ? { href: '/auth/login', label: 'Get Started', icon: ArrowRight }
+    ? { href: "/auth/login", label: "Get Started", icon: ArrowRight }
     : null;
   const PrimaryIcon = primaryAction?.icon ?? null;
 
@@ -155,56 +185,67 @@ export default function LandingNavbar() {
     <header className="fixed inset-x-0 top-0 z-50">
       <div
         className="absolute inset-x-0 top-0 h-0.5 origin-left bg-linear-to-r from-amber-400 to-amber-600"
-        style={{ transform: `scaleX(${progress})`, transition: 'transform 0.1s linear' }}
+        style={{
+          transform: `scaleX(${progress})`,
+          transition: "transform 0.1s linear",
+        }}
         aria-hidden
       />
 
       <div
         className={[
-          'flex items-center justify-between gap-4 px-5 transition-all duration-300 md:px-12 lg:px-16',
+          "w-full transition-all duration-300",
           scrolled
-            ? 'border-b border-white/10 bg-black py-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.7)]'
-            : 'border-b border-transparent bg-black/15 py-5 backdrop-blur-[2px]',
-        ].join(' ')}
+            ? "border-b border-white/10 bg-black py-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.7)]"
+            : "border-b border-transparent bg-black/15 py-5 backdrop-blur-[2px]",
+        ].join(" ")}
       >
-        <Link href="/" className="group flex select-none items-center gap-3" aria-label="TerraChain home">
-          <span className="relative grid h-9 w-9 place-items-center rounded-[8px] bg-linear-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-transform group-hover:scale-105">
-            V
-          </span>
-          <span className="flex flex-col leading-none">
-            <span className="font-display text-xl font-semibold tracking-tight text-white">VEX</span>
-            <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.28em] text-amber-300/80">
-              Property Register
+        {/* ── Content wrapper: constrained to max-w-7xl with marketplace-aligned padding ── */}
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 lg:px-6">
+          {/* Logo */}
+          <Link
+            href="/"
+            className="group flex select-none items-center gap-3"
+            aria-label="VEX home"
+          >
+            <span className="relative grid h-9 w-9 place-items-center rounded-[8px] bg-linear-to-br from-amber-300 to-amber-600 font-display text-lg font-semibold leading-none text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] transition-transform group-hover:scale-105">
+              V
             </span>
-          </span>
-        </Link>
+            <span className="flex flex-col leading-none">
+              <span className="font-display text-xl font-semibold tracking-tight text-white">
+                VEX
+              </span>
+              <span className="mt-0.5 font-mono text-[8px] uppercase tracking-[0.28em] text-amber-300/80">
+                Property Register
+              </span>
+            </span>
+          </Link>
 
-        {/* ── Desktop nav links ────────────────────────────────────────────── */}
-        <nav className="hidden items-center gap-8 text-sm md:flex" aria-label="Primary">
-          {NAV_ITEMS.map((item) =>
-            'href' in item ? (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="relative font-medium text-white/72 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <button
-                key={item.id}
-                onClick={() => scrollTo(item.id)}
-                className="relative cursor-pointer font-medium text-white/72 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
-              >
-                {item.label}
-              </button>
-            ),
-          )}
-        </nav>
+          {/* ── Desktop nav links ────────────────────────────────────────────── */}
+          <nav className="hidden items-center gap-8 text-sm md:flex" aria-label="Primary">
+            {NAV_ITEMS.map((item) =>
+              "href" in item ? (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="relative font-medium text-white/72 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => scrollTo(item.id)}
+                  className="relative cursor-pointer font-medium text-white/72 transition-colors after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-amber-400 after:transition-all after:duration-300 hover:text-white hover:after:w-full"
+                >
+                  {item.label}
+                </button>
+              ),
+            )}
+          </nav>
 
-        {/* ── Right side: CTA + profile ────────────────────────────────────── */}
-        <div className="flex items-center gap-2">
-
+          {/* ── Right side: CTA + profile ────────────────────────────────────── */}
+          <div className="flex items-center gap-2">
           {/* CTA: link for unauthenticated / admin / owner — wallet for tenant */}
           {primaryAction && PrimaryIcon ? (
             <Link
@@ -216,15 +257,13 @@ export default function LandingNavbar() {
             </Link>
           ) : currentUser ? (
             <div className="hidden sm:block">
-              <WalletConnectButton
-                className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] hover:bg-amber-400"
-              />
+              <WalletConnectButton className="rounded-lg bg-amber-500 px-5 py-2 text-sm font-semibold text-emerald-950 shadow-[0_2px_10px_-2px_rgba(189,139,39,0.6)] hover:bg-amber-400" />
             </div>
           ) : null}
 
           {/* ── Profile dropdown (desktop) ─────────────────────────────────── */}
           {currentUser && (
-            <div className="relative hidden sm:block">
+            <div ref={dropdownRef} className="relative hidden sm:block">
               <button
                 type="button"
                 onClick={() => setProfileOpen((value) => !value)}
@@ -232,21 +271,29 @@ export default function LandingNavbar() {
                 aria-expanded={profileOpen}
               >
                 <span className="grid h-7 w-7 place-items-center rounded-md bg-white text-xs font-semibold text-emerald-950">
-                  {(currentUser.name || currentUser.email || 'U').slice(0, 1).toUpperCase()}
+                  {(currentUser.name || currentUser.email || "U")
+                    .slice(0, 1)
+                    .toUpperCase()}
                 </span>
                 <span className="hidden max-w-[120px] truncate text-sm font-medium lg:inline">
                   {currentUser.name || currentUser.email}
                 </span>
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-3.5 w-3.5 transition-transform ${profileOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {profileOpen && (
                 <div className="absolute right-0 mt-2 w-72 overflow-hidden rounded-xl border border-white/10 bg-[#11100d]/95 shadow-2xl backdrop-blur">
                   <div className="border-b border-white/10 px-4 py-3">
-                    <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
-                    <p className="truncate text-xs text-white/45">{currentUser.email}</p>
+                    <p className="truncate text-sm font-semibold text-white">
+                      {currentUser.name}
+                    </p>
+                    <p className="truncate text-xs text-white/45">
+                      {currentUser.email}
+                    </p>
                     <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-amber-300/70">
-                      {currentUser.role?.replace('_', ' ')}
+                      {currentUser.role?.replace("_", " ")}
                     </p>
                   </div>
                   <div className="p-2">
@@ -283,24 +330,29 @@ export default function LandingNavbar() {
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
             className="grid h-10 w-10 place-items-center rounded-lg border border-white/15 bg-white/5 text-white transition-colors hover:bg-white/10 md:hidden"
-            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileOpen}
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
+        </div>
         </div>
       </div>
 
       {/* ── Mobile menu ────────────────────────────────────────────────────── */}
       <div
         className={[
-          'overflow-hidden border-b border-white/10 bg-black transition-[max-height,opacity] duration-300 ease-out md:hidden',
-          mobileOpen ? 'max-h-[90vh] opacity-100' : 'max-h-0 opacity-0',
-        ].join(' ')}
+          "overflow-hidden border-b border-white/10 bg-black transition-[max-height,opacity] duration-300 ease-out md:hidden",
+          mobileOpen ? "max-h-[90vh] opacity-100" : "max-h-0 opacity-0",
+        ].join(" ")}
       >
-        <nav className="flex flex-col px-5 py-4" aria-label="Mobile">
+        <nav className="flex flex-col px-4 py-4 lg:px-6" aria-label="Mobile">
           {NAV_ITEMS.map((item, i) =>
-            'href' in item ? (
+            "href" in item ? (
               <Link
                 key={item.label}
                 href={item.href}
@@ -308,7 +360,9 @@ export default function LandingNavbar() {
                 className="flex items-center justify-between border-b border-white/5 py-3.5 text-left font-display text-lg text-white/85 transition-colors hover:text-white"
               >
                 <span>{item.label}</span>
-                <span className="font-mono text-[11px] text-amber-300/60">0{i + 1}</span>
+                <span className="font-mono text-[11px] text-amber-300/60">
+                  0{i + 1}
+                </span>
               </Link>
             ) : (
               <button
@@ -317,7 +371,9 @@ export default function LandingNavbar() {
                 className="flex items-center justify-between border-b border-white/5 py-3.5 text-left font-display text-lg text-white/85 transition-colors hover:text-white"
               >
                 <span>{item.label}</span>
-                <span className="font-mono text-[11px] text-amber-300/60">0{i + 1}</span>
+                <span className="font-mono text-[11px] text-amber-300/60">
+                  0{i + 1}
+                </span>
               </button>
             ),
           )}
@@ -332,18 +388,19 @@ export default function LandingNavbar() {
                 {primaryAction.label} <PrimaryIcon className="h-4 w-4" />
               </Link>
             ) : currentUser ? (
-              <WalletConnectButton
-                className="rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950 justify-center"
-              />
+              <WalletConnectButton className="rounded-xl bg-amber-500 py-3 text-sm font-semibold text-emerald-950 justify-center" />
             ) : null}
-
           </div>
 
           {currentUser && (
             <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-2">
               <div className="px-3 py-2">
-                <p className="truncate text-sm font-semibold text-white">{currentUser.name}</p>
-                <p className="truncate text-xs text-white/45">{currentUser.email}</p>
+                <p className="truncate text-sm font-semibold text-white">
+                  {currentUser.name}
+                </p>
+                <p className="truncate text-xs text-white/45">
+                  {currentUser.email}
+                </p>
               </div>
               {accountLinks.map((item) => {
                 const Icon = item.icon;
@@ -372,7 +429,7 @@ export default function LandingNavbar() {
 
           <div className="mt-4 flex items-center justify-center gap-2 py-2 font-mono text-[10px] uppercase tracking-widest text-white/35">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            Every listing title-verified
+            Reviewed listings and title-ready records
           </div>
         </nav>
       </div>

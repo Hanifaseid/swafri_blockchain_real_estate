@@ -8,7 +8,7 @@ export default function ContactPage() {
     <div className="relative overflow-x-hidden">
       <div className="absolute top-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-blue-900/8 blur-[140px] pointer-events-none" />
 
-      <main className="max-w-2xl mx-auto px-6 md:px-12 py-16 relative z-10">
+      <main className="max-w-2xl py-16 relative z-10">
         <div className="mb-12">
           <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-3 py-1.5 rounded-full">
             Contact

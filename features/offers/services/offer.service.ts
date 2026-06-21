@@ -39,14 +39,23 @@ function isArrayPayload<T>(
 
 
 function normalizeOffer(offer: any): Offer {
-
+  const amount = offer.amount ?? offer.offerPrice ?? 0;
+  const counterAmount = offer.counterAmount ?? offer.counterOfferPrice;
+  const responseNote = offer.responseNote ?? offer.responseMessage;
   return {
     ...offer,
     listingId: offer.listingId ?? (typeof offer.listing === 'string' ? offer.listing : offer.listing?.id) ?? '',
-    amount: offer.amount ?? offer.offerPrice ?? 0,
+    // Canonical frontend field is offerPrice; backend sends amount — keep both
+    offerPrice: amount,
+    amount,
+    offerer: offer.offerer ?? offer.buyer,
     buyer: offer.buyer ?? offer.offerer,
-    responseNote: offer.responseNote ?? offer.responseMessage,
-    counterAmount: offer.counterAmount ?? offer.counterOfferPrice,
+    responseMessage: responseNote,
+    responseNote,
+    counterOfferPrice: counterAmount,
+    counterAmount,
+    // Normalize status: backend sends 'submitted', older code expected 'pending'
+    status: offer.status === 'pending' ? 'submitted' : offer.status,
   };
 }
 
@@ -144,8 +153,21 @@ export async function getReceivedOffers(): Promise<Offer[]> {
 }
 
 export async function respondOffer(id: string, input: RespondOfferInput): Promise<Offer> {
+  // Map the UI shape ({ status, responseMessage, counterOfferPrice }) onto the
+  // backend contract ({ action, responseNote, counterAmount }).
+  const actionByStatus: Record<RespondOfferInput['status'], 'accept' | 'reject' | 'counter'> = {
+    accepted: 'accept',
+    rejected: 'reject',
+    countered: 'counter',
+  };
+  const payload = {
+    action: actionByStatus[input.status],
+    ...(input.responseMessage ? { responseNote: input.responseMessage } : {}),
+    ...(input.counterOfferPrice != null ? { counterAmount: input.counterOfferPrice } : {}),
+  };
+
   try {
-    const { data } = await apiClient.patch<ApiResp<Offer>>(ENDPOINTS.OFFERS.RESPOND(id), input);
+    const { data } = await apiClient.patch<ApiResp<Offer>>(ENDPOINTS.OFFERS.RESPOND(id), payload);
 
     if (!data.success) throw new Error(data.message);
 

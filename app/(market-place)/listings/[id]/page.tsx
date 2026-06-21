@@ -1,10 +1,28 @@
+import type { Metadata } from "next";
 import { getListing } from "@/features/listings/services/listing.service";
 import { ListingDetailView } from "@/components/listing/ListingDetailView";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { createSeoMetadata, listingJsonLd, listingSeoMetadata } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const listing = await getListing(id);
+
+  if (!listing) {
+    return createSeoMetadata({
+      title: "Listing Not Found",
+      description: "This property listing may have been removed or the URL is incorrect.",
+      path: `/listings/${id}`,
+      noIndex: true,
+    });
+  }
+
+  return listingSeoMetadata(listing, `/listings/${id}`);
 }
 
 export default async function ListingDetailPage({ params }: Props) {
@@ -32,5 +50,16 @@ export default async function ListingDetailPage({ params }: Props) {
     );
   }
 
-  return <ListingDetailView listing={listing} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(listingJsonLd(listing, `/listings/${id}`)),
+        }}
+      />
+      <ListingDetailView listing={listing} />
+    </>
+  );
 }
