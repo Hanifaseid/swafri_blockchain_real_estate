@@ -162,31 +162,49 @@ function TenantRosterView() {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] border-b border-gray-200 bg-gray-50 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-gray-400">
-        <span>Name</span>
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_180px_80px_100px] border-b border-gray-200 bg-gray-50 px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-gray-400">
+        <span>Tenant</span>
+        <span>Listing</span>
         <span>Email</span>
-        <span>Phone</span>
+        <span>Status</span>
+        <span>End Date</span>
       </div>
 
       {tenants.map((t, i) => (
         <div
-          key={t.tenantId || i}
-          className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_120px] items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 hover:bg-gray-50/50 transition-colors"
+          key={t.leaseId || i}
+          className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_180px_80px_100px] items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm last:border-b-0 hover:bg-gray-50/50 transition-colors"
         >
+          {/* Tenant name */}
           <div className="min-w-0">
-            {t.tenantName ? (
-              <p className="font-medium text-gray-800 truncate">{t.tenantName}</p>
-            ) : (
-              <p className="text-gray-400 text-xs font-mono truncate">
-                {t.tenantId ? `…${t.tenantId.slice(-8)}` : '—'}
-              </p>
-            )}
+            <p className="font-medium text-gray-800 truncate">
+              {t.tenantName ?? <span className="text-gray-400 font-mono text-xs">…{t.tenantId.slice(-8)}</span>}
+            </p>
           </div>
+
+          {/* Listing title */}
+          <p className="text-xs text-gray-600 truncate">
+            {t.listingTitle ?? '—'}
+          </p>
+
+          {/* Email */}
           <p className="text-xs text-gray-500 font-mono truncate">
             {t.tenantEmail ?? '—'}
           </p>
+
+          {/* Status */}
+          <span className={cn(
+            'text-[10px] font-mono uppercase px-2 py-0.5 rounded border w-fit',
+            statusBadgeClass(t.status)
+          )}>
+            {t.status}
+          </span>
+
+          {/* End date */}
           <p className="text-xs text-gray-400 font-mono">
-            {(t as any).tenantPhone ?? '—'}
+            {t.endDate
+              ? new Date(t.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+              : '—'}
           </p>
         </div>
       ))}
