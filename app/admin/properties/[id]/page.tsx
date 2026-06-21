@@ -299,8 +299,8 @@ export default function ListingDetailPage({ params }: { params: Promise<{ id: st
       <div className="flex items-center gap-3">
         <Link href="/properties" className="text-black/30 hover:text-black/60"><ArrowLeft size={18} /></Link>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Listing Detail</p>
-          <h1 className="text-xl font-semibold text-[#0f172a] line-clamp-1">{listing.title}</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Listing Detail</p>
+          <h1 className="text-xl font-semibold text-gray-900 line-clamp-1">{listing.title}</h1>
         </div>
       </div>
 
