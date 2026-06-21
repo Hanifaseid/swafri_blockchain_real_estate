@@ -213,6 +213,12 @@ export const ENDPOINTS = {
     AUDIT_LOGS:       '/audit-logs',
   },
 
+  // ── System Settings ──────────────────────────────────────────────────────────
+  SETTINGS: {
+    GET:    '/settings',
+    UPDATE: '/settings',
+  },
+
   // ── Health ───────────────────────────────────────────────────────────────────
   HEALTH: {
     LIVENESS:  '/health/live',
