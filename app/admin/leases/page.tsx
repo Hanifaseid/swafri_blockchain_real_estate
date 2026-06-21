@@ -216,18 +216,21 @@ export default function LeasesDashboardPage() {
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <FileSignature className="w-6 h-6 text-emerald-600" />
-        <h1 className="text-2xl font-semibold tracking-tight text-gray-900">Leases & Escrow</h1>
-        {isAdmin && (
-          <span className="px-2 py-1 text-[10px] font-mono uppercase bg-purple-50 text-purple-700 border border-purple-200 rounded-lg">
-            Admin View
-          </span>
-        )}
+        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <FileSignature size={16} className="text-emerald-600" />
+        </div>
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Leases & Escrow</h1>
+          {isAdmin && (
+            <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-violet-50 text-violet-700 border border-violet-200 rounded-md">
+              Admin View
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Tabs — admin only */}
       {isAdmin && (
-        <div className="flex gap-1 bg-black/5 p-1 rounded-xl w-fit border border-black/10">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit border border-gray-200">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -235,7 +238,7 @@ export default function LeasesDashboardPage() {
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-black/50 hover:text-black/80'
+                activeTab === tab.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
               )}
             >
               {tab.icon}

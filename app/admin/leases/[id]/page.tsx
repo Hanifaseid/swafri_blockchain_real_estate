@@ -358,7 +358,7 @@ function LeaseDisputeResolver({ leaseId }: { leaseId: string }) {
         value={note}
         onChange={e => setNote(e.target.value)}
         placeholder="Resolution notes..."
-        style={{ color: '#111827' }}
+        style={{ color: 'rgb(17 24 39)' }}
         className="w-full p-2.5 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none h-20 bg-gray-50 transition-all"
       />
       

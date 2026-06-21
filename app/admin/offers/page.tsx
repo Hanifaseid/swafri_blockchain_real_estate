@@ -47,10 +47,10 @@ function LoadingState() {
 
 function EmptyState({ title, description }: { title: string; description: string }) {
   return (
-    <div className="rounded-2xl p-12 text-center" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
-      <CreditCard className="w-10 h-10 text-black/15 mx-auto mb-4" />
-      <p className="text-sm text-black/60 font-light mb-2">{title}</p>
-      <p className="text-xs text-black/50">{description}</p>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
+      <CreditCard className="w-10 h-10 text-gray-200 mx-auto mb-4" />
+      <p className="text-sm text-gray-600 font-medium mb-1">{title}</p>
+      <p className="text-xs text-gray-400">{description}</p>
       <Link href="/properties" className="inline-block mt-4 text-xs text-emerald-600 hover:text-emerald-700 font-medium">
         Browse properties →
       </Link>
@@ -70,10 +70,12 @@ export default function OffersPage() {
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
-        <CreditCard className="w-6 h-6 text-emerald-500 shrink-0" />
+        <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center">
+          <CreditCard size={16} className="text-emerald-600" />
+        </div>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">{ROLE_LABELS[currentUser.role]}</p>
-          <h1 className="text-2xl font-light text-dash-sidebar tracking-tight">{isOwner ? 'Offers Dashboard' : 'My Offers'}</h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">{ROLE_LABELS[currentUser.role]}</p>
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">{isOwner ? 'Offers Dashboard' : 'My Offers'}</h1>
         </div>
       </div>
       {isOwner ? <OwnerOffersView /> : <TenantOffersView />}
@@ -141,7 +143,7 @@ function OwnerOffersView() {
 
   return (
     <div>
-      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit border border-gray-200">
         {(['received', 'sent'] as const).map((tab) => (
           <button
             key={tab}
@@ -149,7 +151,7 @@ function OwnerOffersView() {
             onClick={() => setActiveTab(tab)}
             className={cn(
               'text-xs font-medium px-4 py-2 rounded-lg capitalize transition-all',
-              activeTab === tab ? 'bg-white text-black shadow-sm' : 'text-black/50 hover:text-black/70'
+              activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
             )}
           >
             {tab === 'received' ? 'Received' : 'Sent'}
@@ -191,11 +193,11 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
   const canSubmit = responseAction !== 'countered' || counterAmount > 0;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="flex items-center justify-between gap-3 w-full p-4 text-left"
+        className="flex items-center justify-between gap-3 w-full p-4 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2 items-center mb-2">
@@ -312,15 +314,15 @@ function SentOfferCard({ offer, cancelOfferMutation }: { offer: Offer; cancelOff
   const listing = typeof offer.listing === 'string' ? null : offer.listing;
 
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded((value) => !value)}
-        className="flex items-center justify-between gap-3 w-full p-4 text-left"
+        className="flex items-center justify-between gap-3 w-full p-4 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2 items-center mb-2">
-            <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-black/50')}>
+            <span className={cn('text-[10px] font-mono uppercase px-2 py-0.5 rounded border', STATUS_STYLE[offer.status] ?? 'border-gray-200 text-gray-500')}>
               {offer.status.replace('_', ' ')}
             </span>
             <span className="text-[10px] font-mono uppercase bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded">Sent</span>
