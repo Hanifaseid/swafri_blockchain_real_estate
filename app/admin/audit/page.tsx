@@ -1,121 +1,189 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { History, ShieldAlert } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { History } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { getAuditLogs, type AuditLog } from '@/features/audit/services/audit.service';
-import { SearchInput } from '@/components/ui/SearchInput';
+import { getUserById } from '@/features/users/services/users.service';
+import {
+  AdminPageLayout,
+  AdminTable,
+  AdminTableRow,
+  AdminTableCell,
+  AdminLoadingState,
+  AdminEmptyState,
+  AdminFilterBar,
+} from '@/components/admin/ui';
+
+// ─── Actor cache ──────────────────────────────────────────────────────────────
+// Maps actor ID → { name, email } so we only fetch each user once.
+
+interface ActorInfo {
+  name: string;
+  email: string;
+}
 
 export default function AuditPage() {
   const { currentUser } = useAuthStore();
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  // Cache of actorId → { name, email }
+  const [actorCache, setActorCache] = useState<Record<string, ActorInfo>>({});
+
+  // Fetch actor details for all unique actor IDs in the logs
+  const enrichActors = useCallback(async (items: AuditLog[]) => {
+    const uniqueIds = [...new Set(
+      items.map((l) => l.actorId).filter(Boolean) as string[]
+    )];
+
+    const results = await Promise.allSettled(
+      uniqueIds.map(async (id) => {
+        try {
+          const user = await getUserById(id);
+          if (user) return { id, name: user.name, email: user.email };
+          return null;
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    const newCache: Record<string, ActorInfo> = {};
+    results.forEach((r) => {
+      if (r.status === 'fulfilled' && r.value) {
+        newCache[r.value.id] = { name: r.value.name, email: r.value.email };
+      }
+    });
+
+    setActorCache(newCache);
+  }, []);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
     getAuditLogs()
       .then((items) => {
-        if (active) setLogs(items);
+        const arr = Array.isArray(items)
+          ? items
+          : Array.isArray((items as any)?.data)
+          ? (items as any).data
+          : Array.isArray((items as any)?.items)
+          ? (items as any).items
+          : [];
+        if (active) {
+          setLogs(arr);
+          // Enrich actor details in the background — non-blocking
+          void enrichActors(arr);
+        }
       })
-      .catch(() => {
-        if (active) setLogs([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+      .catch(() => { if (active) setLogs([]); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [enrichActors]);
 
   if (!currentUser) return null;
 
-  const canAccess = currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN';
-  if (!canAccess) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <ShieldAlert className="w-12 h-12 text-red-400" />
-        <p className="text-black/60 font-light">Admin access required.</p>
-      </div>
-    );
-  }
-
   const filtered = search
-    ? logs.filter(
-        (l) =>
-          l.user.toLowerCase().includes(search.toLowerCase()) ||
-          l.email.toLowerCase().includes(search.toLowerCase()) ||
-          l.action.toLowerCase().includes(search.toLowerCase())
-      )
+    ? logs.filter((l) => {
+        const actor = l.actorId ? actorCache[l.actorId] : null;
+        const nameMatch = actor?.name.toLowerCase().includes(search.toLowerCase());
+        const emailMatch = actor?.email.toLowerCase().includes(search.toLowerCase());
+        const actionMatch = l.action.toLowerCase().includes(search.toLowerCase());
+        const roleMatch = l.user.toLowerCase().includes(search.toLowerCase());
+        return nameMatch || emailMatch || actionMatch || roleMatch;
+      })
     : logs;
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
-          <History className="w-6 h-6 text-black/50 shrink-0" />
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Platform</p>
-            <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Audit Logs</h1>
-          </div>
-        </div>
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="Search logs…"
-          className="sm:w-64"
-          inputClassName="bg-black/5 border-black/10 text-[#0f172a] placeholder:text-black/25 focus:border-emerald-400"
-        />
-      </div>
+    <AdminPageLayout
+      icon={History}
+      label="Platform"
+      title="Audit Logs"
+      maxWidth="max-w-6xl"
+    >
+      <AdminFilterBar
+        search={search}
+        onSearch={setSearch}
+        placeholder="Search by name, email, or action…"
+        className="mb-5"
+      />
 
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ border: '1px solid var(--color-dash-border)' }}
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-dash-border)', background: 'var(--color-dash-card)' }}>
-                {['User', 'Action', 'Time'].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-mono uppercase tracking-widest text-black/35">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-4 py-12 text-center text-black/30 text-sm font-light">
-                    No audit logs found.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="border-b transition-colors hover:bg-black/3"
-                    style={{ borderColor: 'var(--color-dash-border)' }}
-                  >
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-black">{log.user}</p>
-                      <p className="text-[10px] text-black/35 font-mono">{log.email}</p>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-black/60">{log.action}</td>
-                    <td className="px-4 py-3 text-[10px] text-black/35 font-mono blackspace-nowrap">
-                      {new Date(log.timestamp).toLocaleString('en-GB', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit',
-                      })}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {loading ? (
+        <AdminLoadingState />
+      ) : (
+        <>
+          <AdminTable
+            headers={['Actor', 'Action', 'Target', 'Time']}
+            empty={
+              filtered.length === 0
+                ? <AdminEmptyState icon={History} title="No audit logs found" />
+                : undefined
+            }
+          >
+            {filtered.map((log, i) => {
+              const actor = log.actorId ? actorCache[log.actorId] : null;
 
-      {filtered.length > 0 && (
-        <p className="mt-3 text-xs text-black/25 font-mono">{filtered.length} entries</p>
+              return (
+                <AdminTableRow key={log.id ?? `log-${i}`}>
+                  {/* Actor — shows name + email once enriched, falls back to role + ID */}
+                  <AdminTableCell>
+                    {actor ? (
+                      <>
+                        <p className="text-sm font-medium text-gray-800">{actor.name}</p>
+                        <p className="text-xs text-gray-400 font-mono">{actor.email}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-gray-700 capitalize">{log.user}</p>
+                        {log.actorId && (
+                          <p className="text-[10px] text-gray-400 font-mono">…{log.actorId.slice(-8)}</p>
+                        )}
+                      </>
+                    )}
+                  </AdminTableCell>
+
+                  {/* Action */}
+                  <AdminTableCell>
+                    <span className="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                      {log.action}
+                    </span>
+                  </AdminTableCell>
+
+                  {/* Target */}
+                  <AdminTableCell muted>
+                    {log.targetType && (
+                      <span className="text-xs text-gray-500 capitalize">{log.targetType}</span>
+                    )}
+                    {log.targetId && (
+                      <p className="text-[10px] text-gray-400 font-mono">…{log.targetId.slice(-8)}</p>
+                    )}
+                  </AdminTableCell>
+
+                  {/* Time */}
+                  <AdminTableCell mono muted>
+                    {(() => {
+                      const d = new Date(log.timestamp);
+                      return isNaN(d.getTime())
+                        ? '—'
+                        : d.toLocaleString('en-GB', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          });
+                    })()}
+                  </AdminTableCell>
+                </AdminTableRow>
+              );
+            })}
+          </AdminTable>
+
+          {filtered.length > 0 && (
+            <p className="mt-3 text-xs text-gray-400 font-mono">
+              {filtered.length} entr{filtered.length !== 1 ? 'ies' : 'y'}
+            </p>
+          )}
+        </>
       )}
-    </div>
+    </AdminPageLayout>
   );
 }
