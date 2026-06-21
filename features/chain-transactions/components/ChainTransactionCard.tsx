@@ -12,6 +12,7 @@ interface ChainTransactionCardProps {
 
 const STATUS_STYLES: Record<ChainTransactionStatus, string> = {
   pending: 'bg-amber-50 text-amber-600',
+  mined: 'bg-blue-50 text-blue-600',
   confirmed: 'bg-emerald-50 text-emerald-600',
   reconciled: 'bg-emerald-100 text-emerald-700',
   stale: 'bg-gray-50 text-gray-600',
@@ -20,6 +21,7 @@ const STATUS_STYLES: Record<ChainTransactionStatus, string> = {
 
 const STATUS_ICONS: Record<ChainTransactionStatus, any> = {
   pending: Clock,
+  mined: Clock,
   confirmed: CheckCircle2,
   reconciled: CheckCircle2,
   stale: AlertTriangle,
