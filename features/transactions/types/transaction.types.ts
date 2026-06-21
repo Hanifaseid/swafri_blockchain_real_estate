@@ -10,12 +10,32 @@ export type PurchaseStatus =
   | 'cancelled'
   | 'disputed';
 
+export type PurchaseEscrowState = 'none' | 'funded' | 'released' | 'refunded';
+
 export interface ClosingChecklist {
   purchaseAgreement?: boolean;
   inspection?: boolean;
   financing?: boolean;
   titleReview?: boolean;
   settlementStatement?: boolean;
+}
+
+export interface PurchaseEscrow {
+  escrowId?: string;
+  contractAddress?: string;
+  token?: string;
+  state: PurchaseEscrowState;
+  fundTxHash?: string;
+  settleTxHash?: string;
+  buyerWallet?: string;
+  sellerWallet?: string;
+}
+
+export interface PurchaseDispute {
+  openedBy?: string;
+  openedAt?: string;
+  reason?: string;
+  note?: string;
 }
 
 export interface PurchaseTransaction {
@@ -31,6 +51,10 @@ export interface PurchaseTransaction {
   totalAmount?: number;
   note?: string;
   closingChecklist?: ClosingChecklist;
+  escrow?: PurchaseEscrow;
+  dispute?: PurchaseDispute;
+  termsHash?: string;
+  titleTransferTxHash?: string;
   createdAt: string;
   updatedAt: string;
   estimatedCloseDate?: string;

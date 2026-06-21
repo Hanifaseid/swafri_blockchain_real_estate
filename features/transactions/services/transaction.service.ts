@@ -19,6 +19,49 @@ function unwrapTransaction(payload: ApiSingleResponse<PurchaseTransaction> | Pur
   return payload as PurchaseTransaction;
 }
 
+function normalizePurchaseTransaction(t: any): PurchaseTransaction {
+  return {
+    id:           t.id ?? t._id ?? '',
+    listingId:    typeof t.listing === 'object' ? (t.listing?.id ?? t.listing?._id ?? '') : (t.listingId ?? t.listing ?? ''),
+    listingTitle: typeof t.listing === 'object' ? (t.listing?.title ?? 'Listing') : (t.listingTitle ?? ''),
+    listingPrice: t.amount ?? t.listingPrice ?? 0,
+    buyerId:      typeof t.buyer === 'object' ? (t.buyer?.id ?? t.buyer?._id ?? '') : (t.buyerId ?? t.buyer ?? ''),
+    sellerId:     typeof t.seller === 'object' ? (t.seller?.id ?? t.seller?._id ?? '') : (t.sellerId ?? t.seller ?? ''),
+    currency:     t.currency ?? 'USD',
+    status:       t.status,
+    depositAmount: t.depositAmount,
+    totalAmount:  t.totalAmount,
+    note:         t.note,
+    closingChecklist: t.closingChecklist,
+    escrow: t.escrow
+      ? {
+          escrowId:        t.escrow.escrowId,
+          contractAddress: t.escrow.contractAddress,
+          token:           t.escrow.token,
+          state:           t.escrow.state ?? 'none',
+          fundTxHash:      t.escrow.fundTxHash,
+          settleTxHash:    t.escrow.settleTxHash,
+          buyerWallet:     t.escrow.buyerWallet,
+          sellerWallet:    t.escrow.sellerWallet,
+        }
+      : { state: 'none' },
+    dispute: t.dispute
+      ? {
+          openedBy:  typeof t.dispute.openedBy === 'object' ? (t.dispute.openedBy?.id ?? t.dispute.openedBy?._id) : t.dispute.openedBy,
+          openedAt:  t.dispute.openedAt,
+          reason:    t.dispute.reason,
+          note:      t.dispute.note,
+        }
+      : undefined,
+    termsHash:             t.termsHash,
+    titleTransferTxHash:   t.titleTransferTxHash,
+    createdAt:             t.createdAt ?? '',
+    updatedAt:             t.updatedAt ?? t.createdAt ?? '',
+    estimatedCloseDate:    t.estimatedCloseDate,
+    actualCloseDate:       t.actualCloseDate,
+  };
+}
+
 // ─── Purchase Transactions Service ────────────────────────────────────────────
 // Note: Purchase transactions are auto-created when offers are accepted via the offers API
 // Manual creation is not supported per the OpenAPI spec
@@ -52,24 +95,7 @@ export async function getPurchaseTransactions(
   const rawItems: any[] = Array.isArray(inner?.items) ? inner.items : Array.isArray(inner) ? inner : [];
 
   // Normalize each transaction — API uses `amount` field, not `listingPrice`
-  const items: PurchaseTransaction[] = rawItems.map((t: any) => ({
-    id:           t.id ?? t._id ?? '',
-    listingId:    typeof t.listing === 'object' ? (t.listing?.id ?? t.listing?._id ?? '') : (t.listingId ?? t.listing ?? ''),
-    listingTitle: typeof t.listing === 'object' ? (t.listing?.title ?? 'Listing') : (t.listingTitle ?? ''),
-    listingPrice: t.amount ?? t.listingPrice ?? 0,
-    buyerId:      typeof t.buyer === 'object' ? (t.buyer?.id ?? t.buyer?._id ?? '') : (t.buyerId ?? t.buyer ?? ''),
-    sellerId:     typeof t.seller === 'object' ? (t.seller?.id ?? t.seller?._id ?? '') : (t.sellerId ?? t.seller ?? ''),
-    currency:     t.currency ?? 'USD',
-    status:       t.status,
-    depositAmount: t.depositAmount,
-    totalAmount:  t.totalAmount,
-    note:         t.note,
-    closingChecklist: t.closingChecklist,
-    createdAt:    t.createdAt ?? '',
-    updatedAt:    t.updatedAt ?? t.createdAt ?? '',
-    estimatedCloseDate: t.estimatedCloseDate,
-    actualCloseDate:    t.actualCloseDate,
-  }));
+  const items: PurchaseTransaction[] = rawItems.map((t: any) => normalizePurchaseTransaction(t));
 
   return {
     items,
@@ -80,8 +106,9 @@ export async function getPurchaseTransactions(
 }
 
 export async function getPurchaseTransactionDetail(id: string): Promise<PurchaseTransaction> {
-  const response = await apiClient.get<ApiSingleResponse<PurchaseTransaction> | PurchaseTransaction>(ENDPOINTS.PURCHASES.DETAIL(id));
-  return unwrapTransaction(response.data);
+  const response = await apiClient.get<any>(ENDPOINTS.PURCHASES.DETAIL(id));
+  const raw = response.data?.data ?? response.data;
+  return normalizePurchaseTransaction(raw);
 }
 
 export async function updatePurchaseTransactionStatus(

@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  MessageSquare,
   RefreshCw,
   X,
 } from 'lucide-react';
@@ -148,6 +147,18 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
             </div>
           )}
 
+          {/* Link to deal tracker for accepted offers */}
+          {offer.status === 'accepted' && (
+            <div className="mt-4">
+              <Link
+                href="/account/purchases"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-accent-400/15 border border-accent-400/30 px-4 py-2.5 text-sm font-semibold text-accent-400 hover:bg-accent-400/25 transition-colors"
+              >
+                Track deal progress <ArrowRight size={14} />
+              </Link>
+            </div>
+          )}
+
           {/* Action panel — only for active offers */}
           {isActive && (
             <div className="mt-4">
@@ -157,7 +168,8 @@ function ReceivedOfferCard({ offer }: { offer: Offer }) {
                     <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Counter amount ({currency})</label>
                     <input
                       type="number"
-                      min={1}
+                      min={0}
+                      step="any"
                       value={counterAmount}
                       onChange={(e) => setCounterAmount(e.target.value)}
                       className="mt-1 h-10 w-full rounded-xl border border-border-primary bg-surface-input px-3 text-sm text-white outline-none focus:border-accent-400 transition-colors"
@@ -303,6 +315,18 @@ function SentOfferCard({ offer }: { offer: Offer }) {
             <p className="mt-3 text-xs text-text-muted">
               Expires: {new Date((offer as any).expiresAt).toLocaleDateString()}
             </p>
+          )}
+
+          {/* Link to purchase transaction for accepted offers */}
+          {offer.status === 'accepted' && (
+            <div className="mt-4">
+              <Link
+                href="/account/purchases"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-accent-400/15 border border-accent-400/30 px-4 py-2.5 text-sm font-semibold text-accent-400 hover:bg-accent-400/25 transition-colors"
+              >
+                Track deal progress <ArrowRight size={14} />
+              </Link>
+            </div>
           )}
 
           {/* Cancel — only for active offers */}
