@@ -29,6 +29,8 @@ import type { Listing } from '@/features/listings/types/listing.types';
 import { FavoriteSaveButton, InquiryCard, OfferCard } from './tenant-actions';
 import { RentalApplicationCard } from './RentalApplicationCard';
 import { TitleCertificatePanel } from './TitleCertificatePanel';
+import { isListingOwner } from './ownership';
+import { useAuthStore } from '@/stores/auth.store';
 
 interface Props {
   listing: Listing;
@@ -56,6 +58,7 @@ function areaStr(a?: Listing['area']) {
 }
 
 export function ListingDetailView({ listing }: Props) {
+  const currentUser = useAuthStore((state) => state.currentUser);
   const [photoIdx, setPhotoIdx] = useState(0);
   const photos = listing.photos ?? [];
   const photo = photos[photoIdx];
@@ -65,6 +68,7 @@ export function ListingDetailView({ listing }: Props) {
     ? `${formatCurrency(price, cur)}/mo`
     : formatCurrency(price, cur);
   const verified = listing.verificationStatus === 'verified';
+  const isOwner = isListingOwner(listing, currentUser);
   const area = areaStr(listing.area);
   const addr = [listing.address.street, listing.address.city, listing.address.region, listing.address.country].filter(Boolean).join(', ');
 
@@ -221,7 +225,7 @@ export function ListingDetailView({ listing }: Props) {
             {/* Tenant / buyer actions */}
             <InquiryCard listing={listing} />
 
-            {listing.listingType === 'rent' && (
+            {!isOwner && listing.listingType === 'rent' && (
               <RentalApplicationCard
                 listingId={listing.id}
                 title={listing.title}
@@ -230,7 +234,7 @@ export function ListingDetailView({ listing }: Props) {
               />
             )}
 
-            {listing.listingType === 'sale' && <OfferCard listing={listing} />}
+            {!isOwner && listing.listingType === 'sale' && <OfferCard listing={listing} />}
 
             {/* On-chain certificate of title */}
             <TitleCertificatePanel listingId={listing.id} />

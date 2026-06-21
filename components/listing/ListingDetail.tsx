@@ -10,7 +10,9 @@ import { RentalApplicationCard } from "./RentalApplicationCard";
 import { FavoriteSaveButton, InquiryCard, OfferCard } from "./tenant-actions";
 import type { PropertyPhoto } from "./types";
 import { TitleCertificatePanel } from "./TitleCertificatePanel";
+import { isListingOwner } from "./ownership";
 import type { Listing } from "@/features/listings/types/listing.types";
+import { useAuthStore } from "@/stores/auth.store";
 
 const PLACEHOLDER_IMAGE = "/placeholder-property.jpg";
 
@@ -23,6 +25,8 @@ function formatAreaSqft(listing: Listing): number | undefined {
 // ─── ListingDetail ────────────────────────────────────────────────────────────
 
 export default function ListingDetail({ listing }: { listing: Listing }) {
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const isOwner = isListingOwner(listing, currentUser);
   const photos: PropertyPhoto[] =
     listing.photos && listing.photos.length > 0
       ? listing.photos.map((photo, index) => ({
@@ -124,7 +128,7 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
 
           <InquiryCard listing={listing} />
 
-          {listing.listingType === "rent" && (
+          {!isOwner && listing.listingType === "rent" && (
             <RentalApplicationCard
               listingId={listing.id}
               title={listing.title}
@@ -133,7 +137,7 @@ export default function ListingDetail({ listing }: { listing: Listing }) {
             />
           )}
 
-          {listing.listingType === "sale" && <OfferCard listing={listing} />}
+          {!isOwner && listing.listingType === "sale" && <OfferCard listing={listing} />}
 
           {/* ── On-chain Certificate of Title ──────────────────────────── */}
           <TitleCertificatePanel listingId={listing.id} />

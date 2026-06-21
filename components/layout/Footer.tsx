@@ -1,32 +1,32 @@
-import Link from 'next/link';
-import { siteConfig } from '@/config/site.config';
+import Link from "next/link";
+import { siteConfig } from "@/config/site.config";
 
 const marketplaceLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Discover', href: '/discovery' },
-  { label: 'Listings', href: '/listings' },
-  { label: 'About', href: '/about' },
-  { label: 'Contact', href: '/contact' },
+  { label: "Home", href: "/" },
+  { label: "Discover", href: "/discovery" },
+  { label: "Listings", href: "/listings" },
+  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 const accountLinks = [
-  { label: 'Saved Searches', href: '/account/saved' },
-  { label: 'Applications', href: '/account/applications' },
-  { label: 'Offers', href: '/account/offers' },
-  { label: 'Leases', href: '/account/leases' },
-  { label: 'List a Property', href: '/account/listings/new' },
+  { label: "Saved Searches", href: "/account/saved" },
+  { label: "Applications", href: "/account/applications" },
+  { label: "Offers", href: "/account/offers" },
+  { label: "Leases", href: "/account/leases" },
+  { label: "List a Property", href: "/account/listings/new" },
 ];
 
 const oversightLinks = [
-  { label: 'Admin Dashboard', href: '/admin/dashboard' },
-  { label: 'KYC Review', href: '/admin/kyc' },
-  { label: 'Compliance', href: '/admin/compliance' },
-  { label: 'Transactions', href: '/admin/transactions' },
+  { label: "Admin Dashboard", href: "/admin/dashboard" },
+  { label: "KYC Review", href: "/admin/kyc" },
+  { label: "Compliance", href: "/admin/compliance" },
+  { label: "Transactions", href: "/admin/transactions" },
 ];
 
 export function Footer() {
   return (
-    <footer className="border-t border-white/8 bg-black/40 px-4 py-12 lg:px-6">
+    <footer className="z-5 border-t border-white/8 bg-black/40 px-4 py-12 lg:px-6">
       <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-12">
         <div className="md:col-span-5">
           <Link
@@ -48,13 +48,13 @@ export function Footer() {
           </Link>
 
           <p className="max-w-md text-sm font-light leading-relaxed text-white/52">
-            Blockchain-enabled property listings with map-based discovery, digital title
-            verification, KYC review, and escrow visibility for buyers, renters, and
-            property owners.
+            Blockchain-enabled property listings with map-based discovery,
+            digital title verification, KYC review, and escrow visibility for
+            buyers, renters, and property owners.
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {['Digital Titles', 'Lease Escrow', 'KYC Review'].map((item) => (
+            {["Digital Titles", "Lease Escrow", "KYC Review"].map((item) => (
               <span
                 key={item}
                 className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-white/42"
@@ -72,7 +72,10 @@ export function Footer() {
           <ul className="space-y-2.5">
             {marketplaceLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href={href} className="text-xs text-white/50 transition-colors hover:text-white">
+                <Link
+                  href={href}
+                  className="text-xs text-white/50 transition-colors hover:text-white"
+                >
                   {label}
                 </Link>
               </li>
@@ -87,7 +90,10 @@ export function Footer() {
           <ul className="space-y-2.5">
             {accountLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href={href} className="text-xs text-white/50 transition-colors hover:text-white">
+                <Link
+                  href={href}
+                  className="text-xs text-white/50 transition-colors hover:text-white"
+                >
                   {label}
                 </Link>
               </li>
@@ -102,7 +108,10 @@ export function Footer() {
           <ul className="space-y-2.5">
             {oversightLinks.map(({ label, href }) => (
               <li key={label}>
-                <Link href={href} className="text-xs text-white/50 transition-colors hover:text-white">
+                <Link
+                  href={href}
+                  className="text-xs text-white/50 transition-colors hover:text-white"
+                >
                   {label}
                 </Link>
               </li>
@@ -127,7 +136,9 @@ export function Footer() {
       </div>
 
       <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-3 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <p className="font-mono text-[10px] text-white/25">{siteConfig.copyright}</p>
+        <p className="font-mono text-[10px] text-white/25">
+          {siteConfig.copyright}
+        </p>
         <p className="font-mono text-[10px] uppercase tracking-widest text-white/22">
           Blockchain property marketplace // ERC-721 title records
         </p>
