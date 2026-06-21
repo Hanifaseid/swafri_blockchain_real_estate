@@ -37,30 +37,24 @@ export default function ChainTransactionsPage() {
   const { data, isLoading, error } = useChainTransactions(page, limit, statusFilter || undefined, search);
   const reconcileMutation = useReconcileChainTransaction();
   const staleMutation = useMarkChainTransactionStale();
-
   const transactions = data?.items ?? [];
 
   const columns: ColumnDef<ChainTransaction>[] = useMemo(() => [
     {
-      accessorKey: 'hash',
-      header: 'Hash',
+      accessorKey: 'operation',
+      header: 'Operation',
       cell: ({ row }) => (
-        <span className="text-xs text-gray-600 font-mono truncate block max-w-[160px]">
-          {row.original.hash}
+        <span className="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+          {row.original.operation ?? '—'}
         </span>
       ),
     },
     {
-      accessorKey: 'chain',
-      header: 'Chain',
-      cell: ({ row }) => <span className="text-sm text-gray-700">{row.original.chain}</span>,
-    },
-    {
-      accessorKey: 'amount',
-      header: 'Amount',
+      accessorKey: 'hash',
+      header: 'Tx Hash',
       cell: ({ row }) => (
-        <span className="text-sm text-gray-700 font-mono">
-          {new Intl.NumberFormat('en-US', { style: 'currency', currency: row.original.currency }).format(row.original.amount)}
+        <span className="text-xs text-gray-600 font-mono truncate block max-w-[140px]">
+          {row.original.hash !== '—' ? `${row.original.hash.slice(0, 10)}…` : '—'}
         </span>
       ),
     },
@@ -70,16 +64,32 @@ export default function ChainTransactionsPage() {
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
+      accessorKey: 'targetType',
+      header: 'Target',
+      cell: ({ row }) => (
+        <div>
+          <span className="text-xs text-gray-600 capitalize">{row.original.targetType ?? '—'}</span>
+          {row.original.targetId && (
+            <p className="text-[10px] text-gray-400 font-mono">…{row.original.targetId.slice(-8)}</p>
+          )}
+        </div>
+      ),
+    },
+    {
       accessorKey: 'initiatedBy',
-      header: 'Initiated By',
-      cell: ({ row }) => <span className="text-sm text-gray-600">{row.original.initiatedBy}</span>,
+      header: 'Created By',
+      cell: ({ row }) => (
+        <span className="text-xs text-gray-500 font-mono">
+          {row.original.initiatedBy !== '—' ? `…${row.original.initiatedBy.slice(-8)}` : '—'}
+        </span>
+      ),
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created',
+      header: 'Date',
       cell: ({ row }) => (
         <span className="text-xs text-gray-400 font-mono">
-          {new Date(row.original.createdAt).toLocaleString()}
+          {new Date(row.original.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
         </span>
       ),
     },
@@ -88,11 +98,11 @@ export default function ChainTransactionsPage() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          {row.original.status === 'confirmed' && (
+          {(row.original.status === 'confirmed' || row.original.status === 'mined' as any) && (
             <Button
               size="sm"
               loading={reconcileMutation.status === 'pending'}
-              onClick={() => reconcileMutation.mutate({ id: row.original.id, payload: { confirmations: row.original.confirmations } })}
+              onClick={() => reconcileMutation.mutate({ id: row.original.id, payload: { confirmations: row.original.confirmations || 1 } })}
             >
               Reconcile
             </Button>

@@ -1,6 +1,6 @@
 // ─── Chain Transaction Types ─────────────────────────────────────────────────
 
-export type ChainTransactionStatus = 'pending' | 'confirmed' | 'reconciled' | 'stale' | 'failed';
+export type ChainTransactionStatus = 'pending' | 'confirmed' | 'mined' | 'reconciled' | 'stale' | 'failed';
 
 export interface ChainTransaction {
   id: string;
@@ -14,6 +14,10 @@ export interface ChainTransaction {
   updatedAt?: string;
   confirmations: number;
   reason?: string;
+  /** API-specific fields */
+  operation?: string;
+  targetType?: string;
+  targetId?: string;
 }
 
 export interface ChainTransactionsPage {

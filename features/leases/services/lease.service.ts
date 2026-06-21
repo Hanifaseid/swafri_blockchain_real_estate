@@ -133,14 +133,10 @@ export async function getMyLeases(): Promise<Lease[]> {
 }
 
 export async function getAllLeases(): Promise<Lease[]> {
-  try {
-    const { data } = await apiClient.get<Record<string, unknown>>(ENDPOINTS.BASE);
-    if (!data.success) throw new Error((data.message as string) || 'Failed to fetch leases');
-    const raw = Array.isArray(data.data) ? data.data : (data.data as any)?.items ?? (data.data as any)?.leases ?? [];
-    return (raw as Record<string, unknown>[]).map(normalizeLease);
-  } catch {
-    return getMyLeases();
-  }
+  // NOTE: The backend has no GET /leases admin endpoint per OpenAPI spec.
+  // /leases/mine returns leases where caller is landlord or tenant.
+  // Admins can look up individual leases by ID via getLease(id).
+  return getMyLeases();
 }
 
 export async function getLease(id: string): Promise<Lease> {
@@ -289,13 +285,15 @@ export async function resolveDispute(id: string, payload: ResolveDisputePayload)
 }
 
 // ─── getTenantRoster ──────────────────────────────────────────────────────────
-// GET /leases/tenants — Admin only. Returns all tenants with active leases.
-// Added from your branch — used by admin/leases Tenant Roster view.
+// GET /leases/tenants — Returns distinct tenants across all leases where the
+// caller is landlord (property_owner, admin, super_admin).
+// Response shape: { success, data: [{ id, name, email, phone }] }
 
 export interface TenantRosterEntry {
   tenantId: string;
   tenantName?: string;
   tenantEmail?: string;
+  tenantPhone?: string;
   leaseId: string;
   listingTitle?: string;
   status: string;
@@ -313,8 +311,21 @@ export async function getTenantRoster(
     );
     if (!(data as any).success) throw new Error((data as any).message || 'Failed to fetch tenant roster');
     const d = (data as any).data;
-    if (Array.isArray(d)) return d as TenantRosterEntry[];
-    return (d?.items ?? d?.tenants ?? []) as TenantRosterEntry[];
+    const raw: any[] = Array.isArray(d) ? d : d?.items ?? d?.tenants ?? [];
+
+    // API returns populated user objects: { id, name, email, phone }
+    return raw.map((t: any) => ({
+      tenantId:    t.id ?? t._id ?? '',
+      tenantName:  t.name   ?? undefined,
+      tenantEmail: t.email  ?? undefined,
+      tenantPhone: t.phone  ?? undefined,
+      // These fields are not returned by this endpoint —
+      // the roster tab uses leaseId as a fallback display
+      leaseId:     t.id ?? t._id ?? '',
+      listingTitle: undefined,
+      status:      t.status ?? 'active',
+      endDate:     undefined,
+    }));
   } catch {
     return [];
   }
