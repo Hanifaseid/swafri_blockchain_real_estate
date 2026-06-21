@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileCheck, Lock, ShieldCheck, ScrollText } from 'lucide-react';
+import { FileCheck, Lock, ScrollText, ShieldCheck } from 'lucide-react';
 import Reveal from '@/components/Reveal';
 import SectionHeading from './SectionHeading';
 import { FEATURES } from './data';
@@ -22,20 +22,19 @@ export default function PlatformFeatures() {
       <div className="mx-auto max-w-7xl px-4 lg:px-6">
         <SectionHeading
           index="02"
-          kicker="Why the Register"
+          kicker="Marketplace Core"
           align="center"
-          title={<>Built for real estate.<br className="hidden md:block" /> Settled with proof.</>}
-          description="Four pillars turn a listing into something you can actually trust — verifiable ownership, protected money, checked identities, and a record that never quietly changes."
+          title={<>Discovery, proof,<br className="hidden md:block" /> and oversight in one flow.</>}
+          description="The platform connects map-based search, structured listing data, digital title records, lease escrow, and compliance review without adding extra marketplace roles."
         />
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f, i) => {
             const Icon = ICON_MAP[f.iconName];
             const gold = f.color === 'gold';
             return (
               <Reveal key={f.title} delay={i * 90}>
                 <div className="group relative h-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05]">
-                  {/* corner numeral */}
                   <span className="absolute right-4 top-4 font-mono text-[11px] tracking-widest text-white/20">
                     0{i + 1}
                   </span>
@@ -49,8 +48,8 @@ export default function PlatformFeatures() {
                   >
                     <Icon className="h-6 w-6" />
                   </div>
-                  <h3 className="font-display text-lg font-medium text-white mb-2">{f.title}</h3>
-                  <p className="text-[13px] leading-relaxed font-light text-white/55">{f.desc}</p>
+                  <h3 className="mb-2 font-display text-lg font-medium text-white">{f.title}</h3>
+                  <p className="text-[13px] font-light leading-relaxed text-white/55">{f.desc}</p>
                   <span
                     className={[
                       'absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 transition-transform duration-500 group-hover:scale-x-100',

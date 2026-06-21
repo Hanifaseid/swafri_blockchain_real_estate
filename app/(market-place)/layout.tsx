@@ -21,7 +21,7 @@ export default function MarketplaceLayout({
     <div
       className={[
         "flex min-h-screen flex-col overflow-x-clip text-white",
-        isHome ? "" : "bg-black",
+        isHome ? "" : "bg-[#0d0c0a]!",
       ].join(" ")}
     >
       <LandingNavbar />

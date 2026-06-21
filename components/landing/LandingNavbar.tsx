@@ -429,7 +429,7 @@ export default function LandingNavbar() {
 
           <div className="mt-4 flex items-center justify-center gap-2 py-2 font-mono text-[10px] uppercase tracking-widest text-white/35">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-            Every listing title-verified
+            Reviewed listings and title-ready records
           </div>
         </nav>
       </div>

@@ -9,46 +9,46 @@ import SectionHeading from './SectionHeading';
 const TENANT_STEPS = [
   {
     step: '01',
-    title: 'Browse verified listings',
-    desc: 'Search deed-verified homes on the map. Check the certificate of title before you ever reach out.',
+    title: 'Search the live map',
+    desc: 'Explore listings by location, radius, custom boundary, price, beds, amenities, availability, and verified-title status.',
   },
   {
     step: '02',
-    title: 'Apply or make an offer',
-    desc: 'Submit a rental application or a purchase offer. Counter, accept, and negotiate in the open.',
+    title: 'Inspect the proof',
+    desc: 'Open the property page to review photos, metadata, ownership status, document hash, and title record before you inquire.',
   },
   {
     step: '03',
-    title: 'Sign & fund escrow',
-    desc: 'Your deposit or purchase funds are held in audited on-chain escrow — never paid blindly to a stranger.',
+    title: 'Apply or make an offer',
+    desc: 'Submit a rental application or purchase offer as a tenant, then track the workflow from inquiry to acceptance.',
   },
   {
     step: '04',
-    title: 'Move in or take title',
-    desc: 'On completion, the deposit settles or the title transfers to your wallet. Every step is on the record.',
+    title: 'Lease with escrow visibility',
+    desc: 'When a lease is created, KYC, wallet linking, escrow funding, and transaction status are visible instead of hidden in email threads.',
   },
 ];
 
 const OWNER_STEPS = [
   {
     step: '01',
-    title: 'Submit your property',
-    desc: 'Upload photos and ownership documents, then pass identity verification. Quality is enforced up front.',
+    title: 'Create a structured listing',
+    desc: 'Add sale or rental details, address data, photos, amenities, pricing, availability, and property metadata.',
   },
   {
     step: '02',
-    title: 'Get reviewed & approved',
-    desc: 'Our compliance team verifies the deed and your identity before anything goes live.',
+    title: 'Submit documents for review',
+    desc: 'Upload ownership documents and complete KYC so admins can verify the listing before it is published.',
   },
   {
     step: '03',
-    title: 'Receive your title certificate',
-    desc: 'Once approved, the document hash is minted as an ERC-721 certificate of title — your verifiable proof.',
+    title: 'Anchor title evidence',
+    desc: 'After approval, the platform can mint a digital title certificate with the listing and document hash anchored on-chain.',
   },
   {
     step: '04',
-    title: 'Lease or sell with escrow',
-    desc: 'Accept tenants or buyers and let escrow handle the money. Deposits and payments settle automatically.',
+    title: 'Manage leads without a dashboard',
+    desc: 'Owners handle inquiries, applications, offers, leases, and listing updates from marketplace account pages, not a landlord dashboard.',
   },
 ];
 
@@ -58,12 +58,14 @@ function Track({
   heading,
   steps,
   cta,
+  href,
 }: {
   variant: 'gold' | 'green';
   label: string;
   heading: string;
   steps: { step: string; title: string; desc: string }[];
   cta: string;
+  href: string;
 }) {
   const gold = variant === 'gold';
   return (
@@ -81,7 +83,9 @@ function Track({
         </div>
         <div>
           <div
-            className={`text-[10px] font-mono uppercase tracking-[0.22em] ${gold ? 'text-amber-300' : 'text-emerald-300'}`}
+            className={`font-mono text-[10px] uppercase tracking-[0.22em] ${
+              gold ? 'text-amber-300' : 'text-emerald-300'
+            }`}
           >
             {label}
           </div>
@@ -89,12 +93,12 @@ function Track({
         </div>
       </div>
 
-      <ol className="relative space-y-6 before:absolute before:left-[12px] before:top-2 before:bottom-2 before:w-px before:bg-white/10">
+      <ol className="relative space-y-6 before:absolute before:bottom-2 before:left-[12px] before:top-2 before:w-px before:bg-white/10">
         {steps.map((item) => (
           <li key={item.step} className="relative flex gap-4 pl-0">
             <span
               className={[
-                'relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-mono font-bold',
+                'relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold',
                 gold ? 'bg-amber-500 text-emerald-950' : 'bg-emerald-600 text-white',
               ].join(' ')}
             >
@@ -109,7 +113,7 @@ function Track({
       </ol>
 
       <Link
-        href="/auth"
+        href={href}
         className={[
           'mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-colors',
           gold
@@ -130,27 +134,29 @@ export default function HowItWorks() {
         index="03"
         kicker="How It Works"
         align="center"
-        title={<>Two paths, one record.</>}
-        description="Whether you are looking for a home or listing one, the same verified, escrow-protected rails sit underneath."
+        title={<>Two marketplace paths.<br className="hidden md:block" /> One source of truth.</>}
+        description="TENANT covers both buyers and renters. PROPERTY_OWNER covers owners and representatives. Admin dashboards remain reserved for ADMIN and SUPER_ADMIN."
       />
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         <Reveal>
           <Track
             variant="green"
-            label="For Renters & Buyers"
-            heading="Find a home"
+            label="For Tenants"
+            heading="Discover, apply, offer"
             steps={TENANT_STEPS}
-            cta="Find a Property"
+            cta="Browse Properties"
+            href="/discovery"
           />
         </Reveal>
         <Reveal delay={120}>
           <Track
             variant="gold"
             label="For Property Owners"
-            heading="List & sell"
+            heading="List, verify, transact"
             steps={OWNER_STEPS}
-            cta="List Your Property"
+            cta="Create a Listing"
+            href="/account/listings/new"
           />
         </Reveal>
       </div>

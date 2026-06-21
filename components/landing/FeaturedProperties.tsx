@@ -21,8 +21,8 @@ export default function FeaturedProperties() {
       <SectionHeading
         index="01"
         kicker="The Register"
-        title={<>Verified properties,<br className="hidden md:block" /> ready to view.</>}
-        description="Every listing is identity-checked, document-reviewed, and anchored to a blockchain certificate of title. Verify any of them yourself."
+        title={<>Map-based listings,<br className="hidden md:block" /> ready to inspect.</>}
+        description="Browse properties with structured metadata, photo galleries, location context, ownership review status, and digital title information where available."
         action={
           <Link
             href="/listings"

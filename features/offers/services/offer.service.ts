@@ -39,14 +39,23 @@ function isArrayPayload<T>(
 
 
 function normalizeOffer(offer: any): Offer {
-
+  const amount = offer.amount ?? offer.offerPrice ?? 0;
+  const counterAmount = offer.counterAmount ?? offer.counterOfferPrice;
+  const responseNote = offer.responseNote ?? offer.responseMessage;
   return {
     ...offer,
     listingId: offer.listingId ?? (typeof offer.listing === 'string' ? offer.listing : offer.listing?.id) ?? '',
-    amount: offer.amount ?? offer.offerPrice ?? 0,
+    // Canonical frontend field is offerPrice; backend sends amount — keep both
+    offerPrice: amount,
+    amount,
+    offerer: offer.offerer ?? offer.buyer,
     buyer: offer.buyer ?? offer.offerer,
-    responseNote: offer.responseNote ?? offer.responseMessage,
-    counterAmount: offer.counterAmount ?? offer.counterOfferPrice,
+    responseMessage: responseNote,
+    responseNote,
+    counterOfferPrice: counterAmount,
+    counterAmount,
+    // Normalize status: backend sends 'submitted', older code expected 'pending'
+    status: offer.status === 'pending' ? 'submitted' : offer.status,
   };
 }
 

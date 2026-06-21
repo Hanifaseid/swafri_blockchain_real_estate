@@ -6,13 +6,13 @@ import { Bot, Minimize2, Sparkles, RotateCcw, X, Send } from 'lucide-react';
 const INITIAL_MESSAGE = {
   role: 'assistant' as const,
   content:
-    'Welcome to TerraChain. I can help with map-based property discovery, digital title verification, KYC review, lease escrow, and purchase offers.',
+    'Welcome to VEX Property Register. I can help with map-based property discovery, digital title records, KYC review, lease escrow, rental applications, and purchase offers.',
 };
 
 const QUICK_PROMPTS = [
-  'How is a title verified?',
+  'How do I search by map?',
+  'How is a title reviewed?',
   'How does lease escrow work?',
-  'How do I submit an offer?',
 ];
 
 export default function AiChat() {
