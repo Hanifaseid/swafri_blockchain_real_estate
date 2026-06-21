@@ -128,14 +128,12 @@ export default function ProfilePage() {
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
-        <User className="w-6 h-6 text-black/50 shrink-0" />
+        <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center">
+          <User size={15} className="text-gray-500" />
+        </div>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">
-            Account
-          </p>
-          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">
-            My Profile
-          </h1>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Account</p>
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">My Profile</h1>
         </div>
       </div>
 

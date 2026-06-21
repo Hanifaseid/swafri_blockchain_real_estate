@@ -53,3 +53,16 @@ export async function getUserKycDocUrl(id: string, docId: string): Promise<strin
     return null;
   }
 }
+
+// ─── startKycReview ───────────────────────────────────────────────────────────
+// POST /admin/users/{id}/kyc/start-review
+// Transitions the KYC status from 'pending' → 'under_review'.
+
+export async function startKycReview(id: string): Promise<void> {
+  const { data } = await apiClient.post<ApiResp<void>>(
+    `${ENDPOINTS.ADMIN.USER_KYC(id)}/start-review`
+  );
+  if (!data.success) {
+    throw new Error(data.message || 'Failed to start KYC review');
+  }
+}

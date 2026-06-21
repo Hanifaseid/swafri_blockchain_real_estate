@@ -157,3 +157,24 @@ export const transactionService = {
   disputePurchaseTransaction,
   resolvePurchaseDispute,
 };
+
+// ─── updateClosingChecklist ───────────────────────────────────────────────────
+// PATCH /purchase-transactions/:id/closing-checklist — Admin only.
+// Updates one or more closing checklist items (e.g. title_transferred, funds_disbursed).
+
+export interface ClosingChecklistPayload {
+  items: Record<string, boolean>; // e.g. { title_transferred: true, funds_disbursed: true }
+  note?: string;
+}
+
+export async function updateClosingChecklist(
+  id: string,
+  payload: ClosingChecklistPayload
+): Promise<PurchaseTransaction> {
+  const { data } = await apiClient.patch<ApiSingleResponse<PurchaseTransaction>>(
+    ENDPOINTS.PURCHASES.CLOSING_CHECKLIST(id),
+    payload
+  );
+  if (data?.success === false) throw new Error(data.message || 'Failed to update closing checklist');
+  return unwrapTransaction(data as any);
+}

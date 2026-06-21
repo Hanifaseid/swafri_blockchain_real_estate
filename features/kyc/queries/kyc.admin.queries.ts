@@ -4,6 +4,7 @@ import {
   getUserKycDetails,
   reviewUserKyc,
   getUserKycDocUrl,
+  startKycReview,
 } from '@/features/kyc/services/kyc.admin.service';
 
 const KEYS = {
@@ -43,5 +44,21 @@ export function useAdminKycDocUrl(userId: string, docId: string) {
     queryKey: ['admin', 'kyc', userId, 'doc', docId],
     queryFn: () => getUserKycDocUrl(userId, docId),
     enabled: !!userId && !!docId,
+  });
+}
+
+// ─── useStartKycReview ────────────────────────────────────────────────────────
+// Moves a pending KYC submission to under_review status.
+
+export function useStartKycReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId }: { userId: string }) => startKycReview(userId),
+    onSuccess: (_, { userId }) => {
+      qc.invalidateQueries({ queryKey: KEYS.adminKyc(userId) });
+      qc.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Review started.');
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 }

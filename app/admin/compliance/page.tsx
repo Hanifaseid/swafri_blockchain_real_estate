@@ -1,17 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { ShieldCheck, FileText, Building2 } from 'lucide-react';
-import { useComplianceCases, useUpdateComplianceCase } from '@/features/compliance/queries/compliance.queries';
-import { useBrokerLicenses } from '@/features/compliance/queries/compliance.queries';
+import { ShieldCheck, FileText, Building2, Lock } from 'lucide-react';
+import { useAuthStore } from '@/stores/auth.store';
+import { useComplianceCases, useUpdateComplianceCase, useBrokerLicenses } from '@/features/compliance/queries/compliance.queries';
 import { ComplianceCaseCard } from '@/features/compliance/components/ComplianceCaseCard';
 import { BrokerLicenseCard } from '@/features/compliance/components/BrokerLicenseCard';
 import type { ComplianceCaseStatus, ComplianceSeverity, BrokerLicenseStatus } from '@/features/compliance/types/compliance.types';
+import {
+  AdminPageLayout,
+  AdminTabs,
+  AdminFilterBar,
+  AdminLoadingState,
+  AdminEmptyState,
+  AdminInlineAlert,
+} from '@/components/admin/ui';
 
 export default function CompliancePage() {
+  const { currentUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'cases' | 'licenses'>('cases');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [severityFilter, setSeverityFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('');
+
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   const { data: casesData, isLoading: casesLoading } = useComplianceCases({
     status: statusFilter as ComplianceCaseStatus || undefined,
@@ -23,96 +34,91 @@ export default function CompliancePage() {
     status: statusFilter as BrokerLicenseStatus || undefined,
   });
 
-  const handleUpdateCase = (id: string, input: any) => {
-    updateCase.mutate({ id, input });
-  };
+  const handleUpdateCase = isSuperAdmin
+    ? (id: string, input: any) => updateCase.mutate({ id, input })
+    : undefined;
 
   const handleReviewLicense = (id: string, decision: 'approve' | 'reject' | 'expire', note?: string) => {
-    // This would use useReviewBrokerLicense hook
     console.log('Review license:', id, decision, note);
   };
 
+  const tabs = [
+    { id: 'cases', label: 'Cases', icon: <FileText size={14} /> },
+    { id: 'licenses', label: 'Broker Licenses', icon: <Building2 size={14} /> },
+  ];
+
+  const caseStatusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'open', label: 'Open' },
+    { value: 'under_review', label: 'Under Review' },
+    { value: 'resolved', label: 'Resolved' },
+    { value: 'dismissed', label: 'Dismissed' },
+  ];
+
+  const licenseStatusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'pending', label: 'Pending' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'rejected', label: 'Rejected' },
+    { value: 'expired', label: 'Expired' },
+  ];
+
+  const severityOptions = [
+    { value: '', label: 'All Severities' },
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'high', label: 'High' },
+    { value: 'critical', label: 'Critical' },
+  ];
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <ShieldCheck className="w-6 h-6 text-emerald-500 shrink-0" />
-        <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-black/35">Admin</p>
-          <h1 className="text-2xl font-light text-[#0f172a] tracking-tight">Compliance</h1>
-        </div>
-      </div>
+    <AdminPageLayout icon={ShieldCheck} label="Admin" title="Compliance">
+      {!isSuperAdmin && (
+        <AdminInlineAlert
+          variant="warning"
+          icon={Lock}
+          message="View only — override actions require Super Admin."
+          className="mb-5"
+        />
+      )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-black/5 p-1 rounded-xl w-fit border border-black/10">
-        <button
-          onClick={() => setActiveTab('cases')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'cases' ? 'bg-white text-black shadow-sm' : 'text-black/70 hover:text-black hover:bg-black/5'
-          }`}
-        >
-          <FileText size={16} className="inline mr-2" />
-          Cases
-        </button>
-        <button
-          onClick={() => setActiveTab('licenses')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'licenses' ? 'bg-white text-black shadow-sm' : 'text-black/70 hover:text-black hover:bg-black/5'
-          }`}
-        >
-          <Building2 size={16} className="inline mr-2" />
-          Broker Licenses
-        </button>
-      </div>
+      <AdminTabs
+        tabs={tabs}
+        active={activeTab}
+        onChange={(id) => { setActiveTab(id as 'cases' | 'licenses'); setStatusFilter(''); setSeverityFilter(''); }}
+        className="mb-5"
+      />
 
-      {/* Filters */}
-      <div className="flex gap-3 mb-6">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 border border-black/10 rounded-lg text-sm bg-white text-black/70 focus:outline-none focus:border-emerald-400"
-        >
-          <option value="">All Statuses</option>
-          {activeTab === 'cases' ? (
-            <>
-              <option value="open">Open</option>
-              <option value="under_review">Under Review</option>
-              <option value="resolved">Resolved</option>
-              <option value="dismissed">Dismissed</option>
-            </>
-          ) : (
-            <>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="expired">Expired</option>
-            </>
-          )}
-        </select>
-        {activeTab === 'cases' && (
-          <select
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            className="px-3 py-2 border border-black/10 rounded-lg text-sm bg-white text-black/70 focus:outline-none focus:border-emerald-400"
-          >
-            <option value="">All Severities</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="critical">Critical</option>
-          </select>
-        )}
-      </div>
+      <AdminFilterBar
+        filters={[
+          {
+            key: 'status',
+            label: 'Status',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: activeTab === 'cases' ? caseStatusOptions : licenseStatusOptions,
+          },
+          ...(activeTab === 'cases' ? [{
+            key: 'severity',
+            label: 'Severity',
+            value: severityFilter,
+            onChange: setSeverityFilter,
+            options: severityOptions,
+          }] : []),
+        ]}
+        onClear={() => { setStatusFilter(''); setSeverityFilter(''); }}
+        className="mb-5"
+      />
 
-      {/* Content */}
       {activeTab === 'cases' ? (
-        casesLoading ? (
-          <div className="text-center py-12 text-black/40">Loading cases...</div>
-        ) : casesData?.items.length === 0 ? (
-          <div className="text-center py-12 text-black/40">No compliance cases found.</div>
+        casesLoading ? <AdminLoadingState /> :
+        !casesData?.items?.length ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <AdminEmptyState icon={FileText} title="No compliance cases found" />
+          </div>
         ) : (
           <div className="grid gap-4">
-            {casesData?.items.map((case_) => (
+            {casesData.items.map((case_) => (
               <ComplianceCaseCard
                 key={case_.id}
                 case_={case_}
@@ -123,13 +129,14 @@ export default function CompliancePage() {
           </div>
         )
       ) : (
-        licensesLoading ? (
-          <div className="text-center py-12 text-black/40">Loading licenses...</div>
-        ) : licenses?.length === 0 ? (
-          <div className="text-center py-12 text-black/40">No broker licenses found.</div>
+        licensesLoading ? <AdminLoadingState /> :
+        !licenses?.length ? (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <AdminEmptyState icon={Building2} title="No broker licenses found" />
+          </div>
         ) : (
           <div className="grid gap-4">
-            {licenses?.map((license) => (
+            {licenses.map((license) => (
               <BrokerLicenseCard
                 key={license.id}
                 license={license}
@@ -140,6 +147,6 @@ export default function CompliancePage() {
           </div>
         )
       )}
-    </div>
+    </AdminPageLayout>
   );
 }

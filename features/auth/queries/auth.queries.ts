@@ -54,6 +54,7 @@ export function useLogin() {
       if (typeof document !== 'undefined') {
         const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `vex_user_role=${data.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
       // If admin assigned a temporary password, force change before dashboard access
@@ -86,6 +87,7 @@ export function useRegister() {
       if (typeof document !== 'undefined') {
         const maxAge = 60 * 60 * 24 * 7;
         document.cookie = `vex_authed=1; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `vex_user_role=${data.user.role}; path=/; max-age=${maxAge}; SameSite=Lax`;
       }
 
       router.push(getDefaultRouteForRole(data.user.role));
