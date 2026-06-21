@@ -3,23 +3,13 @@
 import { useState } from 'react';
 import { MoreVertical, ShieldOff, ShieldBan, ShieldCheck, Eye, RotateCcw } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
-import { cn } from '@/lib/utils';
 import type { UserAccount } from '@/features/users/types/user.types';
-import {
-  ACCOUNT_STATUS_BADGE,
-  KYC_STATUS_BADGE,
-  ROLE_BADGE,
-} from '@/features/users/constants';
-
-// ─── UserRow ──────────────────────────────────────────────────────────────────
-// Single row in the user management table.
-// Used by the DataTable in app/(dashboard)/users/page.tsx
+import { StatusBadge } from '@/components/admin/ui/StatusBadge';
+import { AdminTableRow, AdminTableCell } from '@/components/admin/ui';
 
 interface UserRowProps {
   user: UserAccount;
-  /** The ID of the currently logged-in admin — used to block self-action. */
   currentUserId?: string;
-  /** Whether the current actor is a Super Admin (enables restore action). */
   isSuperAdmin?: boolean;
   onView: (user: UserAccount) => void;
   onSuspend: (userId: string) => void;
@@ -43,65 +33,48 @@ export function UserRow({
   hideBlock = false,
 }: UserRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-
-  const statusBadge = ACCOUNT_STATUS_BADGE[user.status];
-  const kycBadge = KYC_STATUS_BADGE[user.kycStatus];
-  const roleBadge = ROLE_BADGE[user.role];
-
-  // Prevent an admin from acting on their own account
   const isSelf = !!currentUserId && user.id === currentUserId;
 
   return (
-    <tr
-      className="border-b transition-colors hover:bg-black/3"
-      style={{ borderColor: 'var(--color-dash-border)' }}
-    >
+    <AdminTableRow>
       {/* User info */}
-      <td className="px-4 py-3">
+      <AdminTableCell>
         <div className="flex items-center gap-3">
           <Avatar name={user.name} size="sm" />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-[#0f172a] truncate">{user.name}</p>
-            <p className="text-xs text-black/40 font-mono truncate">{user.email}</p>
+            <p className="text-sm font-medium text-gray-800 truncate">{user.name}</p>
+            <p className="text-xs text-gray-400 font-mono truncate">{user.email}</p>
           </div>
         </div>
-      </td>
+      </AdminTableCell>
 
       {/* Role */}
-      <td className="px-4 py-3">
-        <span className={cn('text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-md', roleBadge.color)}>
-          {roleBadge.label}
-        </span>
-      </td>
+      <AdminTableCell>
+        <StatusBadge status={user.role} />
+      </AdminTableCell>
 
       {/* Account status */}
-      <td className="px-4 py-3">
-        <span className={cn('text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-md', statusBadge.color)}>
-          {statusBadge.label}
-        </span>
-      </td>
+      <AdminTableCell>
+        <StatusBadge status={user.status} />
+      </AdminTableCell>
 
       {/* KYC status */}
-      <td className="px-4 py-3">
-        <span className={cn('text-[10px]  font-mono uppercase tracking-wider px-2 py-1 rounded-md', kycBadge.color)}>
-          {kycBadge.label}
-        </span>
-      </td>
+      <AdminTableCell>
+        <StatusBadge status={user.kycStatus} />
+      </AdminTableCell>
 
       {/* Joined date */}
-      <td className="px-4 py-3 text-xs text-black/40 font-mono blackspace-nowrap">
-        {new Date(user.createdAt).toLocaleDateString('en-GB', {
-          day: '2-digit', month: 'short', year: 'numeric',
-        })}
-      </td>
+      <AdminTableCell mono muted>
+        {new Date(user.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+      </AdminTableCell>
 
       {/* Actions */}
-      <td className="px-4 py-3">
+      <AdminTableCell>
         <div className="flex items-center gap-1 justify-end">
           <button
             type="button"
             onClick={() => onView(user)}
-            className="p-1.5 rounded-lg text-black/30 hover:text-[#0f172a] hover:bg-black/5 transition-colors"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
             aria-label={`View ${user.name}`}
           >
             <Eye size={14} />
@@ -112,7 +85,7 @@ export function UserRow({
               <button
                 type="button"
                 onClick={() => setMenuOpen((v) => !v)}
-                className="p-1.5 rounded-lg text-black/30 hover:text-[#0f172a] hover:bg-black/5 transition-colors"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
                 aria-label="More actions"
                 aria-expanded={menuOpen}
               >
@@ -121,54 +94,39 @@ export function UserRow({
 
               {menuOpen && (
                 <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setMenuOpen(false)}
-                    aria-hidden="true"
-                  />
-                  <div
-                    className="absolute right-0 top-full mt-1 w-44 rounded-xl border p-1 z-20 shadow-2xl"
-                    style={{ background: 'var(--color-dash-card)', borderColor: 'var(--color-dash-border)' }}
-                  >
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} aria-hidden="true" />
+                  <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-gray-200 bg-white p-1 z-20 shadow-lg">
                     {user.status !== 'SUSPENDED' && user.status !== 'BLOCKED' && (
-                      <button
-                        type="button"
+                      <ActionItem
+                        icon={<ShieldOff size={13} />}
+                        label="Suspend"
+                        className="text-amber-600 hover:bg-amber-50"
                         onClick={() => { onSuspend(user.id); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-amber-400 hover:bg-amber-950/20 transition-colors"
-                      >
-                        <ShieldOff size={13} />
-                        Suspend
-                      </button>
+                      />
                     )}
                     {!hideBlock && user.status !== 'BLOCKED' && (
-                      <button
-                        type="button"
+                      <ActionItem
+                        icon={<ShieldBan size={13} />}
+                        label="Block"
+                        className="text-red-600 hover:bg-red-50"
                         onClick={() => { onBlock(user.id); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-950/20 transition-colors"
-                      >
-                        <ShieldBan size={13} />
-                        Block
-                      </button>
+                      />
                     )}
                     {(user.status === 'SUSPENDED' || user.status === 'BLOCKED') && (
-                      <button
-                        type="button"
+                      <ActionItem
+                        icon={<ShieldCheck size={13} />}
+                        label="Reactivate"
+                        className="text-emerald-600 hover:bg-emerald-50"
                         onClick={() => { onReactivate(user.id); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-emerald-400 hover:bg-emerald-950/20 transition-colors"
-                      >
-                        <ShieldCheck size={13} />
-                        Reactivate
-                      </button>
+                      />
                     )}
                     {isSuperAdmin && user.status === 'BLOCKED' && onRestore && (
-                      <button
-                        type="button"
+                      <ActionItem
+                        icon={<RotateCcw size={13} />}
+                        label="Restore"
+                        className="text-sky-600 hover:bg-sky-50"
                         onClick={() => { onRestore(user.id); setMenuOpen(false); }}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-blue-400 hover:bg-blue-950/20 transition-colors"
-                      >
-                        <RotateCcw size={13} />
-                        Restore
-                      </button>
+                      />
                     )}
                   </div>
                 </>
@@ -176,7 +134,30 @@ export function UserRow({
             </div>
           )}
         </div>
-      </td>
-    </tr>
+      </AdminTableCell>
+    </AdminTableRow>
+  );
+}
+
+function ActionItem({
+  icon,
+  label,
+  onClick,
+  className,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${className}`}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
